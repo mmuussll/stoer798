@@ -72,7 +72,7 @@ export function CartSidebar({
           <CardTitle className="flex items-center gap-2 text-sm">
             <ShoppingBag className="w-4 h-4 text-blue-600" />
             سلة المشتريات
-            {cart.length > 0 && <Badge variant="secondary" className="text-[10px]">{itemCount} قطعة</Badge>}
+            {cart.length > 0 && <Badge variant="secondary" className="text-xs">{itemCount} قطعة</Badge>}
           </CardTitle>
           <div className="flex items-center gap-1">
             {cart.length > 0 && (
@@ -103,7 +103,7 @@ export function CartSidebar({
             {discountType !== "none" ? `خصم ${discountType === "percentage" ? `${discountValue}%` : `${discountValue.toFixed(2)} ${CURRENCY}`}` : "خصم"}
           </Button>
           {taxEnabled && taxRate > 0 && (
-            <Badge variant="outline" className="text-[10px] border-orange-300 text-orange-600">
+            <Badge variant="outline" className="text-xs border-orange-300 text-orange-600">
               <Calculator className="w-2.5 h-2.5 ml-0.5" /> ضريبة {taxRate}%
             </Badge>
           )}
@@ -124,7 +124,7 @@ export function CartSidebar({
                 <div className="flex items-start justify-between gap-1 mb-1">
                   <div className="flex-1 min-w-0">
                     <h4 className="font-medium text-xs text-gray-800 truncate">{item.name}</h4>
-                    <p className="text-[10px] text-gray-500">{item.price.toFixed(2)} {CURRENCY} / قطعة</p>
+                    <p className="text-xs text-gray-500">{item.price.toFixed(2)} {CURRENCY} / قطعة</p>
                   </div>
                   <Button variant="ghost" size="icon" className="h-6 w-6 text-red-400 hover:text-red-600 hover:bg-red-50 shrink-0" onClick={() => onRemoveItem(item.id)}>
                     <X className="w-3 h-3" />
@@ -208,12 +208,12 @@ export function CartSidebar({
             <div className="space-y-1">
               <div className="flex gap-2">
                 <div className="flex-1">
-                  <label className="text-[10px] text-gray-500 block mb-0.5">كاش</label>
+                  <label className="text-xs text-gray-500 block mb-0.5">كاش</label>
                   <Input type="number" className="text-center text-sm" value={splitCash || ""}
                     onChange={(e) => onSplitCashChange(parseFloat(e.target.value) || 0)} placeholder="0" />
                 </div>
                 <div className="flex-1">
-                  <label className="text-[10px] text-gray-500 block mb-0.5">بطاقة</label>
+                  <label className="text-xs text-gray-500 block mb-0.5">بطاقة</label>
                   <Input type="number" className="text-center text-sm" value={splitCard || ""} readOnly placeholder="0" />
                 </div>
               </div>

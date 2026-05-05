@@ -1,5 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { X, Menu } from "lucide-react";
 
 const SidebarContext = React.createContext<{ open: boolean; setOpen: (v: boolean) => void }>({
   open: true,
@@ -59,7 +60,7 @@ function SidebarMenuButton({
     <button
       data-active={isActive}
       className={cn(
-        "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left outline-none ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
+        "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-start outline-none ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
         size === "sm" && "text-xs",
         size === "lg" && "text-sm",
         isActive && "bg-blue-100 text-blue-900",
@@ -78,7 +79,7 @@ function SidebarTrigger({ className, ...props }: React.ButtonHTMLAttributes<HTML
       className={cn("inline-flex items-center justify-center rounded-md text-sm font-medium h-10 w-10", className)}
       {...props}
     >
-      {open ? "✕" : "☰"}
+      {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
     </button>
   );
 }

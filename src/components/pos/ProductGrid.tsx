@@ -70,6 +70,9 @@ export function ProductGrid({
         return (
           <Card
             key={product.id}
+            role="button"
+            tabIndex={isOutOfStock ? -1 : 0}
+            onKeyDown={(e) => { if (!isOutOfStock && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); onAddToCart(product); } }}
             className={`cursor-pointer transition-all duration-150 hover:shadow-md ${
               isOutOfStock ? "opacity-60 cursor-not-allowed" : "hover:border-blue-300"
             } ${inCart ? "ring-2 ring-blue-500 ring-offset-1" : ""} overflow-hidden`}
@@ -83,15 +86,15 @@ export function ProductGrid({
             <CardContent className="p-2 space-y-1.5">
               <div className="flex justify-between items-start gap-1">
                 <h3 className="font-semibold text-xs text-gray-800 line-clamp-2 flex-1">{product.name}</h3>
-                {inCart && <Badge variant="default" className="shrink-0 bg-blue-600 text-[10px] px-1.5">{inCart.quantity}</Badge>}
+                {inCart && <Badge variant="default" className="shrink-0 bg-blue-600 text-xs px-1.5">{inCart.quantity}</Badge>}
               </div>
               <p className="text-base font-bold text-blue-600">
-                {product.price.toFixed(2)} <span className="text-[10px] font-normal text-gray-500">{CURRENCY}</span>
+                {product.price.toFixed(2)} <span className="text-xs font-normal text-gray-500">{CURRENCY}</span>
               </p>
               <div className="flex items-center gap-1 flex-wrap">
-                <Badge variant={stockStatus.variant} className="text-[9px]">{stockStatus.label}</Badge>
+                <Badge variant={stockStatus.variant} className="text-xs">{stockStatus.label}</Badge>
                 {product.category && (
-                  <Badge variant="outline" className="text-[9px]" style={{ borderColor: product.category.color, color: product.category.color }}>{product.category.name}</Badge>
+                  <Badge variant="outline" className="text-xs" style={{ borderColor: product.category.color, color: product.category.color }}>{product.category.name}</Badge>
                 )}
               </div>
             </CardContent>

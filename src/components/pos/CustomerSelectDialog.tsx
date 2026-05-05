@@ -62,7 +62,7 @@ export function CustomerSelectDialog({
                         <div className="font-medium text-sm truncate">{c.name}</div>
                         {c.phone && <div className="text-xs text-gray-500">{c.phone}</div>}
                       </div>
-                      <Badge variant="outline" className="text-[10px]">{c.points} نقطة</Badge>
+                      <Badge variant="outline" className="text-xs">{c.points} نقطة</Badge>
                     </div>
                   ))}
                 </div>

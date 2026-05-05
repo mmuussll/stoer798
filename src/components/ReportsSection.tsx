@@ -841,7 +841,7 @@ export default function ReportsSection() {
                       {item.remaining > 0 ? (
                         <span className="text-orange-600">{item.remaining}</span>
                       ) : (
-                        <Badge variant="destructive" className="text-[10px]">نفذ</Badge>
+                        <Badge variant="destructive" className="text-xs">نفذ</Badge>
                       )}
                     </TableCell>
                     <TableCell>

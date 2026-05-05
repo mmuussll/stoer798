@@ -26,6 +26,7 @@ import {
   Users,
   RotateCcw,
   Landmark,
+  Settings,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
@@ -37,6 +38,7 @@ const SalesInvoices = lazy(() => import("@/components/SalesInvoices"));
 const CustomerManagement = lazy(() => import("@/components/CustomerManagement"));
 const SalesReturns = lazy(() => import("@/components/SalesReturns"));
 const CashSessions = lazy(() => import("@/components/CashSessions"));
+const SettingsPage = lazy(() => import("@/components/SettingsPage"));
 
 function SectionSkeleton() {
   return (
@@ -60,6 +62,7 @@ const NAV_ITEMS = [
   { id: "sales-returns", label: "المرتجعات", icon: RotateCcw },
   { id: "cash-sessions", label: "جلسات الصندوق", icon: Landmark },
   { id: "reports", label: "التقارير", icon: BarChart3 },
+  { id: "settings", label: "الإعدادات", icon: Settings },
 ] as const;
 
 export default function Index() {
@@ -75,6 +78,7 @@ export default function Index() {
       case "sales-returns": return <SalesReturns />;
       case "cash-sessions": return <CashSessions />;
       case "reports": return <ReportsSection />;
+      case "settings": return <SettingsPage />;
       default: return null;
     }
   };
@@ -91,7 +95,7 @@ export default function Index() {
               <h1 className="text-base font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent leading-tight">
                 نظام نقطة البيع
               </h1>
-              <p className="text-[10px] text-muted-foreground">إدارة ذكية للمبيعات والمخزون</p>
+              <p className="text-xs text-muted-foreground">إدارة ذكية للمبيعات والمخزون</p>
             </div>
           </div>
         </SidebarHeader>
@@ -132,7 +136,7 @@ export default function Index() {
       </Sidebar>
 
       <SidebarInset className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50" dir="rtl">
-        <header className="flex h-14 items-center gap-2 border-b border-blue-100 bg-white/50 backdrop-blur-sm px-4 sticky top-0 z-40">
+        <header className="flex h-14 items-center gap-2 border-b border-blue-100 bg-white px-4 sticky top-0 z-40">
           <SidebarTrigger className="ml-2" />
           <div className="flex items-center gap-2">
             <ChevronRight className="w-4 h-4 text-muted-foreground" />
@@ -141,7 +145,7 @@ export default function Index() {
             </span>
           </div>
           <div className="flex-1" />
-          <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200 text-[10px]">
+          <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200 text-xs">
             متصل
           </Badge>
         </header>

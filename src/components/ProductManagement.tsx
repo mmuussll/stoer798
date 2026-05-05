@@ -206,7 +206,7 @@ export default function ProductManagement() {
                 {imagePreview ? (
                   <div className="relative w-32 h-32 rounded-lg overflow-hidden border-2 border-dashed border-gray-300">
                     <img src={imagePreview} alt="معاينة" className="w-full h-full object-cover" />
-                    <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6 rounded-full" onClick={removeImage}><X className="w-3 h-3" /></Button>
+                    <Button type="button" variant="destructive" size="icon" className="absolute top-1 end-1 h-6 w-6 rounded-full" onClick={removeImage}><X className="w-3 h-3" /></Button>
                   </div>
                 ) : (
                   <label className="flex flex-col items-center justify-center w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
@@ -277,7 +277,7 @@ export default function ProductManagement() {
                 <CardHeader className={product.image_url ? "pb-1 pt-3" : "pb-3"}>
                   <div className="flex justify-between items-start">
                     <CardTitle className="text-base text-gray-800 line-clamp-1 flex-1">{product.name}</CardTitle>
-                    {category && <Badge variant="secondary" className="text-[10px] text-white border-0 shrink-0 mr-2" style={{ backgroundColor: category.color }}>{category.name}</Badge>}
+                    {category && <Badge variant="secondary" className="text-xs text-white border-0 shrink-0 mr-2" style={{ backgroundColor: category.color }}>{category.name}</Badge>}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3 pt-0">
@@ -314,7 +314,7 @@ export default function ProductManagement() {
                     <TableCell className="font-medium">{product.name}</TableCell>
                     <TableCell className="text-blue-600 font-semibold">{product.price.toFixed(2)} {CURRENCY}</TableCell>
                     <TableCell>{getStockBadge(product.stock)}</TableCell>
-                    <TableCell>{category ? <Badge variant="secondary" className="text-[10px] text-white border-0" style={{ backgroundColor: category.color }}>{category.name}</Badge> : <span className="text-gray-400 text-sm">-</span>}</TableCell>
+                    <TableCell>{category ? <Badge variant="secondary" className="text-xs text-white border-0" style={{ backgroundColor: category.color }}>{category.name}</Badge> : <span className="text-gray-400 text-sm">-</span>}</TableCell>
                     <TableCell>{product.barcode ? <span className="text-xs font-mono bg-gray-100 px-2 py-1 rounded">{product.barcode}</span> : <span className="text-gray-400 text-sm">-</span>}</TableCell>
                     <TableCell>
                       <div className="flex gap-1">

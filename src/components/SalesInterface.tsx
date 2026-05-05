@@ -17,7 +17,7 @@ import * as customersApi from "@/api/customers";
 import * as sessionsApi from "@/api/sessions";
 import * as settingsApi from "@/api/settings";
 import { CURRENCY } from "@/constants";
-import { printSaleInvoice } from "@/lib/printInvoice";
+import { printSaleInvoice, setPrintSettings } from "@/lib/printInvoice";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Product, CartItem, Category, Customer, HeldOrder, CashSession, StoreSettings } from "@/types";
 
@@ -61,6 +61,8 @@ export default function SalesInterface() {
   const [discountValue, setDiscountValue] = useState(0);
   const [taxEnabled, setTaxEnabled] = useState(false);
   const [taxRate, setTaxRate] = useState(0);
+  const [secondTaxEnabled, setSecondTaxEnabled] = useState(false);
+  const [secondTaxRate, setSecondTaxRate] = useState(0);
 
   // Dialog states
   const [showCheckoutDialog, setShowCheckoutDialog] = useState(false);
@@ -115,6 +117,10 @@ export default function SalesInterface() {
       setSettings(s);
       setTaxEnabled(s.tax_enabled);
       setTaxRate(s.tax_rate);
+      setSecondTaxEnabled(s.second_tax_enabled);
+      setSecondTaxRate(s.second_tax_rate);
+      setPaymentMethod(s.default_payment_method as "cash" | "card" | "mixed");
+      setPrintSettings(s);
     }).catch(() => {});
   }, []);
 
@@ -136,8 +142,10 @@ export default function SalesInterface() {
     const afterDiscount = subtotal - discountAmount;
     let taxAmount = 0;
     if (taxEnabled && taxRate > 0) taxAmount = afterDiscount * (taxRate / 100);
-    const total = afterDiscount + taxAmount;
-    return { subtotal, discountAmount, taxAmount, total };
+    let secondTaxAmount = 0;
+    if (secondTaxEnabled && secondTaxRate > 0) secondTaxAmount = afterDiscount * (secondTaxRate / 100);
+    const total = afterDiscount + taxAmount + secondTaxAmount;
+    return { subtotal, discountAmount, taxAmount, secondTaxAmount, total };
   };
 
   const totals = calculateTotals();
@@ -254,7 +262,8 @@ export default function SalesInterface() {
     mutationFn: async () => {
       const t = calculateTotals();
       const now = new Date();
-      const invoiceNumber = `INV-${now.toISOString().slice(0, 10).replace(/-/g, "")}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+      const prefix = settings?.invoice_number_prefix || "INV-";
+      const invoiceNumber = `${prefix}${now.toISOString().slice(0, 10).replace(/-/g, "")}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 
       const result = await salesApi.createSaleInvoice({
         invoice_number: invoiceNumber,
@@ -264,6 +273,8 @@ export default function SalesInterface() {
         discount_type: discountType === "none" ? "" : discountType,
         discount_value: discountType !== "none" ? discountValue : 0,
         tax_rate: taxEnabled ? taxRate : 0, tax_total: t.taxAmount, total: t.total,
+        second_tax_rate: secondTaxEnabled ? secondTaxRate : 0,
+        second_tax_total: t.secondTaxAmount,
         payment_method: paymentMethod,
         paid_amount: paymentMethod === "cash" ? paidAmount : paymentMethod === "card" ? t.total : splitCash + splitCard,
         change_amount: paymentMethod === "cash" ? paidAmount - t.total : 0,
@@ -292,7 +303,9 @@ export default function SalesInterface() {
       queryClient.invalidateQueries({ queryKey: ["customers"] });
       toast({ title: "تمت عملية البيع بنجاح", description: `المبلغ: ${invoice.total.toFixed(2)} ${CURRENCY}` });
 
-      setTimeout(() => { if (invoice) printSaleInvoice(invoice); }, 300);
+      if (settings?.receipt_auto_print !== false) {
+        setTimeout(() => { if (invoice) printSaleInvoice(invoice); }, 300);
+      }
 
       if (activeSession && t) {
         const cashAmount = pm === "cash" ? t.total : pm === "mixed" ? sc : 0;
@@ -399,7 +412,7 @@ export default function SalesInterface() {
             {heldOrders.length > 0 && (
               <Button variant="outline" size="sm" onClick={() => setShowRecallDialog(true)} title="استرجاع (Ctrl+R)" className="gap-1 relative">
                 <Play className="w-3.5 h-3.5" /> استرجاع
-                <Badge variant="destructive" className="absolute -top-1 -left-1 h-4 w-4 p-0 flex items-center justify-center text-[9px]">{heldOrders.length}</Badge>
+                <Badge variant="destructive" className="absolute -top-1 -end-1 h-4 w-4 p-0 flex items-center justify-center text-xs">{heldOrders.length}</Badge>
               </Button>
             )}
           </div>
@@ -418,7 +431,7 @@ export default function SalesInterface() {
                 onClick={() => setSelectedCategory("all")}
                 className={selectedCategory === "all" ? "bg-blue-600 hover:bg-blue-700" : ""}>الكل</Button>
               {categoriesLoading
-                ? <Skeleton className="h-8 w-20" />
+                ? Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-8 w-16" />)
                 : categories.map((cat) => (
                   <Button key={cat.id} variant={selectedCategory === cat.id ? "default" : "outline"} size="sm"
                     onClick={() => setSelectedCategory(cat.id)}

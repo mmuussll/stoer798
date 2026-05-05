@@ -27,9 +27,71 @@ export interface Customer {
   total_purchases: number;
   total_visits: number;
   points: number;
+  total_debt: number;
+  debt_limit: number;
   note?: string;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface Debt {
+  id: string;
+  customer_id: string;
+  customer?: Customer;
+  invoice_id?: string;
+  invoice?: SaleInvoice;
+  total_amount: number;
+  remaining_amount: number;
+  status: 'active' | 'partially_paid' | 'paid' | 'overdue';
+  due_date?: string;
+  guarantor_name?: string;
+  guarantor_phone?: string;
+  debtor_phone?: string;
+  debt_items?: DebtItem[];
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface DebtItem {
+  name: string;
+  price: number;
+  quantity: number;
+  barcode?: string;
+}
+
+export interface DebtPayment {
+  id: string;
+  debt_id: string;
+  debt?: Debt;
+  customer_id: string;
+  customer?: Customer;
+  invoice_id?: string;
+  amount: number;
+  payment_method: 'cash' | 'card' | 'transfer';
+  payment_date: string;
+  payment_time?: string;
+  notes?: string;
+  cashier?: string;
+  user_id?: string;
+  created_at?: string;
+}
+
+export interface DebtSummary {
+  total_outstanding: number;
+  total_overdue: number;
+  total_active: number;
+  total_customers_with_debt: number;
+  total_debts: number;
+  customers: {
+    id: string;
+    name: string;
+    phone?: string;
+    total_debt: number;
+    debt_limit: number;
+    debt_count: number;
+    oldest_due_date?: string;
+  }[];
 }
 
 export interface CartItem {
@@ -72,6 +134,7 @@ export interface SaleInvoice {
   payment_method: string;
   paid_amount: number;
   change_amount: number;
+  debt_amount: number;
   customer_id?: string;
   customer?: Customer;
   items: SaleInvoiceItem[];
@@ -215,6 +278,7 @@ export interface StoreSettings {
   invoice_number_prefix: string;
   enable_negative_stock: boolean;
   enable_fast_sale: boolean;
+  enable_credit_sales: boolean;
   show_product_images: boolean;
   grid_columns: number;
   backup_enabled: boolean;

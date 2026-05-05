@@ -16,6 +16,7 @@ import * as salesApi from "@/api/sales";
 import * as customersApi from "@/api/customers";
 import * as sessionsApi from "@/api/sessions";
 import * as settingsApi from "@/api/settings";
+import * as debtsApi from "@/api/debts";
 import { CURRENCY } from "@/constants";
 import { printSaleInvoice, setPrintSettings } from "@/lib/printInvoice";
 import { useAuth } from "@/contexts/AuthContext";
@@ -77,10 +78,11 @@ export default function SalesInterface() {
   const [customerSearch, setCustomerSearch] = useState("");
 
   // Payment
-  const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "mixed">("cash");
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "mixed" | "credit">("cash");
   const [paidAmount, setPaidAmount] = useState(0);
   const [splitCash, setSplitCash] = useState(0);
   const [splitCard, setSplitCard] = useState(0);
+  const [debtDueDate, setDebtDueDate] = useState("");
 
   // Held orders
   const [heldOrders, setHeldOrders] = useState<HeldOrder[]>(loadHeldOrders());
@@ -119,7 +121,7 @@ export default function SalesInterface() {
       setTaxRate(s.tax_rate);
       setSecondTaxEnabled(s.second_tax_enabled);
       setSecondTaxRate(s.second_tax_rate);
-      setPaymentMethod(s.default_payment_method as "cash" | "card" | "mixed");
+      setPaymentMethod(s.default_payment_method as "cash" | "card" | "mixed" | "credit");
       setPrintSettings(s);
     }).catch(() => {});
   }, []);
@@ -154,6 +156,11 @@ export default function SalesInterface() {
   useEffect(() => {
     if (paymentMethod === "mixed") setSplitCard(Math.max(0, totals.total - splitCash));
   }, [splitCash, totals.total, paymentMethod]);
+
+  // Auto set paidAmount for credit (full amount as debt)
+  useEffect(() => {
+    if (paymentMethod === "credit") setPaidAmount(0);
+  }, [paymentMethod]);
 
   // === Cart operations ===
   const addToCart = (product: Product) => {
@@ -256,6 +263,7 @@ export default function SalesInterface() {
     setCart([]); setShowCheckoutDialog(false); setSelectedCustomer(null);
     setDiscountType("none"); setDiscountValue(0);
     setPaymentMethod("cash"); setPaidAmount(0); setSplitCash(0); setSplitCard(0); setBarcode("");
+    setDebtDueDate("");
   };
 
   const checkoutMutation = useMutation({
@@ -264,6 +272,9 @@ export default function SalesInterface() {
       const now = new Date();
       const prefix = settings?.invoice_number_prefix || "INV-";
       const invoiceNumber = `${prefix}${now.toISOString().slice(0, 10).replace(/-/g, "")}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+
+      const isCredit = paymentMethod === "credit";
+      const debtAmount = isCredit ? t.total : 0;
 
       const result = await salesApi.createSaleInvoice({
         invoice_number: invoiceNumber,
@@ -276,8 +287,9 @@ export default function SalesInterface() {
         second_tax_rate: secondTaxEnabled ? secondTaxRate : 0,
         second_tax_total: t.secondTaxAmount,
         payment_method: paymentMethod,
-        paid_amount: paymentMethod === "cash" ? paidAmount : paymentMethod === "card" ? t.total : splitCash + splitCard,
-        change_amount: paymentMethod === "cash" ? paidAmount - t.total : 0,
+        paid_amount: isCredit ? 0 : paymentMethod === "cash" ? paidAmount : paymentMethod === "card" ? t.total : splitCash + splitCard,
+        change_amount: isCredit ? 0 : paymentMethod === "cash" ? paidAmount - t.total : 0,
+        debt_amount: debtAmount,
         customer_id: selectedCustomer?.id || null,
         cashier: user?.email || "البائع الرئيسي",
         user_id: user?.id, note: "",
@@ -286,10 +298,37 @@ export default function SalesInterface() {
         quantity: item.quantity, barcode: item.barcode,
       })));
 
+      // If credit sale, create debt record
+      if (isCredit && selectedCustomer) {
+        try {
+          const debtItems = cart.map((item) => ({
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            barcode: item.barcode,
+          }));
+
+          await debtsApi.createDebt({
+            customer_id: selectedCustomer.id,
+            invoice_id: result.id,
+            total_amount: t.total,
+            remaining_amount: t.total,
+            status: "active",
+            due_date: debtDueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+            debtor_phone: selectedCustomer.phone || undefined,
+            debt_items: debtItems,
+            notes: `فاتورة: ${invoiceNumber}`,
+          });
+        } catch (debtErr) {
+          console.error("Failed to create debt:", debtErr);
+        }
+      }
+
       (result as any)._totals = t;
       (result as any)._pm = paymentMethod;
       (result as any)._sc = splitCash;
       (result as any)._smc = splitCard;
+      (result as any)._isCredit = isCredit;
       return result;
     },
     onSuccess: async (invoice) => {
@@ -297,19 +336,22 @@ export default function SalesInterface() {
       const pm = (invoice as any)._pm;
       const sc = (invoice as any)._sc || 0;
       const smc = (invoice as any)._smc || 0;
+      const isCredit = (invoice as any)._isCredit;
 
       queryClient.invalidateQueries({ queryKey: ["sales-invoices"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["customers"] });
-      toast({ title: "تمت عملية البيع بنجاح", description: `المبلغ: ${invoice.total.toFixed(2)} ${CURRENCY}` });
+      queryClient.invalidateQueries({ queryKey: ["debts"] });
+      queryClient.invalidateQueries({ queryKey: ["debt-summary"] });
+      toast({ title: isCredit ? "تم البيع بالآجل" : "تمت عملية البيع بنجاح", description: `المبلغ: ${invoice.total.toFixed(2)} ${CURRENCY}` });
 
       if (settings?.receipt_auto_print !== false) {
         setTimeout(() => { if (invoice) printSaleInvoice(invoice); }, 300);
       }
 
       if (activeSession && t) {
-        const cashAmount = pm === "cash" ? t.total : pm === "mixed" ? sc : 0;
-        const cardAmount = pm === "card" ? t.total : pm === "mixed" ? smc : 0;
+        const cashAmount = isCredit ? 0 : pm === "cash" ? t.total : pm === "mixed" ? sc : 0;
+        const cardAmount = isCredit ? 0 : pm === "card" ? t.total : pm === "mixed" ? smc : 0;
         try {
           await sessionsApi.updateSessionStats(activeSession.id, {
             total_sales: activeSession.total_sales + t.total,
@@ -470,8 +512,10 @@ export default function SalesInterface() {
           taxEnabled={taxEnabled} taxRate={taxRate}
           paymentMethod={paymentMethod} paidAmount={paidAmount}
           splitCash={splitCash} splitCard={splitCard}
+          debtDueDate={debtDueDate}
           subtotal={calculateSubtotal()} totals={totals}
           isPending={checkoutMutation.isPending}
+          enableCreditSales={settings?.enable_credit_sales !== false}
           onUpdateQuantity={updateQuantity} onRemoveItem={removeFromCart}
           onClearCart={() => setShowClearCartDialog(true)}
           onShowDiscount={() => setShowDiscountDialog(true)}
@@ -479,11 +523,16 @@ export default function SalesInterface() {
           onShowCheckout={() => {
             if (cart.length === 0) { toast({ title: "السلة فارغة" }); return; }
             if (paymentMethod === "cash" && paidAmount <= 0) setPaidAmount(totals.total);
+            if (paymentMethod === "credit" && !selectedCustomer) {
+              toast({ title: "الرجاء اختيار زبون", description: "يجب اختيار زبون للبيع بالآجل", variant: "destructive" });
+              return;
+            }
             setShowCheckoutDialog(true);
           }}
           onPaymentMethodChange={setPaymentMethod}
           onPaidAmountChange={setPaidAmount}
           onSplitCashChange={setSplitCash}
+          onDebtDueDateChange={setDebtDueDate}
           onPrint={handlePrintPreview}
         />
       </div>
@@ -498,6 +547,8 @@ export default function SalesInterface() {
         paidAmount={paidAmount}
         change={paymentMethod === "cash" ? paidAmount - totals.total : 0}
         isPending={checkoutMutation.isPending}
+        isCredit={paymentMethod === "credit"}
+        debtDueDate={debtDueDate}
         onConfirm={() => checkoutMutation.mutate()}
       />
 

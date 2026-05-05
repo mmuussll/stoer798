@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Receipt, User2 } from "lucide-react";
+import { Receipt, User2, Landmark, AlertTriangle } from "lucide-react";
 import { CURRENCY } from "@/constants";
 import type { CartItem, Customer } from "@/types";
 
@@ -21,13 +21,17 @@ interface CheckoutDialogProps {
   paidAmount: number;
   change: number;
   isPending: boolean;
+  isCredit?: boolean;
+  debtDueDate?: string;
   onConfirm: () => void;
 }
 
 export function CheckoutDialog({
   open, onOpenChange, cart, selectedCustomer,
   discountType, discountAmount, taxEnabled, taxRate, taxAmount,
-  total, paymentMethod, paidAmount, change, isPending, onConfirm,
+  total, paymentMethod, paidAmount, change, isPending,
+  isCredit, debtDueDate,
+  onConfirm,
 }: CheckoutDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -67,12 +71,26 @@ export function CheckoutDialog({
           )}
           <div className="flex justify-between text-sm text-gray-600">
             <span>طريقة الدفع:</span>
-            <span className="font-medium">{paymentMethod === "cash" ? "نقداً" : paymentMethod === "card" ? "بطاقة" : "مختلط (كاش + بطاقة)"}</span>
+            <span className="font-medium">{paymentMethod === "cash" ? "نقداً" : paymentMethod === "card" ? "بطاقة" : paymentMethod === "credit" ? "آجل (دَين)" : "مختلط (كاش + بطاقة)"}</span>
           </div>
           {paymentMethod === "cash" && paidAmount > 0 && change >= 0 && (
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">المبلغ المدفوع / الباقي:</span>
               <span className="font-semibold">{paidAmount.toFixed(2)} / <span className="text-green-600">{change.toFixed(2)}</span> {CURRENCY}</span>
+            </div>
+          )}
+          {isCredit && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 space-y-1">
+              <div className="flex items-center gap-2 text-red-700 text-sm font-semibold">
+                <AlertTriangle className="w-4 h-4" />
+                <span>تنبيه: بيع بالآجل (دَين)</span>
+              </div>
+              <p className="text-xs text-red-600">سيتم إنشاء دين على الزبون بقيمة {total.toFixed(2)} {CURRENCY}</p>
+              {debtDueDate && <p className="text-xs text-red-500">تاريخ الاستحقاق: {debtDueDate}</p>}
+              {!debtDueDate && <p className="text-xs text-red-500">تاريخ الاستحقاق: بعد 30 يوم</p>}
+              {selectedCustomer && selectedCustomer.total_debt > 0 && (
+                <p className="text-xs text-red-400">الدين الحالي للزبون: {selectedCustomer.total_debt.toFixed(2)} {CURRENCY}</p>
+              )}
             </div>
           )}
           <Separator />

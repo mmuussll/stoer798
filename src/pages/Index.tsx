@@ -27,6 +27,7 @@ import {
   RotateCcw,
   Landmark,
   Settings,
+  Wallet,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
@@ -38,6 +39,7 @@ const SalesInvoices = lazy(() => import("@/components/SalesInvoices"));
 const CustomerManagement = lazy(() => import("@/components/CustomerManagement"));
 const SalesReturns = lazy(() => import("@/components/SalesReturns"));
 const CashSessions = lazy(() => import("@/components/CashSessions"));
+const DebtManagement = lazy(() => import("@/components/DebtManagement"));
 const SettingsPage = lazy(() => import("@/components/SettingsPage"));
 
 function SectionSkeleton() {
@@ -60,6 +62,7 @@ const NAV_ITEMS = [
   { id: "customers", label: "الزبائن", icon: Users },
   { id: "sales-invoices", label: "فواتير المبيعات", icon: Receipt },
   { id: "sales-returns", label: "المرتجعات", icon: RotateCcw },
+  { id: "debts", label: "الديون", icon: Wallet },
   { id: "cash-sessions", label: "جلسات الصندوق", icon: Landmark },
   { id: "reports", label: "التقارير", icon: BarChart3 },
   { id: "settings", label: "الإعدادات", icon: Settings },
@@ -76,6 +79,7 @@ export default function Index() {
       case "customers": return <CustomerManagement />;
       case "sales-invoices": return <SalesInvoices />;
       case "sales-returns": return <SalesReturns />;
+      case "debts": return <DebtManagement />;
       case "cash-sessions": return <CashSessions />;
       case "reports": return <ReportsSection />;
       case "settings": return <SettingsPage />;

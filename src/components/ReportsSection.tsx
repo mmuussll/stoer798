@@ -14,12 +14,13 @@ import {
   FileText, Calendar, TrendingUp, Package, DollarSign, Download,
   BarChart3, PieChart as PieChartIcon, Activity, RefreshCw,
   TrendingDown, AlertTriangle, Layers, ShoppingCart, Target,
-  Clock, Zap, Receipt
+  Clock, Zap, Receipt, Landmark, User2, CreditCard, Wallet, CheckCircle2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import * as salesApi from "@/api/sales";
 import * as purchasesApi from "@/api/purchases";
 import * as productsApi from "@/api/products";
+import * as debtsApi from "@/api/debts";
 import { CURRENCY } from "@/constants";
 
 const COLORS = ["#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#06B6D4", "#EC4899", "#14B8A6", "#F97316", "#6366F1"];
@@ -125,6 +126,10 @@ export default function ReportsSection() {
   const { data: products = [], isLoading: productsLoading } = useQuery({
     queryKey: ["products"],
     queryFn: productsApi.fetchProducts,
+  });
+  const { data: debts = [], isLoading: debtsLoading } = useQuery({
+    queryKey: ["debts"],
+    queryFn: debtsApi.fetchDebts,
   });
 
   const isLoading = salesLoading || purchasesLoading || productsLoading;
@@ -944,6 +949,197 @@ export default function ReportsSection() {
     </div>
   );
 
+  const renderDebtsTab = () => {
+    const debtSummary = useMemo(() => {
+      const active = debts.filter((d) => d.status !== "paid");
+      const paid = debts.filter((d) => d.status === "paid");
+      const overdue = active.filter((d) => d.due_date && d.due_date < new Date().toISOString().slice(0, 10));
+      const totalOutstanding = active.reduce((s, d) => s + d.remaining_amount, 0);
+      const totalPaid = paid.reduce((s, d) => s + d.total_amount, 0);
+      const totalDebtValue = debts.reduce((s, d) => s + d.total_amount, 0);
+      const overdueAmount = overdue.reduce((s, d) => s + d.remaining_amount, 0);
+
+      const customerMap = new Map<string, { name: string; total: number; count: number; paid: number }>();
+      debts.forEach((d) => {
+        const c = d.customer;
+        if (!c) return;
+        const key = c.id;
+        const existing = customerMap.get(key) || { name: c.name, total: 0, count: 0, paid: 0 };
+        existing.total += d.total_amount;
+        existing.count += 1;
+        existing.paid += d.total_amount - d.remaining_amount;
+        customerMap.set(key, existing);
+      });
+
+      const paymentMethodMap = new Map<string, number>();
+      debts.forEach((d) => {
+        if (d.status === "paid" || d.status === "partially_paid") {
+          const paid_ = d.total_amount - d.remaining_amount;
+          if (d.invoice?.payment_method) {
+            const m = d.invoice.payment_method;
+            paymentMethodMap.set(m, (paymentMethodMap.get(m) || 0) + paid_);
+          }
+        }
+      });
+
+      return {
+        activeCount: active.length,
+        paidCount: paid.length,
+        overdueCount: overdue.length,
+        totalOutstanding,
+        totalPaid,
+        totalDebtValue,
+        overdueAmount,
+        topCustomers: Array.from(customerMap.values())
+          .sort((a, b) => (b.total - b.paid) - (a.total - a.paid))
+          .slice(0, 10),
+        paymentMethodData: Array.from(paymentMethodMap.entries()).map(([name, value]) => ({ name, value })),
+      };
+    }, [debts]);
+
+    const ds = debtSummary;
+
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+          <StatCard title="الديون المستحقة" value={`${CURRENCY} ${ds.totalOutstanding.toFixed(2)}`} icon={Landmark} color="text-red-600" bg="bg-red-50 border border-red-200" />
+          <StatCard title="الديون المسددة" value={`${CURRENCY} ${ds.totalPaid.toFixed(2)}`} icon={CheckCircle2} color="text-emerald-600" bg="bg-emerald-50" />
+          <StatCard title="إجمالي الديون" value={`${CURRENCY} ${ds.totalDebtValue.toFixed(2)}`} icon={Wallet} color="text-blue-600" bg="bg-blue-50" />
+          <StatCard title="عدد الديون النشطة" value={String(ds.activeCount)} icon={AlertTriangle} color="text-amber-600" bg="bg-amber-50" />
+          <StatCard title="عدد الديون المتأخرة" value={`${ds.overdueCount} (${CURRENCY} ${ds.overdueAmount.toFixed(0)})`} icon={AlertTriangle} color={ds.overdueCount > 0 ? "text-red-600" : "text-green-600"} bg={ds.overdueCount > 0 ? "bg-red-50" : "bg-green-50"} />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <User2 className="w-5 h-5 text-violet-600" />
+                أكثر الزبائن مدينةً
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {ds.topCustomers.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 text-gray-400">
+                  <User2 className="w-8 h-8 mb-2" />
+                  <p>لا توجد ديون حتى الآن</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-right">الزبون</TableHead>
+                      <TableHead className="text-right">عدد الديون</TableHead>
+                      <TableHead className="text-right">إجمالي الدين</TableHead>
+                      <TableHead className="text-right">المسدد</TableHead>
+                      <TableHead className="text-right">المتبقي</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {ds.topCustomers.map((c, i) => (
+                      <TableRow key={i}>
+                        <TableCell className="font-medium">{c.name}</TableCell>
+                        <TableCell><Badge variant="secondary">{c.count}</Badge></TableCell>
+                        <TableCell className="font-semibold">{c.total.toFixed(2)} {CURRENCY}</TableCell>
+                        <TableCell className="text-emerald-600">{c.paid.toFixed(2)} {CURRENCY}</TableCell>
+                        <TableCell className="font-bold text-red-600">{(c.total - c.paid).toFixed(2)} {CURRENCY}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <PieChartIcon className="w-5 h-5 text-blue-600" />
+                توزيع الديون (نشط/مسدد)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {debts.length === 0 ? (
+                <div className="flex items-center justify-center h-[320px] text-gray-400">لا توجد بيانات</div>
+              ) : (
+                <ResponsiveContainer width="100%" height={320}>
+                  <PieChart>
+                    <Pie
+                      data={[
+                        { name: "مستحق", value: ds.totalOutstanding, color: "#EF4444" },
+                        { name: "مسدد", value: ds.totalPaid, color: "#10B981" },
+                      ]}
+                      cx="50%" cy="50%" labelLine={false}
+                      label={({ name, value }) => `${name}: ${CURRENCY} ${value.toFixed(0)}`}
+                      outerRadius={110}
+                      dataKey="value"
+                    >
+                      <Cell fill="#EF4444" />
+                      <Cell fill="#10B981" />
+                    </Pie>
+                    <Tooltip formatter={(value: any) => [`${CURRENCY} ${value}`, ""]} />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <FileText className="w-5 h-5 text-violet-600" />
+              قائمة الديون ({debts.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {debts.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 text-gray-400">
+                <Landmark className="w-8 h-8 mb-2" />
+                <p>لا توجد ديون</p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-right">الزبون</TableHead>
+                    <TableHead className="text-right">المبلغ الكلي</TableHead>
+                    <TableHead className="text-right">المسدد</TableHead>
+                    <TableHead className="text-right">المتبقي</TableHead>
+                    <TableHead className="text-right">الحالة</TableHead>
+                    <TableHead className="text-right">تاريخ الاستحقاق</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {debts.slice(0, 20).map((d) => {
+                    const statusColors: Record<string, string> = {
+                      active: "bg-blue-100 text-blue-700", partially_paid: "bg-amber-100 text-amber-700",
+                      paid: "bg-emerald-100 text-emerald-700", overdue: "bg-red-100 text-red-700",
+                    };
+                    const statusLabels: Record<string, string> = {
+                      active: "نشط", partially_paid: "مدفوع جزئياً", paid: "مدفوع", overdue: "متأخر",
+                    };
+                    return (
+                      <TableRow key={d.id}>
+                        <TableCell className="font-medium">{d.customer?.name || "-"}</TableCell>
+                        <TableCell>{d.total_amount.toFixed(2)} {CURRENCY}</TableCell>
+                        <TableCell className="text-emerald-600">{(d.total_amount - d.remaining_amount).toFixed(2)} {CURRENCY}</TableCell>
+                        <TableCell className="font-bold text-red-600">{d.remaining_amount.toFixed(2)} {CURRENCY}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={statusColors[d.status]}>{statusLabels[d.status]}</Badge>
+                        </TableCell>
+                        <TableCell className="text-sm">{d.due_date || "-"}</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6" dir="rtl">
       {/* Header */}
@@ -1041,6 +1237,10 @@ export default function ReportsSection() {
             <PieChartIcon className="w-4 h-4" />
             الفئات
           </TabsTrigger>
+          <TabsTrigger value="debts" className="gap-1.5">
+            <Landmark className="w-4 h-4" />
+            الديون
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="sales">{renderSalesTab()}</TabsContent>
@@ -1048,6 +1248,7 @@ export default function ReportsSection() {
         <TabsContent value="profit">{renderProfitTab()}</TabsContent>
         <TabsContent value="stock">{renderStockTab()}</TabsContent>
         <TabsContent value="categories">{renderCategoriesTab()}</TabsContent>
+        <TabsContent value="debts">{renderDebtsTab()}</TabsContent>
       </Tabs>
     </div>
   );

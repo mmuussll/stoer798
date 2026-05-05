@@ -14,6 +14,8 @@ function mapCustomer(row: Record<string, unknown>): Customer {
     total_purchases: toNumber(row.total_purchases),
     total_visits: toNumber(row.total_visits),
     points: toNumber(row.points),
+    total_debt: toNumber(row.total_debt),
+    debt_limit: toNumber(row.debt_limit),
     note: row.note as string | undefined,
     created_at: row.created_at as string | undefined,
     updated_at: row.updated_at as string | undefined,
@@ -65,6 +67,7 @@ export async function updateCustomer(
   if (updates.email !== undefined) payload.email = updates.email;
   if (updates.address !== undefined) payload.address = updates.address;
   if (updates.note !== undefined) payload.note = updates.note;
+  if (updates.debt_limit !== undefined) payload.debt_limit = updates.debt_limit;
 
   const { data, error } = await supabase
     .from(TABLE)

@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import {
   ShoppingBag, RotateCcw, User2, Percent, Calculator,
   DollarSign, CreditCard, Wallet, Minus, Plus, X,
-  Printer, CheckCircle2,
+  Printer, CheckCircle2, Landmark, Calendar,
 } from "lucide-react";
 import { CURRENCY } from "@/constants";
 import type { CartItem, Customer } from "@/types";
@@ -18,22 +18,25 @@ interface CartSidebarProps {
   discountValue: number;
   taxEnabled: boolean;
   taxRate: number;
-  paymentMethod: "cash" | "card" | "mixed";
+  paymentMethod: "cash" | "card" | "mixed" | "credit";
   paidAmount: number;
   splitCash: number;
   splitCard: number;
+  debtDueDate: string;
   subtotal: number;
   totals: { subtotal: number; discountAmount: number; taxAmount: number; total: number };
   isPending: boolean;
+  enableCreditSales: boolean;
   onUpdateQuantity: (id: string, qty: number) => void;
   onRemoveItem: (id: string) => void;
   onClearCart: () => void;
   onShowDiscount: () => void;
   onShowCustomer: () => void;
   onShowCheckout: () => void;
-  onPaymentMethodChange: (method: "cash" | "card" | "mixed") => void;
+  onPaymentMethodChange: (method: "cash" | "card" | "mixed" | "credit") => void;
   onPaidAmountChange: (amount: number) => void;
   onSplitCashChange: (amount: number) => void;
+  onDebtDueDateChange: (date: string) => void;
   onPrint: () => void;
 }
 
@@ -48,9 +51,11 @@ export function CartSidebar({
   paidAmount,
   splitCash,
   splitCard,
+  debtDueDate,
   subtotal,
   totals,
   isPending,
+  enableCreditSales,
   onUpdateQuantity,
   onRemoveItem,
   onClearCart,
@@ -60,6 +65,7 @@ export function CartSidebar({
   onPaymentMethodChange,
   onPaidAmountChange,
   onSplitCashChange,
+  onDebtDueDateChange,
   onPrint,
 }: CartSidebarProps) {
   const change = paymentMethod === "cash" ? paidAmount - totals.total : 0;
@@ -168,10 +174,10 @@ export function CartSidebar({
           </div>
 
           <div className="flex gap-1.5">
-            {(["cash", "card", "mixed"] as const).map((method) => {
-              const icons: Record<string, React.ReactNode> = { cash: <DollarSign className="w-3 h-3" />, card: <CreditCard className="w-3 h-3" />, mixed: <Wallet className="w-3 h-3" /> };
-              const labels: Record<string, string> = { cash: "كاش", card: "بطاقة", mixed: "مختلط" };
-              const colors: Record<string, string> = { cash: "bg-emerald-600", card: "bg-purple-600", mixed: "bg-indigo-600" };
+            {(["cash", "card", "mixed", ...(enableCreditSales ? ["credit" as const] : [])] as const).map((method) => {
+              const icons: Record<string, React.ReactNode> = { cash: <DollarSign className="w-3 h-3" />, card: <CreditCard className="w-3 h-3" />, mixed: <Wallet className="w-3 h-3" />, credit: <Landmark className="w-3 h-3" /> };
+              const labels: Record<string, string> = { cash: "كاش", card: "بطاقة", mixed: "مختلط", credit: "آجل" };
+              const colors: Record<string, string> = { cash: "bg-emerald-600", card: "bg-purple-600", mixed: "bg-indigo-600", credit: "bg-red-600 hover:bg-red-700" };
               return (
                 <Button
                   key={method}
@@ -221,6 +227,25 @@ export function CartSidebar({
                 <div className="text-center">
                   <Badge variant="outline" className="bg-green-50 text-green-700 text-xs">المتبقي: {((splitCash + splitCard) - totals.total).toFixed(2)} {CURRENCY}</Badge>
                 </div>
+              )}
+            </div>
+          )}
+
+          {paymentMethod === "credit" && (
+            <div className="space-y-1 bg-red-50 rounded-lg p-2 border border-red-200">
+              <div className="flex items-center gap-1 text-red-700 text-xs mb-1">
+                <Landmark className="w-3 h-3" />
+                <span>بيع بالآجل - سيتم إنشاء دين للزبون</span>
+              </div>
+              <label className="text-xs text-gray-600 block">تاريخ الاستحقاق</label>
+              <Input
+                type="date"
+                className="text-center text-sm"
+                value={debtDueDate}
+                onChange={(e) => onDebtDueDateChange(e.target.value)}
+              />
+              {!selectedCustomer && (
+                <p className="text-xs text-red-500 mt-1">يجب اختيار زبون للبيع بالآجل</p>
               )}
             </div>
           )}

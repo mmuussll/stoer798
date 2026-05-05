@@ -27,6 +27,7 @@ function mapInvoice(row: Record<string, unknown>): SaleInvoice {
     payment_method: raw.payment_method || "cash",
     paid_amount: toNumber(raw.paid_amount),
     change_amount: toNumber(raw.change_amount),
+    debt_amount: toNumber(raw.debt_amount),
     customer_id: raw.customer_id,
     customer: raw.customer ? {
       id: raw.customer.id,
@@ -37,6 +38,8 @@ function mapInvoice(row: Record<string, unknown>): SaleInvoice {
       total_purchases: toNumber(raw.customer.total_purchases),
       total_visits: toNumber(raw.customer.total_visits),
       points: toNumber(raw.customer.points),
+      total_debt: toNumber(raw.customer.total_debt),
+      debt_limit: toNumber(raw.customer.debt_limit),
     } : undefined,
     items: (raw.items || []).map((item: any) => ({
       id: item.id,
@@ -98,6 +101,7 @@ export async function createSaleInvoice(
       payment_method: invoice.payment_method,
       paid_amount: invoice.paid_amount,
       change_amount: invoice.change_amount,
+      debt_amount: invoice.debt_amount || 0,
       customer_id: invoice.customer_id,
       cashier: invoice.cashier,
       user_id: invoice.user_id,

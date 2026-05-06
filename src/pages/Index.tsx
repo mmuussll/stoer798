@@ -11,9 +11,9 @@ import {
   SidebarInset,
   SidebarSeparator,
   SidebarFooter,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   ShoppingCart,
@@ -31,6 +31,8 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
+import WhatsAppSupport from "@/components/WhatsAppSupport";
+import { MobileBottomNav } from "@/components/MobileBottomNav";
 
 const SalesInterface = lazy(() => import("@/components/SalesInterface"));
 const ProductManagement = lazy(() => import("@/components/ProductManagement"));
@@ -71,6 +73,12 @@ const NAV_ITEMS = [
 export default function Index() {
   const [activeSection, setActiveSection] = useState("sales");
   const { user, signOut } = useAuth();
+  const { setOpen, isMobile, open } = useSidebar();
+
+  const handleSectionChange = (id: string) => {
+    setActiveSection(id);
+    if (isMobile) setOpen(false);
+  };
 
   const renderContent = () => {
     switch (activeSection) {
@@ -89,6 +97,7 @@ export default function Index() {
 
   return (
     <SidebarProvider defaultOpen={true}>
+      <WhatsAppSupport />
       <Sidebar side="right" className="border-l border-blue-100">
         <SidebarHeader className="p-4 pb-2">
           <div className="flex items-center gap-3">
@@ -113,7 +122,7 @@ export default function Index() {
               {NAV_ITEMS.map((item) => (
                 <SidebarMenuItem key={item.id}>
                   <SidebarMenuButton
-                    onClick={() => setActiveSection(item.id)}
+                    onClick={() => handleSectionChange(item.id)}
                     isActive={activeSection === item.id}
                     tooltip={item.label}
                     size="lg"
@@ -154,12 +163,20 @@ export default function Index() {
           </Badge>
         </header>
 
-        <main className={cn("p-4 md:p-6", activeSection === "sales" && "p-0 md:p-0")}>
+        <main className={cn("p-4 md:p-6", activeSection === "sales" && "p-0 md:p-0", "pb-16 lg:pb-0")}>
           <Suspense fallback={<SectionSkeleton />}>
             {renderContent()}
           </Suspense>
         </main>
       </SidebarInset>
+
+      <MobileBottomNav
+        items={[...NAV_ITEMS]}
+        activeSection={activeSection}
+        onSelect={handleSectionChange}
+        sidebarOpen={open}
+        onToggleSidebar={() => setOpen(!open)}
+      />
     </SidebarProvider>
   );
 }

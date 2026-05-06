@@ -165,6 +165,7 @@ export default function CashSessions() {
               <p className="text-sm">لم يتم فتح أي جلسة صندوق بعد</p>
             </div>
           ) : (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -217,6 +218,7 @@ export default function CashSessions() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>

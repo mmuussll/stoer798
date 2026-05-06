@@ -294,7 +294,7 @@ export default function ProductManagement() {
           })}
         </div>
       ) : (
-        <Card>
+        <Card className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>

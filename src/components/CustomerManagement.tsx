@@ -168,6 +168,7 @@ export default function CustomerManagement() {
               {!searchTerm && <Button onClick={openAdd} variant="outline"><Plus className="w-4 h-4 ml-2" />إضافة أول زبون</Button>}
             </div>
           ) : (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -215,6 +216,7 @@ export default function CustomerManagement() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>

@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
-  Search, Barcode, Plus, ShoppingBag, AlertTriangle, Pause, Play, Hash,
+  Search, Barcode, Plus, ShoppingBag, AlertTriangle, Pause, Play, Hash, X, Landmark,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import * as productsApi from "@/api/products";
@@ -431,7 +431,7 @@ export default function SalesInterface() {
   }
 
   return (
-    <div className="h-[calc(100vh-3.5rem)] flex flex-col lg:flex-row gap-0" dir="rtl">
+    <div className="h-[calc(100vh-3.5rem)] flex flex-col lg:flex-row gap-0 pb-14 lg:pb-0" dir="rtl">
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         {/* Top bar */}
@@ -455,6 +455,16 @@ export default function SalesInterface() {
               <Button variant="outline" size="sm" onClick={() => setShowRecallDialog(true)} title="استرجاع (Ctrl+R)" className="gap-1 relative">
                 <Play className="w-3.5 h-3.5" /> استرجاع
                 <Badge variant="destructive" className="absolute -top-1 -end-1 h-4 w-4 p-0 flex items-center justify-center text-xs">{heldOrders.length}</Badge>
+              </Button>
+            )}
+            {activeSession && (
+              <Button variant="outline" size="sm"
+                className="hidden lg:inline-flex gap-1 border-red-300 text-red-600 hover:bg-red-50 ml-auto"
+                onClick={() => {
+                  setClosingBalance(activeSession.total_cash.toFixed(0));
+                  setShowCloseSessionDialog(true);
+                }}>
+                <Landmark className="w-3.5 h-3.5" /> إقفال الجلسة
               </Button>
             )}
           </div>
@@ -495,17 +505,17 @@ export default function SalesInterface() {
           />
         </div>
 
-        {/* Mobile cart button */}
-        <div className="lg:hidden p-2 border-t bg-white">
-          <Button onClick={() => setShowCartMobile(!showCartMobile)} className="w-full bg-blue-600">
-            <ShoppingBag className="w-4 h-4 ml-2" />
+        {/* Mobile cart button - floating */}
+        <div className="lg:hidden fixed bottom-[6.5rem] left-2 right-2 z-40">
+          <Button onClick={() => setShowCartMobile(!showCartMobile)} className="w-full bg-blue-600 shadow-xl rounded-xl h-12 text-base">
+            <ShoppingBag className="w-5 h-5 ml-2" />
             {cart.length > 0 ? `السلة (${calculateItemsCount()} قطعة - ${totals.total.toFixed(2)} ${CURRENCY})` : "عرض السلة"}
           </Button>
         </div>
       </div>
 
-      {/* Cart Sidebar */}
-      <div className={showCartMobile ? "max-h-[60vh]" : "hidden lg:flex lg:max-h-none"}>
+      {/* Cart - Desktop sidebar or Mobile bottom sheet */}
+      <div className="hidden lg:flex lg:max-h-none">
         <CartSidebar
           cart={cart} selectedCustomer={selectedCustomer}
           discountType={discountType} discountValue={discountValue}
@@ -536,6 +546,52 @@ export default function SalesInterface() {
           onPrint={handlePrintPreview}
         />
       </div>
+
+      {/* Mobile Cart Bottom Sheet */}
+      {showCartMobile && (
+        <div className="lg:hidden fixed inset-0 z-50 flex flex-col justify-end">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowCartMobile(false)} />
+          <div className="relative bg-white rounded-t-2xl max-h-[85vh] flex flex-col animate-slide-up shadow-2xl" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+            <div className="flex items-center justify-between p-3 border-b shrink-0">
+              <h3 className="text-sm font-bold">سلة المشتريات</h3>
+              <button onClick={() => setShowCartMobile(false)} className="p-1 rounded-full hover:bg-gray-100">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="overflow-y-auto flex-1">
+              <CartSidebar
+                cart={cart} selectedCustomer={selectedCustomer}
+                discountType={discountType} discountValue={discountValue}
+                taxEnabled={taxEnabled} taxRate={taxRate}
+                paymentMethod={paymentMethod} paidAmount={paidAmount}
+                splitCash={splitCash} splitCard={splitCard}
+                debtDueDate={debtDueDate}
+                subtotal={calculateSubtotal()} totals={totals}
+                isPending={checkoutMutation.isPending}
+                enableCreditSales={settings?.enable_credit_sales !== false}
+                onUpdateQuantity={updateQuantity} onRemoveItem={removeFromCart}
+                onClearCart={() => { setShowClearCartDialog(true); }}
+                onShowDiscount={() => { setShowDiscountDialog(true); }}
+                onShowCustomer={() => { setShowCustomerDialog(true); }}
+                onShowCheckout={() => {
+                  if (cart.length === 0) { toast({ title: "السلة فارغة" }); return; }
+                  if (paymentMethod === "cash" && paidAmount <= 0) setPaidAmount(totals.total);
+                  if (paymentMethod === "credit" && !selectedCustomer) {
+                    toast({ title: "الرجاء اختيار زبون", description: "يجب اختيار زبون للبيع بالآجل", variant: "destructive" });
+                    return;
+                  }
+                  setShowCheckoutDialog(true);
+                }}
+                onPaymentMethodChange={setPaymentMethod}
+                onPaidAmountChange={setPaidAmount}
+                onSplitCashChange={setSplitCash}
+                onDebtDueDateChange={setDebtDueDate}
+                onPrint={handlePrintPreview}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* === DIALOGS === */}
       <CheckoutDialog
@@ -600,7 +656,7 @@ export default function SalesInterface() {
         heldOrders={heldOrders} onRecall={recallOrder} onDelete={deleteHeldOrder}
       />
 
-      {/* Session management in header */}
+      {/* Session management - Mobile floating */}
       {activeSession && (
         <div className="lg:hidden fixed bottom-16 left-4 right-4 z-40">
           <Button variant="outline" size="sm" className="w-full border-red-300 text-red-600 hover:bg-red-50"

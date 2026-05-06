@@ -1,44 +1,79 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { X, Menu } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
-const SidebarContext = React.createContext<{ open: boolean; setOpen: (v: boolean) => void }>({
+const SidebarContext = React.createContext<{ open: boolean; setOpen: (v: boolean) => void; isMobile: boolean }>({
   open: true,
   setOpen: () => {},
+  isMobile: false,
 });
 
-function SidebarProvider({ children, defaultOpen = true }: { children: React.ReactNode; defaultOpen?: boolean }) {
-  const [open, setOpen] = React.useState(defaultOpen);
-  return <SidebarContext.Provider value={{ open, setOpen }}>{children}</SidebarContext.Provider>;
+function useSidebar() {
+  const ctx = React.useContext(SidebarContext);
+  if (!ctx) throw new Error("useSidebar must be used within SidebarProvider");
+  return ctx;
 }
 
-function Sidebar({ className, children, side = "right", collapsible, ...props }: React.HTMLAttributes<HTMLDivElement> & { side?: "left" | "right"; collapsible?: "icon" }) {
-  const { open } = React.useContext(SidebarContext);
+function SidebarProvider({ children, defaultOpen = true }: { children: React.ReactNode; defaultOpen?: boolean }) {
+  const isMobile = useIsMobile();
+  const [open, setOpen] = React.useState(!isMobile && defaultOpen);
+
+  React.useEffect(() => {
+    if (isMobile) {
+      setOpen(false);
+    }
+  }, [isMobile]);
+
+  React.useEffect(() => {
+    if (isMobile && open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [isMobile, open]);
+
+  return <SidebarContext.Provider value={{ open, setOpen, isMobile }}>{children}</SidebarContext.Provider>;
+}
+
+function Sidebar({ className, children, side = "right", ...props }: React.HTMLAttributes<HTMLDivElement> & { side?: "left" | "right"; collapsible?: "icon" }) {
+  const { open, setOpen, isMobile } = useSidebar();
+
   return (
-    <div
-      className={cn(
-        "fixed inset-y-0 z-40 flex w-60 flex-col border bg-background transition-transform duration-300",
-        side === "right" ? "right-0 border-l" : "left-0 border-r",
-        !open && side === "right" ? "translate-x-full" : !open && side === "left" ? "-translate-x-full" : "",
-        className
+    <>
+      {isMobile && open && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm transition-opacity duration-300"
+          onClick={() => setOpen(false)}
+        />
       )}
-      {...props}
-    >
-      {children}
-    </div>
+      <div
+        className={cn(
+          "fixed inset-y-0 z-[60] flex w-60 flex-col border bg-background transition-transform duration-300",
+          side === "right" ? "right-0 border-l" : "left-0 border-r",
+          !open && side === "right" ? "translate-x-full" : !open && side === "left" ? "-translate-x-full" : "",
+          isMobile && "shadow-2xl",
+          className
+        )}
+        {...props}
+      >
+        {children}
+      </div>
+    </>
   );
 }
 
 function SidebarHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("flex h-16 items-center border-b px-4", className)} {...props} />;
+  return <div className={cn("flex h-16 items-center border-b px-4 pt-safe", className)} {...props} />;
 }
 
 function SidebarContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("flex-1 overflow-auto py-2", className)} {...props} />;
+  return <div className={cn("flex-1 overflow-auto py-2 pb-safe", className)} {...props} />;
 }
 
 function SidebarFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("border-t p-4", className)} {...props} />;
+  return <div className={cn("border-t p-4 pb-safe", className)} {...props} />;
 }
 
 function SidebarMenu({ className, ...props }: React.HTMLAttributes<HTMLUListElement>) {
@@ -72,7 +107,7 @@ function SidebarMenuButton({
 }
 
 function SidebarTrigger({ className, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
-  const { open, setOpen } = React.useContext(SidebarContext);
+  const { open, setOpen } = useSidebar();
   return (
     <button
       onClick={() => setOpen(!open)}
@@ -85,12 +120,12 @@ function SidebarTrigger({ className, ...props }: React.ButtonHTMLAttributes<HTML
 }
 
 function SidebarInset({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  const { open } = React.useContext(SidebarContext);
+  const { open, isMobile } = useSidebar();
   return (
     <div
       className={cn(
         "flex min-h-svh flex-1 flex-col transition-[margin] duration-300",
-        open ? "mr-60" : "mr-0",
+        !isMobile && open ? "mr-60" : "mr-0",
         className
       )}
       {...props}
@@ -114,4 +149,5 @@ export {
   SidebarTrigger,
   SidebarInset,
   SidebarSeparator,
+  useSidebar,
 };

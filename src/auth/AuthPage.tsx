@@ -3,9 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calculator, Loader2 } from "lucide-react";
+import { Calculator, Loader2, Info } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
+import WhatsAppSupport from "@/components/WhatsAppSupport";
 
 export default function AuthPage() {
   const { signIn, signUp } = useAuth();
@@ -49,6 +51,7 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 p-4" dir="rtl">
+      <WhatsAppSupport />
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg mx-auto mb-4">
@@ -58,6 +61,13 @@ export default function AuthPage() {
             نظام نقطة البيع
           </h1>
           <p className="text-gray-500 mt-1">تسجيل الدخول لإدارة المتجر</p>
+          <Link
+            to="/welcome"
+            className="inline-flex items-center gap-1 mt-3 text-sm text-blue-600 hover:underline"
+          >
+            <Info className="w-3.5 h-3.5" />
+            تعرف على النظام
+          </Link>
         </div>
 
         <Card>

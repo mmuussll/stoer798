@@ -202,6 +202,7 @@ export default function SalesReturns() {
               <p className="text-sm">{searchTerm ? "جرب تغيير معايير البحث" : "لم يتم تسجيل أي مرتجع بعد"}</p>
             </div>
           ) : (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -239,6 +240,7 @@ export default function SalesReturns() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>

@@ -29,11 +29,18 @@ function mapInvoice(row: Record<string, unknown>): PurchaseInvoice {
   };
 }
 
-export async function fetchPurchaseInvoices(): Promise<PurchaseInvoice[]> {
-  const { data, error } = await supabase
+export async function fetchPurchaseInvoices(page?: number, limit?: number): Promise<PurchaseInvoice[]> {
+  let query = supabase
     .from(INVOICE_TABLE)
     .select("*, items:purchase_invoice_items(*)")
     .order("created_at", { ascending: false });
+
+  if (limit && page !== undefined) {
+    const from = (page - 1) * limit;
+    query = query.range(from, from + limit - 1);
+  }
+
+  const { data, error } = await query;
 
   if (error) throw error;
   return (data || []).map(mapInvoice);

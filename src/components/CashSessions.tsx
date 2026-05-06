@@ -42,7 +42,8 @@ export default function CashSessions() {
 
   const { data: sessions = [], isLoading } = useQuery({
     queryKey: ["cash-sessions"],
-    queryFn: sessionsApi.fetchCashSessions,
+    queryFn: () => sessionsApi.fetchCashSessions(),
+    staleTime: 2 * 60_000,
   });
 
   const [activeSession, setActiveSession] = useState<CashSession | null>(null);

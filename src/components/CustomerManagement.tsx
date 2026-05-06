@@ -43,7 +43,8 @@ export default function CustomerManagement() {
 
   const { data: customers = [], isLoading } = useQuery({
     queryKey: ["customers"],
-    queryFn: customersApi.fetchCustomers,
+    queryFn: () => customersApi.fetchCustomers(),
+    staleTime: 2 * 60_000,
   });
 
   const addEditMutation = useMutation({

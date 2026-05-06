@@ -94,14 +94,30 @@ function mapPayment(row: Record<string, unknown>): DebtPayment {
 
 // === DEBTS ===
 
-export async function fetchDebts(): Promise<Debt[]> {
-  const { data, error } = await supabase
+export async function fetchDebts(page?: number, limit?: number): Promise<Debt[]> {
+  let query = supabase
     .from(DEBTS_TABLE)
     .select("*, customer:customers(*), invoice:sales_invoices(*)")
     .order("created_at", { ascending: false });
 
+  if (limit && page !== undefined) {
+    const from = (page - 1) * limit;
+    query = query.range(from, from + limit - 1);
+  }
+
+  const { data, error } = await query;
+
   if (error) throw error;
   return (data || []).map(mapDebt);
+}
+
+export async function fetchDebtsCount(): Promise<number> {
+  const { count, error } = await supabase
+    .from(DEBTS_TABLE)
+    .select("*", { count: "exact", head: true });
+
+  if (error) throw error;
+  return count || 0;
 }
 
 export async function getDebt(id: string): Promise<Debt | null> {
@@ -206,13 +222,17 @@ export async function deleteDebt(id: string): Promise<void> {
 
 // === DEBT PAYMENTS ===
 
-export async function fetchPayments(debtId?: string): Promise<DebtPayment[]> {
+export async function fetchPayments(debtId?: string, page?: number, limit?: number): Promise<DebtPayment[]> {
   let query = supabase
     .from(PAYMENTS_TABLE)
     .select("*, customer:customers(*), debt:debts(*)")
     .order("created_at", { ascending: false });
 
   if (debtId) query = query.eq("debt_id", debtId);
+  if (limit && page !== undefined) {
+    const from = (page - 1) * limit;
+    query = query.range(from, from + limit - 1);
+  }
 
   const { data, error } = await query;
 

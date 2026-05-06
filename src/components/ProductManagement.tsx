@@ -38,8 +38,8 @@ export default function ProductManagement() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  const { data: allProducts = [], isLoading: productsLoading } = useQuery({ queryKey: ["products"], queryFn: productsApi.fetchProducts });
-  const { data: categories = [], isLoading: categoriesLoading } = useQuery({ queryKey: ["categories"], queryFn: categoriesApi.fetchCategories });
+  const { data: allProducts = [], isLoading: productsLoading } = useQuery({ queryKey: ["products"], queryFn: productsApi.fetchProducts, staleTime: 2 * 60_000 });
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery({ queryKey: ["categories"], queryFn: categoriesApi.fetchCategories, staleTime: 5 * 60_000 });
 
   const createMutation = useMutation({
     mutationFn: productsApi.createProduct,

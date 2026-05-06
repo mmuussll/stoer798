@@ -12,7 +12,19 @@ import Welcome from "./pages/Welcome";
 import AuthPage from "./auth/AuthPage";
 
 const AdminPanel = lazy(() => import("@/components/AdminPanel"));
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60_000,
+      gcTime: 5 * 60_000,
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+    mutations: {
+      retry: 0,
+    },
+  },
+});
 
 function LoadingSpinner({ text = "جاري التحميل..." }) {
   return (

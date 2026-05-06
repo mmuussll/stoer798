@@ -48,7 +48,8 @@ export default function SalesReturns() {
 
   const { data: returns = [], isLoading } = useQuery({
     queryKey: ["sales-returns"],
-    queryFn: returnsApi.fetchSalesReturns,
+    queryFn: () => returnsApi.fetchSalesReturns(),
+    staleTime: 2 * 60_000,
   });
 
   const createReturnMutation = useMutation({

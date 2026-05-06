@@ -31,14 +31,30 @@ function mapReturn(row: Record<string, unknown>): SalesReturn {
   };
 }
 
-export async function fetchSalesReturns(): Promise<SalesReturn[]> {
-  const { data, error } = await supabase
+export async function fetchSalesReturns(page?: number, limit?: number): Promise<SalesReturn[]> {
+  let query = supabase
     .from(RETURNS_TABLE)
     .select("*, items:sales_return_items(*)")
     .order("created_at", { ascending: false });
 
+  if (limit && page !== undefined) {
+    const from = (page - 1) * limit;
+    query = query.range(from, from + limit - 1);
+  }
+
+  const { data, error } = await query;
+
   if (error) throw error;
   return (data || []).map(mapReturn);
+}
+
+export async function fetchSalesReturnsCount(): Promise<number> {
+  const { count, error } = await supabase
+    .from(RETURNS_TABLE)
+    .select("*", { count: "exact", head: true });
+
+  if (error) throw error;
+  return count || 0;
 }
 
 export async function getSalesReturn(id: string): Promise<SalesReturn | null> {
@@ -90,31 +106,35 @@ export async function createSalesReturn(
     throw itemsError;
   }
 
-  // 3. Restore stock for each returned product
-  const stockErrors: Error[] = [];
-  for (const item of items) {
-    if (!item.product_id) continue;
-
-    const { data: productData } = await supabase
+  // 3. Batch restore stock for all returned products (single SELECT + parallel UPDATEs)
+  const productIds = [...new Set(items.filter((item) => item.product_id).map((item) => item.product_id))];
+  if (productIds.length > 0) {
+    const { data: stocks } = await supabase
       .from(PRODUCTS_TABLE)
-      .select("stock")
-      .eq("id", item.product_id)
-      .single();
+      .select("id, stock")
+      .in("id", productIds);
 
-    if (productData) {
-      const newStock = (productData.stock || 0) + item.quantity;
+    const stockMap = new Map((stocks || []).map((p: any) => [p.id, p.stock || 0]));
+
+    const updates = productIds.map(async (productId) => {
+      const currentStock = stockMap.get(productId) ?? 0;
+      const totalQty = items
+        .filter((item) => item.product_id === productId)
+        .reduce((sum, item) => sum + item.quantity, 0);
+      const newStock = currentStock + totalQty;
       const { error } = await supabase
         .from(PRODUCTS_TABLE)
         .update({ stock: newStock })
-        .eq("id", item.product_id);
+        .eq("id", productId);
+      return { productId, error };
+    });
 
-      if (error) stockErrors.push(error);
+    const results = await Promise.all(updates);
+    const failed = results.filter((r) => r.error);
+    if (failed.length > 0) {
+      await supabase.from(RETURNS_TABLE).delete().eq("id", retData.id);
+      throw new Error(`فشل استعادة المخزون: ${failed.map((f) => f.error!.message).join(", ")}`);
     }
-  }
-
-  if (stockErrors.length > 0) {
-    await supabase.from(RETURNS_TABLE).delete().eq("id", retData.id);
-    throw new Error(`فشل استعادة المخزون: ${stockErrors.map((e) => e.message).join(", ")}`);
   }
 
   return mapReturn({ ...retData, items: returnItems });
@@ -132,22 +152,33 @@ export async function deleteSalesReturn(id: string): Promise<void> {
 
   const ret = mapReturn(returnData);
 
-  // 2. Reverse the stock restoration (deduct stock back)
-  for (const item of ret.items) {
-    if (!item.product_id) continue;
-
-    const { data: productData } = await supabase
+  // 2. Batch reverse the stock restoration (deduct stock back)
+  const itemProductIds = [...new Set(ret.items.filter((item) => item.product_id).map((item) => item.product_id))];
+  if (itemProductIds.length > 0) {
+    const { data: stocks } = await supabase
       .from(PRODUCTS_TABLE)
-      .select("stock")
-      .eq("id", item.product_id)
-      .single();
+      .select("id, stock")
+      .in("id", itemProductIds);
 
-    if (productData) {
-      const newStock = Math.max(0, (productData.stock || 0) - item.quantity);
-      await supabase
+    const stockMap = new Map((stocks || []).map((p: any) => [p.id, p.stock || 0]));
+
+    const updates = itemProductIds.map(async (productId) => {
+      const currentStock = stockMap.get(productId) ?? 0;
+      const totalQty = ret.items
+        .filter((item) => item.product_id === productId)
+        .reduce((sum, item) => sum + item.quantity, 0);
+      const newStock = Math.max(0, currentStock - totalQty);
+      const { error } = await supabase
         .from(PRODUCTS_TABLE)
         .update({ stock: newStock })
-        .eq("id", item.product_id);
+        .eq("id", productId);
+      return { error };
+    });
+
+    const results = await Promise.all(updates);
+    const failed = results.filter((r) => r.error);
+    if (failed.length > 0) {
+      throw new Error(`فشل عكس استعادة المخزون: ${failed.map((f) => f.error!.message).join(", ")}`);
     }
   }
 

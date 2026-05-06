@@ -117,19 +117,23 @@ export default function ReportsSection() {
 
   const { data: salesInvoices = [], isLoading: salesLoading } = useQuery({
     queryKey: ["sales-invoices"],
-    queryFn: salesApi.fetchSalesInvoices,
+    queryFn: () => salesApi.fetchSalesInvoices(),
+    staleTime: 2 * 60_000,
   });
   const { data: purchaseInvoices = [], isLoading: purchasesLoading } = useQuery({
     queryKey: ["purchase-invoices"],
-    queryFn: purchasesApi.fetchPurchaseInvoices,
+    queryFn: () => purchasesApi.fetchPurchaseInvoices(),
+    staleTime: 2 * 60_000,
   });
   const { data: products = [], isLoading: productsLoading } = useQuery({
     queryKey: ["products"],
-    queryFn: productsApi.fetchProducts,
+    queryFn: () => productsApi.fetchProducts(),
+    staleTime: 5 * 60_000,
   });
   const { data: debts = [], isLoading: debtsLoading } = useQuery({
     queryKey: ["debts"],
-    queryFn: debtsApi.fetchDebts,
+    queryFn: () => debtsApi.fetchDebts(),
+    staleTime: 2 * 60_000,
   });
 
   const isLoading = salesLoading || purchasesLoading || productsLoading;
@@ -319,6 +323,54 @@ export default function ReportsSection() {
       .map(([name, data]) => ({ name, revenue: data.revenue, items: data.items, percent: total > 0 ? (data.revenue / total) * 100 : 0 }))
       .sort((a, b) => b.revenue - a.revenue);
   }, [filteredSales, products]);
+
+  // ===================== Debt Report (Tab 6) =====================
+  const debtSummary = useMemo(() => {
+    const active = debts.filter((d) => d.status !== "paid");
+    const paid = debts.filter((d) => d.status === "paid");
+    const overdue = active.filter((d) => d.due_date && d.due_date < new Date().toISOString().slice(0, 10));
+    const totalOutstanding = active.reduce((s, d) => s + d.remaining_amount, 0);
+    const totalPaid = paid.reduce((s, d) => s + d.total_amount, 0);
+    const totalDebtValue = debts.reduce((s, d) => s + d.total_amount, 0);
+    const overdueAmount = overdue.reduce((s, d) => s + d.remaining_amount, 0);
+
+    const customerMap = new Map<string, { name: string; total: number; count: number; paid: number }>();
+    debts.forEach((d) => {
+      const c = d.customer;
+      if (!c) return;
+      const key = c.id;
+      const existing = customerMap.get(key) || { name: c.name, total: 0, count: 0, paid: 0 };
+      existing.total += d.total_amount;
+      existing.count += 1;
+      existing.paid += d.total_amount - d.remaining_amount;
+      customerMap.set(key, existing);
+    });
+
+    const paymentMethodMap = new Map<string, number>();
+    debts.forEach((d) => {
+      if (d.status === "paid" || d.status === "partially_paid") {
+        const paid_ = d.total_amount - d.remaining_amount;
+        if (d.invoice?.payment_method) {
+          const m = d.invoice.payment_method;
+          paymentMethodMap.set(m, (paymentMethodMap.get(m) || 0) + paid_);
+        }
+      }
+    });
+
+    return {
+      activeCount: active.length,
+      paidCount: paid.length,
+      overdueCount: overdue.length,
+      totalOutstanding,
+      totalPaid,
+      totalDebtValue,
+      overdueAmount,
+      topCustomers: Array.from(customerMap.values())
+        .sort((a, b) => (b.total - b.paid) - (a.total - a.paid))
+        .slice(0, 10),
+      paymentMethodData: Array.from(paymentMethodMap.entries()).map(([name, value]) => ({ name, value })),
+    };
+  }, [debts]);
 
   // ===================== CSV Export =====================
   const exportCSV = () => {
@@ -950,53 +1002,6 @@ export default function ReportsSection() {
   );
 
   const renderDebtsTab = () => {
-    const debtSummary = useMemo(() => {
-      const active = debts.filter((d) => d.status !== "paid");
-      const paid = debts.filter((d) => d.status === "paid");
-      const overdue = active.filter((d) => d.due_date && d.due_date < new Date().toISOString().slice(0, 10));
-      const totalOutstanding = active.reduce((s, d) => s + d.remaining_amount, 0);
-      const totalPaid = paid.reduce((s, d) => s + d.total_amount, 0);
-      const totalDebtValue = debts.reduce((s, d) => s + d.total_amount, 0);
-      const overdueAmount = overdue.reduce((s, d) => s + d.remaining_amount, 0);
-
-      const customerMap = new Map<string, { name: string; total: number; count: number; paid: number }>();
-      debts.forEach((d) => {
-        const c = d.customer;
-        if (!c) return;
-        const key = c.id;
-        const existing = customerMap.get(key) || { name: c.name, total: 0, count: 0, paid: 0 };
-        existing.total += d.total_amount;
-        existing.count += 1;
-        existing.paid += d.total_amount - d.remaining_amount;
-        customerMap.set(key, existing);
-      });
-
-      const paymentMethodMap = new Map<string, number>();
-      debts.forEach((d) => {
-        if (d.status === "paid" || d.status === "partially_paid") {
-          const paid_ = d.total_amount - d.remaining_amount;
-          if (d.invoice?.payment_method) {
-            const m = d.invoice.payment_method;
-            paymentMethodMap.set(m, (paymentMethodMap.get(m) || 0) + paid_);
-          }
-        }
-      });
-
-      return {
-        activeCount: active.length,
-        paidCount: paid.length,
-        overdueCount: overdue.length,
-        totalOutstanding,
-        totalPaid,
-        totalDebtValue,
-        overdueAmount,
-        topCustomers: Array.from(customerMap.values())
-          .sort((a, b) => (b.total - b.paid) - (a.total - a.paid))
-          .slice(0, 10),
-        paymentMethodData: Array.from(paymentMethodMap.entries()).map(([name, value]) => ({ name, value })),
-      };
-    }, [debts]);
-
     const ds = debtSummary;
 
     return (

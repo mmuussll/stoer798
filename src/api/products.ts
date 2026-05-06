@@ -52,14 +52,30 @@ export async function deleteProductImage(image_url: string): Promise<void> {
   }
 }
 
-export async function fetchProducts(): Promise<Product[]> {
-  const { data, error } = await supabase
+export async function fetchProducts(page?: number, limit?: number): Promise<Product[]> {
+  let query = supabase
     .from(TABLE)
     .select("*, category:categories(id, name, description, color)")
     .order("name");
 
+  if (limit && page !== undefined) {
+    const from = (page - 1) * limit;
+    query = query.range(from, from + limit - 1);
+  }
+
+  const { data, error } = await query;
+
   if (error) throw error;
   return (data || []).map(mapProduct);
+}
+
+export async function fetchProductsCount(): Promise<number> {
+  const { count, error } = await supabase
+    .from(TABLE)
+    .select("*", { count: "exact", head: true });
+
+  if (error) throw error;
+  return count || 0;
 }
 
 export async function createProduct(

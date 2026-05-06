@@ -46,7 +46,8 @@ export default function SalesInvoices() {
 
   const { data: salesInvoices = [], isLoading } = useQuery({
     queryKey: ["sales-invoices"],
-    queryFn: salesApi.fetchSalesInvoices,
+    queryFn: () => salesApi.fetchSalesInvoices(),
+    staleTime: 2 * 60_000,
   });
 
   const filteredInvoices = useMemo(() => {

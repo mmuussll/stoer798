@@ -95,9 +95,6 @@ export default function SalesInterface() {
   const [closingBalance, setClosingBalance] = useState("0");
   const [showCloseSessionDialog, setShowCloseSessionDialog] = useState(false);
 
-  // Settings
-  const [settings, setSettings] = useState<StoreSettings | null>(null);
-
   // Fast sale
   const [showFastSaleDialog, setShowFastSaleDialog] = useState(false);
   const [fastSaleName, setFastSaleName] = useState("");
@@ -109,28 +106,42 @@ export default function SalesInterface() {
   // Data queries
   const { data: products = [], isLoading: productsLoading } = useQuery({
     queryKey: ["products"], queryFn: productsApi.fetchProducts,
+    staleTime: 5 * 60_000,
   });
   const { data: categories = [], isLoading: categoriesLoading } = useQuery({
     queryKey: ["categories"], queryFn: categoriesApi.fetchCategories,
+    staleTime: 10 * 60_000,
   });
 
-  useEffect(() => {
-    settingsApi.fetchSettings().then((s) => {
-      setSettings(s);
-      setTaxEnabled(s.tax_enabled);
-      setTaxRate(s.tax_rate);
-      setSecondTaxEnabled(s.second_tax_enabled);
-      setSecondTaxRate(s.second_tax_rate);
-      setPaymentMethod(s.default_payment_method as "cash" | "card" | "mixed" | "credit");
-      setPrintSettings(s);
-    }).catch(() => {});
-  }, []);
+  const { data: settings } = useQuery({
+    queryKey: ["settings"],
+    queryFn: settingsApi.fetchSettings,
+    staleTime: 10 * 60_000,
+  });
 
+  const { data: activeSessionData } = useQuery({
+    queryKey: ["active-session", user?.id],
+    queryFn: () => sessionsApi.getActiveSession(user!.id),
+    enabled: !!user?.id,
+    staleTime: 30_000,
+  });
+
+  // Sync settings-derived state
   useEffect(() => {
-    if (user?.id) {
-      sessionsApi.getActiveSession(user.id).then(setActiveSession).catch(() => {});
+    if (settings) {
+      setTaxEnabled(settings.tax_enabled);
+      setTaxRate(settings.tax_rate);
+      setSecondTaxEnabled(settings.second_tax_enabled);
+      setSecondTaxRate(settings.second_tax_rate);
+      setPaymentMethod(settings.default_payment_method as "cash" | "card" | "mixed" | "credit");
+      setPrintSettings(settings);
     }
-  }, [user?.id]);
+  }, [settings]);
+
+  // Sync active session
+  useEffect(() => {
+    if (activeSessionData) setActiveSession(activeSessionData);
+  }, [activeSessionData]);
 
   // === Calculations ===
   const calculateSubtotal = () => cart.reduce((t, i) => t + i.price * i.quantity, 0);
@@ -338,11 +349,31 @@ export default function SalesInterface() {
       const smc = (invoice as any)._smc || 0;
       const isCredit = (invoice as any)._isCredit;
 
-      queryClient.invalidateQueries({ queryKey: ["sales-invoices"] });
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.invalidateQueries({ queryKey: ["customers"] });
-      queryClient.invalidateQueries({ queryKey: ["debts"] });
-      queryClient.invalidateQueries({ queryKey: ["debt-summary"] });
+      // Targeted cache updates - update products stock in cache immediately
+      queryClient.setQueryData<Product[]>(["products"], (old) => {
+        if (!old) return old;
+        return old.map((p) => {
+          const cartItem = cart.find((ci) => ci.id === p.id);
+          if (cartItem) {
+            return { ...p, stock: Math.max(0, p.stock - cartItem.quantity) };
+          }
+          return p;
+        });
+      });
+
+      // Update customer cache if customer was used (non-credit only)
+      if (selectedCustomer && !isCredit) {
+        queryClient.invalidateQueries({ queryKey: ["customers"], refetchType: "active" });
+      }
+
+      // Only invalidate debts if it was a credit sale
+      if (isCredit) {
+        queryClient.invalidateQueries({ queryKey: ["debts"] });
+        queryClient.invalidateQueries({ queryKey: ["debt-summary"] });
+      }
+
+      // Invalidate sales-invoices lazily (background)
+      queryClient.invalidateQueries({ queryKey: ["sales-invoices"], refetchType: "none" });
       toast({ title: isCredit ? "تم البيع بالآجل" : "تمت عملية البيع بنجاح", description: `المبلغ: ${invoice.total.toFixed(2)} ${CURRENCY}` });
 
       if (settings?.receipt_auto_print !== false) {

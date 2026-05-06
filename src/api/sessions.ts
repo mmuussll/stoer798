@@ -28,14 +28,30 @@ function mapSession(row: Record<string, unknown>): CashSession {
   };
 }
 
-export async function fetchCashSessions(): Promise<CashSession[]> {
-  const { data, error } = await supabase
+export async function fetchCashSessions(page?: number, limit?: number): Promise<CashSession[]> {
+  let query = supabase
     .from(TABLE)
     .select("*")
     .order("created_at", { ascending: false });
 
+  if (limit && page !== undefined) {
+    const from = (page - 1) * limit;
+    query = query.range(from, from + limit - 1);
+  }
+
+  const { data, error } = await query;
+
   if (error) throw error;
   return (data || []).map(mapSession);
+}
+
+export async function fetchCashSessionsCount(): Promise<number> {
+  const { count, error } = await supabase
+    .from(TABLE)
+    .select("*", { count: "exact", head: true });
+
+  if (error) throw error;
+  return count || 0;
 }
 
 export async function getActiveSession(userId: string): Promise<CashSession | null> {

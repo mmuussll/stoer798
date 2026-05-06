@@ -57,25 +57,30 @@ function mapInvoice(row: Record<string, unknown>): SaleInvoice {
   };
 }
 
-export async function fetchSalesInvoices(): Promise<SaleInvoice[]> {
-  const { data, error } = await supabase
+export async function fetchSalesInvoices(page?: number, limit?: number): Promise<SaleInvoice[]> {
+  let query = supabase
     .from(INVOICE_TABLE)
     .select("*, items:sales_invoice_items(*), customer:customers(*)")
     .order("created_at", { ascending: false });
+
+  if (limit && page !== undefined) {
+    const from = (page - 1) * limit;
+    query = query.range(from, from + limit - 1);
+  }
+
+  const { data, error } = await query;
 
   if (error) throw error;
   return (data || []).map(mapInvoice);
 }
 
-export async function getSaleInvoice(id: string): Promise<SaleInvoice | null> {
-  const { data, error } = await supabase
+export async function fetchSalesInvoicesCount(): Promise<number> {
+  const { count, error } = await supabase
     .from(INVOICE_TABLE)
-    .select("*, items:sales_invoice_items(*), customer:customers(*)")
-    .eq("id", id)
-    .single();
+    .select("*", { count: "exact", head: true });
 
-  if (error) return null;
-  return mapInvoice(data);
+  if (error) throw error;
+  return count || 0;
 }
 
 export async function createSaleInvoice(
@@ -129,32 +134,35 @@ export async function createSaleInvoice(
     throw itemsError;
   }
 
-  // 3. Decrease stock for each product
-  const stockErrors: Error[] = [];
-  for (const item of items) {
-    if (!item.product_id) continue;
-
-    const { data: productData } = await supabase
+  // 3. Batch decrease stock for all products (single SELECT + parallel UPDATEs)
+  const productIds = [...new Set(items.filter((item) => item.product_id).map((item) => item.product_id))];
+  if (productIds.length > 0) {
+    const { data: stocks } = await supabase
       .from(PRODUCTS_TABLE)
-      .select("stock")
-      .eq("id", item.product_id)
-      .single();
+      .select("id, stock")
+      .in("id", productIds);
 
-    if (productData) {
-      const newStock = Math.max(0, (productData.stock || 0) - item.quantity);
+    const stockMap = new Map((stocks || []).map((p: any) => [p.id, p.stock || 0]));
+
+    const updates = productIds.map(async (productId) => {
+      const currentStock = stockMap.get(productId) ?? 0;
+      const totalQty = items
+        .filter((item) => item.product_id === productId)
+        .reduce((sum, item) => sum + item.quantity, 0);
+      const newStock = Math.max(0, currentStock - totalQty);
       const { error } = await supabase
         .from(PRODUCTS_TABLE)
         .update({ stock: newStock })
-        .eq("id", item.product_id);
+        .eq("id", productId);
+      return { productId, error };
+    });
 
-      if (error) stockErrors.push(error);
+    const results = await Promise.all(updates);
+    const failed = results.filter((r) => r.error);
+    if (failed.length > 0) {
+      await supabase.from(INVOICE_TABLE).delete().eq("id", invData.id);
+      throw new Error(`فشل تحديث المخزون: ${failed.map((f) => f.error!.message).join(", ")}`);
     }
-  }
-
-  if (stockErrors.length > 0) {
-    // Rollback: delete invoice and items
-    await supabase.from(INVOICE_TABLE).delete().eq("id", invData.id);
-    throw new Error(`فشل تحديث المخزون: ${stockErrors.map((e) => e.message).join(", ")}`);
   }
 
   // 4. Update customer stats if customer_id provided

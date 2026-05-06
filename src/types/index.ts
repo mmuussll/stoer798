@@ -299,7 +299,33 @@ export interface StoreSettings {
 
 export interface Profile {
   id: string;
+  email?: string;
   full_name?: string;
   role?: string;
   created_at?: string;
+  updated_at?: string;
+}
+
+export interface UserSubscription {
+  id: string;
+  user_id: string;
+  status: 'trial' | 'active' | 'suspended' | 'expired';
+  trial_start_date: string;
+  trial_end_date: string;
+  is_trial_used: boolean;
+  subscription_start_date?: string;
+  subscription_end_date?: string;
+  activated_by?: string;
+  note?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface UserWithSubscription {
+  id: string;
+  email: string;
+  full_name: string;
+  role: string;
+  created_at?: string;
+  subscription: UserSubscription | null;
 }

@@ -1,48 +1,48 @@
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ToastProvider } from "@/components/ui/toast";
 import { Toaster } from "@/components/ui/sonner";
+import { SubscriptionGuard } from "@/components/SubscriptionGuard";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Welcome from "./pages/Welcome";
 import AuthPage from "./auth/AuthPage";
 
+const AdminPanel = lazy(() => import("@/components/AdminPanel"));
 const queryClient = new QueryClient();
+
+function LoadingSpinner({ text = "جاري التحميل..." }) {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
+      <div className="text-center">
+        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-gray-600">{text}</p>
+      </div>
+    </div>
+  );
+}
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">جاري التحميل...</p>
-        </div>
-      </div>
-    );
-  }
-
+  if (loading) return <LoadingSpinner />;
   if (!user) return <Navigate to="/auth" replace />;
+  return <>{children}</>;
+}
+
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading, isAdmin } = useAuth();
+  if (loading) return <LoadingSpinner />;
+  if (!user) return <Navigate to="/auth" replace />;
+  if (!isAdmin) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">جاري التحميل...</p>
-        </div>
-      </div>
-    );
-  }
-
+  if (loading) return <LoadingSpinner />;
   if (user) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
@@ -57,7 +57,14 @@ const App = () => (
             <Routes>
               <Route path="/welcome" element={<Welcome />} />
               <Route path="/auth" element={<PublicRoute><AuthPage /></PublicRoute>} />
-              <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+              <Route path="/" element={<ProtectedRoute><SubscriptionGuard><Index /></SubscriptionGuard></ProtectedRoute>} />
+              <Route path="/admin" element={
+                <AdminRoute>
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <AdminPanel />
+                  </Suspense>
+                </AdminRoute>
+              } />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AuthProvider>

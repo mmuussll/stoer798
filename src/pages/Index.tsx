@@ -28,10 +28,13 @@ import {
   Landmark,
   Settings,
   Wallet,
+  Shield,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import WhatsAppSupport from "@/components/WhatsAppSupport";
+import SubscriptionStatusBar from "@/components/SubscriptionStatusBar";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
 
 const SalesInterface = lazy(() => import("@/components/SalesInterface"));
@@ -72,7 +75,8 @@ const NAV_ITEMS = [
 
 export default function Index() {
   const [activeSection, setActiveSection] = useState("sales");
-  const { user, signOut } = useAuth();
+  const { user, signOut, isAdmin } = useAuth();
+  const navigate = useNavigate();
   const { setOpen, isMobile, open } = useSidebar();
 
   const handleSectionChange = (id: string) => {
@@ -137,6 +141,15 @@ export default function Index() {
         </SidebarContent>
 
         <SidebarFooter className="p-2">
+          {isAdmin && (
+            <button
+              onClick={() => navigate("/admin")}
+              className="flex items-center gap-2 px-3 py-2 mb-1 rounded-md text-purple-600 hover:bg-purple-50 hover:text-purple-700 transition-colors text-sm font-medium w-full"
+            >
+              <Shield className="w-4 h-4" />
+              <span>لوحة التحكم</span>
+            </button>
+          )}
           <div className="flex items-center gap-2 px-2 py-1">
             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" />
             <span className="text-xs text-muted-foreground truncate">{user?.email || "المتجر"}</span>
@@ -158,9 +171,12 @@ export default function Index() {
             </span>
           </div>
           <div className="flex-1" />
+          <div className="flex items-center gap-2">
+            <SubscriptionStatusBar />
           <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200 text-xs">
             متصل
           </Badge>
+          </div>
         </header>
 
         <main className={cn("p-4 md:p-6", activeSection === "sales" && "p-0 md:p-0", "pb-16 lg:pb-0")}>

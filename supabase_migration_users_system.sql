@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email text,
   full_name text,
+  phone text,
   role text NOT NULL DEFAULT 'user' CHECK (role IN ('admin', 'user')),
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
@@ -50,11 +51,12 @@ BEGIN
     assigned_role := 'user';
   END IF;
 
-  INSERT INTO public.profiles (id, email, full_name, role)
+  INSERT INTO public.profiles (id, email, full_name, phone, role)
   VALUES (
     NEW.id,
     NEW.email,
     COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.email),
+    NEW.raw_user_meta_data->>'phone',
     assigned_role
   );
 

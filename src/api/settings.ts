@@ -81,6 +81,8 @@ const DEFAULTS: StoreSettings = {
   whatsapp_send_invoice: false,
   api_key_enabled: false,
   api_key: "",
+  maintenance_mode: false,
+  maintenance_message: "الموقع تحت الصيانة حالياً، يرجى المحاولة لاحقاً",
 };
 
 function mapSettings(row: Record<string, unknown>): StoreSettings {
@@ -170,6 +172,8 @@ function mapSettings(row: Record<string, unknown>): StoreSettings {
     whatsapp_send_invoice: b("whatsapp_send_invoice", DEFAULTS.whatsapp_send_invoice),
     api_key_enabled: b("api_key_enabled", DEFAULTS.api_key_enabled),
     api_key: s("api_key", DEFAULTS.api_key),
+    maintenance_mode: b("maintenance_mode", DEFAULTS.maintenance_mode),
+    maintenance_message: s("maintenance_message", DEFAULTS.maintenance_message),
     created_at: row.created_at as string | undefined,
     updated_at: row.updated_at as string | undefined,
   };
@@ -206,6 +210,7 @@ export async function updateSettings(
     "backup_frequency", "last_backup_date",
     "whatsapp_number",
     "api_key",
+    "maintenance_message",
   ];
   const numberKeys = [
     "tax_rate", "second_tax_rate",
@@ -234,6 +239,7 @@ export async function updateSettings(
     "enable_desktop_notifications", "enable_2fa",
     "whatsapp_enabled", "whatsapp_send_invoice",
     "api_key_enabled",
+    "maintenance_mode",
   ];
 
   for (const key of stringKeys) {

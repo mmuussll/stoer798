@@ -293,6 +293,8 @@ export interface StoreSettings {
   whatsapp_send_invoice: boolean;
   api_key_enabled: boolean;
   api_key: string;
+  maintenance_mode: boolean;
+  maintenance_message: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -301,9 +303,20 @@ export interface Profile {
   id: string;
   email?: string;
   full_name?: string;
+  phone?: string;
   role?: string;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  title: string;
+  message: string;
+  type: 'system' | 'subscription' | 'debt' | 'alert' | 'info';
+  is_read: boolean;
+  created_at?: string;
 }
 
 export interface UserSubscription {
@@ -325,6 +338,7 @@ export interface UserWithSubscription {
   id: string;
   email: string;
   full_name: string;
+  phone?: string;
   role: string;
   created_at?: string;
   subscription: UserSubscription | null;

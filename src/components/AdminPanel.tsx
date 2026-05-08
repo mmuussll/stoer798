@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchUsers, activateSubscription, suspendUser, extendSubscription } from "@/api/users";
+import { createNotification, broadcastNotification } from "@/api/notifications";
+import { fetchSettings, updateSettings } from "@/api/settings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,6 +30,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Shield,
@@ -42,11 +52,23 @@ import {
   RefreshCw,
   PlusCircle,
   Loader2,
+  Send,
+  Megaphone,
+  Phone,
+  Mail,
+  Eye,
+  CalendarDays,
+  StickyNote,
+  Timer,
+  UserCheck,
+  Info,
+  Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { CURRENCY } from "@/constants";
+import type { UserWithSubscription, UserSubscription } from "@/types";
 
 const SUBSCRIPTION_PRICE = 25000;
 
@@ -102,7 +124,8 @@ function getRoleBadge(role: string) {
   );
 }
 
-function getDaysRemaining(sub: NonNullable<ReturnType<typeof formatSubscription>["subscription"]>): number {
+function getDaysRemaining(sub: UserSubscription | null): number {
+  if (!sub) return 0;
   const now = new Date();
   if (sub.status === "trial") {
     const end = new Date(sub.trial_end_date);
@@ -133,9 +156,24 @@ export default function AdminPanel() {
   const [activationNote, setActivationNote] = useState("");
   const [extendDays, setExtendDays] = useState(30);
 
+  const [notifyDialog, setNotifyDialog] = useState(false);
+  const [notifyTitle, setNotifyTitle] = useState("");
+  const [notifyMessage, setNotifyMessage] = useState("");
+  const [notifyType, setNotifyType] = useState<string>("system");
+  const [notifyTarget, setNotifyTarget] = useState<string>("all");
+
+  const [infoUser, setInfoUser] = useState<UserWithSubscription | null>(null);
+
+  const [maintenanceMessage, setMaintenanceMessage] = useState("");
+
   const { data: users, isLoading } = useQuery({
     queryKey: ["admin-users"],
     queryFn: fetchUsers,
+  });
+
+  const { data: settings } = useQuery({
+    queryKey: ["store-settings"],
+    queryFn: fetchSettings,
   });
 
   const activateMutation = useMutation({
@@ -168,13 +206,53 @@ export default function AdminPanel() {
     mutationFn: ({ userId, days }: { userId: string; days: number }) =>
       extendSubscription(userId, days),
     onSuccess: () => {
-      toast.success("تم تمديد الاشتراك بنجاح");
+      toast.success(`تمت إضافة ${extendDays} يوم بنجاح`);
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      queryClient.invalidateQueries({ queryKey: ["store-settings"] });
       setExtendDialog(false);
       setExtendDays(30);
     },
     onError: (err: Error) => {
       toast.error(err.message || "فشل التمديد");
+    },
+  });
+
+  const notifyMutation = useMutation({
+    mutationFn: async () => {
+      const title = notifyTitle.trim();
+      const message = notifyMessage.trim();
+      const type = notifyType as "system" | "subscription" | "debt" | "alert" | "info";
+      if (notifyTarget === "all") {
+        await broadcastNotification(title, message, type);
+      } else {
+        await createNotification(notifyTarget, title, message, type);
+      }
+    },
+    onSuccess: () => {
+      toast.success("تم إرسال الإشعار بنجاح");
+      setNotifyDialog(false);
+      setNotifyTitle("");
+      setNotifyMessage("");
+      setNotifyType("system");
+      setNotifyTarget("all");
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "فشل إرسال الإشعار");
+    },
+  });
+
+  const maintenanceMutation = useMutation({
+    mutationFn: (enabled: boolean) =>
+      updateSettings({
+        maintenance_mode: enabled,
+        maintenance_message: enabled ? (maintenanceMessage || undefined) : undefined,
+      }),
+    onSuccess: (_data: unknown, enabled: boolean) => {
+      toast.success(enabled ? "تم تفعيل وضع الصيانة" : "تم إيقاف وضع الصيانة");
+      queryClient.invalidateQueries({ queryKey: ["store-settings"] });
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "فشل تحديث حالة الصيانة");
     },
   });
 
@@ -222,7 +300,7 @@ export default function AdminPanel() {
       <div className="p-4 md:p-6 space-y-4" dir="rtl">
         <Skeleton className="h-8 w-48" />
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
+          {Array.from({ length: 4 }).map((_item, i) => (
             <Skeleton key={i} className="h-24 rounded-lg" />
           ))}
         </div>
@@ -289,6 +367,80 @@ export default function AdminPanel() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
+            <Wrench className="w-5 h-5" />
+            وضع الصيانة
+          </CardTitle>
+          <CardDescription>إيقاف الموقع عن المستخدمين أثناء التطوير أو الصيانة</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium text-gray-900">
+                  {settings?.maintenance_mode ? "الموقع متوقف حالياً" : "الموقع يعمل بشكل طبيعي"}
+                </p>
+                <p className="text-sm text-gray-500">
+                  {settings?.maintenance_mode
+                    ? "المستخدمون العاديون لا يمكنهم الوصول"
+                    : "جميع المستخدمين يمكنهم الوصول"}
+                </p>
+              </div>
+              <Switch
+                checked={settings?.maintenance_mode || false}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    setMaintenanceMessage(settings?.maintenance_message || "");
+                  }
+                  maintenanceMutation.mutate(checked);
+                }}
+                disabled={maintenanceMutation.isPending}
+              />
+            </div>
+
+            {settings?.maintenance_mode && (
+              <div className="p-3 bg-orange-50 rounded-lg border border-orange-200 space-y-2">
+                <Label htmlFor="maintMsg" className="text-sm text-orange-800">
+                  رسالة الصيانة (تظهر للمستخدمين)
+                </Label>
+                <Input
+                  id="maintMsg"
+                  value={maintenanceMessage || settings?.maintenance_message || ""}
+                  onChange={(e) => setMaintenanceMessage(e.target.value)}
+                  onBlur={() => {
+                    if (maintenanceMessage.trim()) {
+                      updateSettings({ maintenance_message: maintenanceMessage });
+                    }
+                  }}
+                  placeholder="الموقع تحت الصيانة..."
+                />
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Megaphone className="w-5 h-5" />
+            إرسال إشعار
+          </CardTitle>
+          <CardDescription>إرسال إشعار إلى جميع المستخدمين أو مستخدم محدد</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button
+            onClick={() => setNotifyDialog(true)}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+          >
+            <Send className="w-4 h-4 ml-2" />
+            إرسال إشعار
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5" />
             المستخدمين
           </CardTitle>
@@ -300,10 +452,10 @@ export default function AdminPanel() {
               <TableHeader>
                 <TableRow>
                   <TableHead>المستخدم</TableHead>
+                  <TableHead>الهاتف</TableHead>
                   <TableHead>البريد الإلكتروني</TableHead>
                   <TableHead>الدور</TableHead>
                   <TableHead>الحالة</TableHead>
-                  <TableHead>تاريخ الانتهاء</TableHead>
                   <TableHead>الأيام المتبقية</TableHead>
                   <TableHead>تاريخ التسجيل</TableHead>
                   <TableHead>إجراءات</TableHead>
@@ -315,18 +467,28 @@ export default function AdminPanel() {
                   const isExpiring = daysRemaining <= 3 && user.subscription?.status !== "suspended";
                   return (
                     <TableRow key={user.id}>
-                      <TableCell className="font-medium">{user.full_name || "—"}</TableCell>
+                      <TableCell className="font-medium">
+                        <button
+                          onClick={() => setInfoUser(user)}
+                          className="text-blue-600 hover:underline flex items-center gap-1"
+                        >
+                          <Eye className="w-3 h-3" />
+                          {user.full_name || "—"}
+                        </button>
+                      </TableCell>
+                      <TableCell className="text-sm" dir="ltr">
+                        {user.phone ? (
+                          <span className="text-blue-600">{user.phone}</span>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-sm text-muted-foreground" dir="ltr">
                         {user.email}
                       </TableCell>
                       <TableCell>{getRoleBadge(user.role)}</TableCell>
                       <TableCell>
                         {user.subscription ? getStatusBadge(user.subscription.status) : "—"}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {user.subscription?.status === "trial"
-                          ? formatDate(user.subscription.trial_end_date)
-                          : formatDate(user.subscription?.subscription_end_date)}
                       </TableCell>
                       <TableCell>
                         {user.subscription?.status === "trial" || user.subscription?.status === "active" ? (
@@ -350,7 +512,20 @@ export default function AdminPanel() {
                         <div className="flex items-center gap-1">
                           {user.role !== "admin" && (
                             <>
-                              {user.subscription?.status === "suspended" || user.subscription?.status === "expired" ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                                onClick={() => {
+                                  setSelectedUser(user.id);
+                                  setExtendDays(1);
+                                  setExtendDialog(true);
+                                }}
+                              >
+                                <RefreshCw className="w-3.5 h-3.5 ml-1" />
+                                إضافة أيام
+                              </Button>
+                              {user.subscription?.status !== "active" && (
                                 <Button
                                   variant="outline"
                                   size="sm"
@@ -363,34 +538,21 @@ export default function AdminPanel() {
                                   <CheckCircle className="w-3.5 h-3.5 ml-1" />
                                   تفعيل
                                 </Button>
-                              ) : (
-                                <>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-8 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-                                    onClick={() => {
-                                      setSelectedUser(user.id);
-                                      setExtendDialog(true);
-                                    }}
-                                  >
-                                    <RefreshCw className="w-3.5 h-3.5 ml-1" />
-                                    تمديد
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                    onClick={() => {
-                                      if (confirm("هل أنت متأكد من إيقاف هذا المستخدم؟")) {
-                                        suspendMutation.mutate(user.id);
-                                      }
-                                    }}
-                                  >
-                                    <Ban className="w-3.5 h-3.5 ml-1" />
-                                    إيقاف
-                                  </Button>
-                                </>
+                              )}
+                              {user.subscription?.status === "active" && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  onClick={() => {
+                                    if (confirm("هل أنت متأكد من إيقاف هذا المستخدم؟")) {
+                                      suspendMutation.mutate(user.id);
+                                    }
+                                  }}
+                                >
+                                  <Ban className="w-3.5 h-3.5 ml-1" />
+                                  إيقاف
+                                </Button>
                               )}
                             </>
                           )}
@@ -478,15 +640,15 @@ export default function AdminPanel() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Calendar className="w-5 h-5 text-purple-600" />
-              تمديد الاشتراك
+              إضافة أيام
             </DialogTitle>
             <DialogDescription>
-              أضف أيام إضافية إلى اشتراك المستخدم الحالي
+              أضف عدد من الأيام للمستخدم (حتى لو كان منتهي الاشتراك)
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="extendDays">عدد الأيام الإضافية</Label>
+              <Label htmlFor="extendDays">عدد الأيام</Label>
               <Input
                 id="extendDays"
                 type="number"
@@ -495,16 +657,6 @@ export default function AdminPanel() {
                 onChange={(e) => setExtendDays(Number(e.target.value))}
               />
             </div>
-            {extendDays >= 30 && (
-              <div className="p-3 bg-purple-50 rounded-lg border border-purple-100">
-                <p className="text-sm text-purple-800">
-                  السعر التقريبي:{" "}
-                  <span className="font-bold">
-                    {Math.ceil(extendDays / 30) * SUBSCRIPTION_PRICE.toLocaleString()} {CURRENCY}
-                  </span>
-                </p>
-              </div>
-            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setExtendDialog(false)}>
@@ -520,9 +672,233 @@ export default function AdminPanel() {
               ) : (
                 <RefreshCw className="w-4 h-4 ml-2" />
               )}
-              تمديد
+              إضافة
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={notifyDialog} onOpenChange={setNotifyDialog}>
+        <DialogContent className="sm:max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Send className="w-5 h-5 text-blue-600" />
+              إرسال إشعار
+            </DialogTitle>
+            <DialogDescription>
+              أرسل إشعاراً إلى المستخدمين لإعلامهم بالتحديثات أو التنبيهات
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="notifyTarget">المستلم</Label>
+              <Select value={notifyTarget} onValueChange={setNotifyTarget}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">جميع المستخدمين</SelectItem>
+                  {(users || []).map((u) => (
+                    <SelectItem key={u.id} value={u.id}>
+                      {u.full_name || u.email}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="notifyType">نوع الإشعار</Label>
+              <Select value={notifyType} onValueChange={setNotifyType}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="system">النظام</SelectItem>
+                  <SelectItem value="subscription">اشتراك</SelectItem>
+                  <SelectItem value="debt">ديون</SelectItem>
+                  <SelectItem value="alert">تنبيه</SelectItem>
+                  <SelectItem value="info">معلومة</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="notifyTitle">العنوان</Label>
+              <Input
+                id="notifyTitle"
+                value={notifyTitle}
+                onChange={(e) => setNotifyTitle(e.target.value)}
+                placeholder="عنوان الإشعار"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="notifyMessage">الرسالة</Label>
+              <Input
+                id="notifyMessage"
+                value={notifyMessage}
+                onChange={(e) => setNotifyMessage(e.target.value)}
+                placeholder="نص الإشعار"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNotifyDialog(false)}>
+              إلغاء
+            </Button>
+            <Button
+              onClick={() => notifyMutation.mutate()}
+              disabled={notifyMutation.isPending || !notifyTitle.trim() || !notifyMessage.trim()}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {notifyMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin ml-2" />
+              ) : (
+                <Send className="w-4 h-4 ml-2" />
+              )}
+              إرسال
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!infoUser} onOpenChange={(open) => { if (!open) setInfoUser(null); }}>
+        <DialogContent className="sm:max-w-lg" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Info className="w-5 h-5 text-blue-600" />
+              معلومات المستخدم
+            </DialogTitle>
+            <DialogDescription>
+              كافة التفاصيل الخاصة بالمستخدم
+            </DialogDescription>
+          </DialogHeader>
+          {infoUser && (
+            <div className="space-y-4 py-2">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-3 bg-blue-50 rounded-lg space-y-1">
+                  <p className="text-xs text-blue-500 flex items-center gap-1">
+                    <Users className="w-3 h-3" /> الاسم
+                  </p>
+                  <p className="font-bold text-gray-900">{infoUser.full_name || "—"}</p>
+                </div>
+                <div className="p-3 bg-blue-50 rounded-lg space-y-1">
+                  <p className="text-xs text-blue-500 flex items-center gap-1">
+                    <Mail className="w-3 h-3" /> البريد الإلكتروني
+                  </p>
+                  <p className="font-bold text-gray-900 text-sm" dir="ltr">{infoUser.email}</p>
+                </div>
+                <div className="p-3 bg-blue-50 rounded-lg space-y-1">
+                  <p className="text-xs text-blue-500 flex items-center gap-1">
+                    <Phone className="w-3 h-3" /> الهاتف
+                  </p>
+                  <p className="font-bold text-gray-900" dir="ltr">
+                    {infoUser.phone || <span className="text-gray-400">غير متوفر</span>}
+                  </p>
+                </div>
+                <div className="p-3 bg-blue-50 rounded-lg space-y-1">
+                  <p className="text-xs text-blue-500 flex items-center gap-1">
+                    <Shield className="w-3 h-3" /> الدور
+                  </p>
+                  <div>{getRoleBadge(infoUser.role)}</div>
+                </div>
+                <div className="p-3 bg-blue-50 rounded-lg space-y-1">
+                  <p className="text-xs text-blue-500 flex items-center gap-1">
+                    <CalendarDays className="w-3 h-3" /> تاريخ التسجيل
+                  </p>
+                  <p className="font-bold text-gray-900 text-sm">
+                    {infoUser.created_at
+                      ? format(new Date(infoUser.created_at), "yyyy/MM/dd  hh:mm a", { locale: ar })
+                      : "—"}
+                  </p>
+                </div>
+                <div className="p-3 bg-blue-50 rounded-lg space-y-1">
+                  <p className="text-xs text-blue-500 flex items-center gap-1">
+                    <Timer className="w-3 h-3" /> الأيام المتبقية
+                  </p>
+                  <p className="font-bold text-gray-900">
+                    {getDaysRemaining(infoUser.subscription)} يوم
+                  </p>
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-purple-600" />
+                  تفاصيل الاشتراك
+                </h4>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                    <span className="text-sm text-gray-500">الحالة</span>
+                    <span>{infoUser.subscription ? getStatusBadge(infoUser.subscription.status) : "—"}</span>
+                  </div>
+
+                  {(infoUser.subscription?.status === "trial" || infoUser.subscription?.trial_start_date) && (
+                    <>
+                      <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                        <span className="text-sm text-gray-500">بداية التجربة</span>
+                        <span className="text-sm font-medium" dir="ltr">
+                          {infoUser.subscription?.trial_start_date
+                            ? format(new Date(infoUser.subscription.trial_start_date), "yyyy/MM/dd  hh:mm a", { locale: ar })
+                            : "—"}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                        <span className="text-sm text-gray-500">نهاية التجربة</span>
+                        <span className="text-sm font-medium" dir="ltr">
+                          {infoUser.subscription?.trial_end_date
+                            ? format(new Date(infoUser.subscription.trial_end_date), "yyyy/MM/dd  hh:mm a", { locale: ar })
+                            : "—"}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                        <span className="text-sm text-gray-500">تم استخدام التجربة</span>
+                        <Badge className={infoUser.subscription?.is_trial_used ? "bg-orange-100 text-orange-800" : "bg-green-100 text-green-800"}>
+                          {infoUser.subscription?.is_trial_used ? "نعم" : "لا"}
+                        </Badge>
+                      </div>
+                    </>
+                  )}
+
+                  {infoUser.subscription?.subscription_start_date && (
+                    <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                      <span className="text-sm text-gray-500">بداية الاشتراك</span>
+                      <span className="text-sm font-medium" dir="ltr">
+                        {format(new Date(infoUser.subscription.subscription_start_date), "yyyy/MM/dd  hh:mm a", { locale: ar })}
+                      </span>
+                    </div>
+                  )}
+
+                  {infoUser.subscription?.subscription_end_date && (
+                    <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                      <span className="text-sm text-gray-500">نهاية الاشتراك</span>
+                      <span className="text-sm font-medium" dir="ltr">
+                        {format(new Date(infoUser.subscription.subscription_end_date), "yyyy/MM/dd  hh:mm a", { locale: ar })}
+                      </span>
+                    </div>
+                  )}
+
+                  {infoUser.subscription?.note && (
+                    <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                      <span className="text-sm text-gray-500 flex items-center gap-1">
+                        <StickyNote className="w-3 h-3" /> ملاحظة
+                      </span>
+                      <span className="text-sm font-medium">{infoUser.subscription.note}</span>
+                    </div>
+                  )}
+
+                  {infoUser.subscription?.activated_by && (
+                    <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                      <span className="text-sm text-gray-500 flex items-center gap-1">
+                        <UserCheck className="w-3 h-3" /> مفعل من قبل
+                      </span>
+                      <span className="text-sm font-medium" dir="ltr">
+                        {infoUser.subscription.activated_by}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

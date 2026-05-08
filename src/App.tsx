@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ToastProvider } from "@/components/ui/toast";
 import { Toaster } from "@/components/ui/sonner";
 import { SubscriptionGuard } from "@/components/SubscriptionGuard";
+import MaintenanceGuard from "@/components/MaintenanceGuard";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Welcome from "./pages/Welcome";
@@ -69,7 +70,7 @@ const App = () => (
             <Routes>
               <Route path="/welcome" element={<Welcome />} />
               <Route path="/auth" element={<PublicRoute><AuthPage /></PublicRoute>} />
-              <Route path="/" element={<ProtectedRoute><SubscriptionGuard><Index /></SubscriptionGuard></ProtectedRoute>} />
+              <Route path="/" element={<ProtectedRoute><MaintenanceGuard><SubscriptionGuard><Index /></SubscriptionGuard></MaintenanceGuard></ProtectedRoute>} />
               <Route path="/admin" element={
                 <AdminRoute>
                   <Suspense fallback={<LoadingSpinner />}>

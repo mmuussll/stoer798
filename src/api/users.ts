@@ -24,6 +24,7 @@ export async function fetchUsers(): Promise<UserWithSubscription[]> {
     id: p.id as string,
     email: (p.email as string) || "",
     full_name: (p.full_name as string) || "",
+    phone: (p.phone as string) || undefined,
     role: (p.role as string) || "user",
     created_at: p.created_at as string | undefined,
     subscription: subsMap.get(p.id as string) || null,
@@ -137,22 +138,44 @@ export async function extendSubscription(
     .from("user_subscriptions")
     .select("*")
     .eq("user_id", userId)
-    .single();
+    .maybeSingle();
 
-  if (fetchError) throw fetchError;
+  const now = new Date();
 
-  const currentEnd = existing.subscription_end_date
-    ? new Date(existing.subscription_end_date as string)
-    : new Date();
+  let currentEnd: Date;
+  if (existing && existing.subscription_end_date) {
+    const existingEnd = new Date(existing.subscription_end_date as string);
+    currentEnd = existingEnd > now ? existingEnd : now;
+  } else {
+    currentEnd = now;
+  }
+
   const newEnd = new Date(currentEnd.getTime() + extraDays * 24 * 60 * 60 * 1000);
+  const payload: Record<string, unknown> = {
+    status: "active",
+    subscription_end_date: newEnd.toISOString(),
+    subscription_start_date: existing?.subscription_start_date || now.toISOString(),
+    is_trial_used: existing?.is_trial_used ?? false,
+  };
+
+  if (existing) {
+    const { data, error } = await supabase
+      .from("user_subscriptions")
+      .update(payload)
+      .eq("user_id", userId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return mapSubscription(data);
+  }
 
   const { data, error } = await supabase
     .from("user_subscriptions")
-    .update({
-      status: "active",
-      subscription_end_date: newEnd.toISOString(),
+    .insert({
+      user_id: userId,
+      ...payload,
     })
-    .eq("user_id", userId)
     .select()
     .single();
 

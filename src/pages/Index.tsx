@@ -29,13 +29,17 @@ import {
   Settings,
   Wallet,
   Shield,
+  Wrench,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import WhatsAppSupport from "@/components/WhatsAppSupport";
 import SubscriptionStatusBar from "@/components/SubscriptionStatusBar";
+import NotificationsBell from "@/components/NotificationsBell";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
+import { useQuery } from "@tanstack/react-query";
+import { fetchSettings } from "@/api/settings";
 
 const SalesInterface = lazy(() => import("@/components/SalesInterface"));
 const ProductManagement = lazy(() => import("@/components/ProductManagement"));
@@ -78,6 +82,12 @@ export default function Index() {
   const { user, signOut, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { setOpen, isMobile, open } = useSidebar();
+
+  const { data: settings } = useQuery({
+    queryKey: ["store-settings"],
+    queryFn: fetchSettings,
+    enabled: isAdmin,
+  });
 
   const handleSectionChange = (id: string) => {
     setActiveSection(id);
@@ -172,12 +182,20 @@ export default function Index() {
           </div>
           <div className="flex-1" />
           <div className="flex items-center gap-2">
+            <NotificationsBell />
             <SubscriptionStatusBar />
           <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200 text-xs">
             متصل
           </Badge>
           </div>
         </header>
+
+        {isAdmin && settings?.maintenance_mode && (
+          <div className="bg-gradient-to-r from-orange-500 to-yellow-500 text-white px-4 py-2 text-center text-sm font-medium flex items-center justify-center gap-2 sticky top-14 z-30">
+            <Wrench className="w-4 h-4" />
+            <span>وضع الصيانة مفعل - الموقع غير متاح للمستخدمين العاديين</span>
+          </div>
+        )}
 
         <main className={cn("p-4 md:p-6", activeSection === "sales" && "p-0 md:p-0", "pb-16 lg:pb-0")}>
           <Suspense fallback={<SectionSkeleton />}>

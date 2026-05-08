@@ -15,6 +15,7 @@ export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -33,7 +34,12 @@ export default function AuthPage() {
           setLoading(false);
           return;
         }
-        const { error } = await signUp(email, password, fullName);
+        if (!phone.trim()) {
+          setError("يرجى إدخال رقم الهاتف");
+          setLoading(false);
+          return;
+        }
+        const { error } = await signUp(email, password, fullName, phone);
         if (error) {
           setError(error.message);
         } else {
@@ -82,16 +88,30 @@ export default function AuthPage() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               {!isLogin && (
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">الاسم الكامل</Label>
-                  <Input
-                    id="fullName"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="أدخل اسمك الكامل"
-                    required={!isLogin}
-                  />
-                </div>
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="fullName">الاسم الكامل</Label>
+                    <Input
+                      id="fullName"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="أدخل اسمك الكامل"
+                      required={!isLogin}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">رقم الهاتف</Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="07xx xxx xxxx"
+                      required={!isLogin}
+                      dir="ltr"
+                    />
+                  </div>
+                </>
               )}
               <div className="space-y-2">
                 <Label htmlFor="email">البريد الإلكتروني</Label>
@@ -103,6 +123,7 @@ export default function AuthPage() {
                   placeholder="example@domain.com"
                   required
                   dir="ltr"
+                  autoComplete="email"
                 />
               </div>
               <div className="space-y-2">
@@ -115,6 +136,7 @@ export default function AuthPage() {
                   placeholder="••••••••"
                   required
                   dir="ltr"
+                  autoComplete={isLogin ? "current-password" : "new-password"}
                 />
               </div>
 

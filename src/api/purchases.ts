@@ -1,12 +1,12 @@
 import { supabase } from "@/lib/supabase";
-import { toNumber } from "@/lib/db";
+import { toNumber, type RawRow } from "@/lib/db";
 import type { PurchaseInvoice, PurchaseInvoiceItem } from "@/types";
 
 const INVOICE_TABLE = "purchase_invoices";
 const ITEMS_TABLE = "purchase_invoice_items";
 
-function mapInvoice(row: Record<string, unknown>): PurchaseInvoice {
-  const raw = row as any;
+function mapInvoice(row: RawRow): PurchaseInvoice {
+  const raw = row as Record<string, unknown>;
   return {
     id: raw.id,
     invoice_number: raw.invoice_number,
@@ -16,7 +16,7 @@ function mapInvoice(row: Record<string, unknown>): PurchaseInvoice {
     total: toNumber(raw.total),
     user_id: raw.user_id,
     created_at: raw.created_at,
-    items: (raw.items || []).map((item: any) => ({
+    items: ((raw as RawRow).items as Record<string, unknown>[] || []).map((item) => ({
       id: item.id,
       invoice_id: item.invoice_id,
       product_name: item.product_name,

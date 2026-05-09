@@ -7,6 +7,7 @@ import { ToastProvider } from "@/components/ui/toast";
 import { Toaster } from "@/components/ui/sonner";
 import { SubscriptionGuard } from "@/components/SubscriptionGuard";
 import MaintenanceGuard from "@/components/MaintenanceGuard";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Welcome from "./pages/Welcome";
@@ -61,30 +62,32 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 }
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ToastProvider>
-      <TooltipProvider>
-        <Toaster />
-        <BrowserRouter>
-          <AuthProvider>
-            <Routes>
-              <Route path="/welcome" element={<Welcome />} />
-              <Route path="/auth" element={<PublicRoute><AuthPage /></PublicRoute>} />
-              <Route path="/" element={<ProtectedRoute><MaintenanceGuard><SubscriptionGuard><Index /></SubscriptionGuard></MaintenanceGuard></ProtectedRoute>} />
-              <Route path="/admin" element={
-                <AdminRoute>
-                  <Suspense fallback={<LoadingSpinner />}>
-                    <AdminPanel />
-                  </Suspense>
-                </AdminRoute>
-              } />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
-    </ToastProvider>
-  </QueryClientProvider>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>
+        <TooltipProvider>
+          <Toaster />
+          <BrowserRouter>
+            <AuthProvider>
+              <Routes>
+                <Route path="/welcome" element={<Welcome />} />
+                <Route path="/auth" element={<PublicRoute><AuthPage /></PublicRoute>} />
+                <Route path="/" element={<ProtectedRoute><MaintenanceGuard><SubscriptionGuard><Index /></SubscriptionGuard></MaintenanceGuard></ProtectedRoute>} />
+                <Route path="/admin" element={
+                  <AdminRoute>
+                    <Suspense fallback={<LoadingSpinner />}>
+                      <AdminPanel />
+                    </Suspense>
+                  </AdminRoute>
+                } />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </AuthProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </ToastProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

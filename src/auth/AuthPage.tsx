@@ -48,8 +48,8 @@ export default function AuthPage() {
           setPassword("");
         }
       }
-    } catch (err: any) {
-      setError(err.message || "حدث خطأ");
+    } catch (err: unknown) {
+      setError((err as Error).message || "حدث خطأ");
     } finally {
       setLoading(false);
     }

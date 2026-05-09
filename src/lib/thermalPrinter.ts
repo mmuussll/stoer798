@@ -22,7 +22,6 @@ export interface PrinterConfig {
 // ESC/POS Commands
 const ESC = "\x1B";
 const GS = "\x1D";
-const FS = "\x1C";
 
 const CMD = {
   INIT: ESC + "@",
@@ -226,7 +225,7 @@ export function generateEscPosReceipt(
 export async function connectSerialPrinter(): Promise<SerialPort | null> {
   try {
     if (!("serial" in navigator)) return null;
-    const port = await (navigator as any).serial.requestPort({
+    const port = await (navigator as Navigator & { serial: Serial }).serial.requestPort({
       filters: [{ usbVendorId: 0x0416 }, { usbVendorId: 0x0493 }, { usbVendorId: 0x0471 }],
     });
     await port.open({ baudRate: 9600 });
@@ -260,11 +259,8 @@ export async function disconnectSerialPrinter(port: SerialPort): Promise<void> {
 
 // ============ Network Printer ============
 
-export async function printViaNetwork(ip: string, port: string, data: Uint8Array): Promise<boolean> {
+export async function printViaNetwork(_ip: string, _port: string, _data: Uint8Array): Promise<boolean> {
   try {
-    // For network printing we need a server-side proxy or local agent
-    // This attempts to use a local WebSocket/HTTP bridge
-    const url = `http://${ip}:${port || "9100"}`;
     // Note: Direct TCP from browser is not possible without a proxy
     // This is a placeholder - actual implementation requires backend
     return false;

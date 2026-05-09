@@ -1,8 +1,7 @@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Receipt, User2, Landmark, AlertTriangle } from "lucide-react";
+import { Receipt, User2, AlertTriangle } from "lucide-react";
 import { CURRENCY } from "@/constants";
 import type { CartItem, Customer } from "@/types";
 

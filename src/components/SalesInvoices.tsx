@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import {
   Receipt, Search, Calendar, User, Printer, Eye, FileText, X, Package,
-  DollarSign, Hash, Users, CreditCard, Percent, Wallet, ChevronDown,
+  DollarSign, Hash, Users, CreditCard, Percent, Wallet,
 } from "lucide-react";
 import * as salesApi from "@/api/sales";
 import { CURRENCY } from "@/constants";
@@ -70,7 +70,6 @@ export default function SalesInvoices() {
   const totalRevenue = filteredInvoices.reduce((sum, inv) => sum + inv.total, 0);
   const totalItems = filteredInvoices.reduce((sum, inv) => sum + inv.items.reduce((s, item) => s + item.quantity, 0), 0);
   const totalDiscount = filteredInvoices.reduce((sum, inv) => sum + (inv.discount_total || 0), 0);
-  const totalTax = filteredInvoices.reduce((sum, inv) => sum + (inv.tax_total || 0), 0);
 
   const openInvoice = (invoice: SaleInvoice) => {
     setSelectedInvoice(invoice);

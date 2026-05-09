@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -16,8 +16,8 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  RotateCcw, Search, Eye, Trash2, Receipt, ArrowRightLeft,
-  FileText, Clock, Package, ChevronLeft, X,
+  RotateCcw, Search, Eye, Trash2, ArrowRightLeft,
+  FileText, Clock, Package, X,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import * as returnsApi from "@/api/returns";
@@ -121,8 +121,8 @@ export default function SalesReturns() {
       } else {
         toast({ title: "لم يتم العثور", description: "لا توجد فاتورة بهذا الرقم", variant: "destructive" });
       }
-    } catch (err: any) {
-      toast({ title: "خطأ", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      toast({ title: "خطأ", description: (err as Error).message, variant: "destructive" });
     } finally {
       setSearchingInvoice(false);
     }

@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import { toNumber } from "@/lib/db";
+import { toNumber, type RawRow } from "@/lib/db";
 import type { Product } from "@/types";
 
 const TABLE = "products";
@@ -12,7 +12,8 @@ function getImagePublicUrl(image_url: string | null | undefined): string | undef
   return data.publicUrl;
 }
 
-function mapProduct(row: Record<string, unknown>): Product {
+function mapProduct(row: RawRow): Product {
+  const cat = (row as RawRow).category as RawRow | undefined;
   return {
     id: row.id as string,
     name: row.name as string,
@@ -21,12 +22,12 @@ function mapProduct(row: Record<string, unknown>): Product {
     barcode: row.barcode as string | undefined,
     image_url: getImagePublicUrl(row.image_url as string | null | undefined),
     category_id: row.category_id as string | undefined,
-    category: (row as any).category
+    category: cat
       ? {
-          id: (row as any).category.id || "",
-          name: (row as any).category.name,
-          description: (row as any).category.description,
-          color: (row as any).category.color,
+          id: (cat.id as string) || "",
+          name: cat.name as string | undefined,
+          description: cat.description as string | undefined,
+          color: cat.color as string | undefined,
         }
       : undefined,
     created_at: row.created_at as string | undefined,

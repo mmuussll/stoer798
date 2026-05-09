@@ -39,7 +39,7 @@ export default function ProductManagement() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const { data: allProducts = [], isLoading: productsLoading } = useQuery({ queryKey: ["products"], queryFn: productsApi.fetchProducts, staleTime: 2 * 60_000 });
-  const { data: categories = [], isLoading: categoriesLoading } = useQuery({ queryKey: ["categories"], queryFn: categoriesApi.fetchCategories, staleTime: 5 * 60_000 });
+  const { data: categories = [] } = useQuery({ queryKey: ["categories"], queryFn: categoriesApi.fetchCategories, staleTime: 5 * 60_000 });
 
   const createMutation = useMutation({
     mutationFn: productsApi.createProduct,
@@ -94,8 +94,8 @@ export default function ProductManagement() {
       const productData = { name: formData.name, price: parseFloat(formData.price), stock: parseInt(formData.stock) || 0, barcode: formData.barcode || undefined, image_url: imageUrl, category_id: formData.category_id || undefined };
       if (editingProduct) updateMutation.mutate({ id: editingProduct.id, updates: productData });
       else createMutation.mutate(productData);
-    } catch (err: any) {
-      toast({ title: "خطأ في رفع الصورة", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      toast({ title: "خطأ في رفع الصورة", description: (err as Error).message, variant: "destructive" });
     }
   };
 
@@ -246,7 +246,7 @@ export default function ProductManagement() {
                 <SelectTrigger className="w-36"><Filter className="w-4 h-4 ml-2" /><SelectValue placeholder="الفئة" /></SelectTrigger>
                 <SelectContent><SelectItem value="all">جميع الفئات</SelectItem>{categories.map((cat: Category) => <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>)}</SelectContent>
               </Select>
-              <Select value={stockFilter} onValueChange={(v: any) => setStockFilter(v)}>
+              <Select value={stockFilter} onValueChange={(v) => setStockFilter(v)}>
                 <SelectTrigger className="w-36"><AlertTriangle className="w-4 h-4 ml-2" /><SelectValue placeholder="المخزون" /></SelectTrigger>
                 <SelectContent><SelectItem value="all">جميع المنتجات</SelectItem><SelectItem value="low">مخزون منخفض</SelectItem><SelectItem value="out">نفذ المخزون</SelectItem></SelectContent>
               </Select>

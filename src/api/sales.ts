@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import { toNumber } from "@/lib/db";
+import { toNumber, type RawRow } from "@/lib/db";
 import type { SaleInvoice, SaleInvoiceItem } from "@/types";
 
 const INVOICE_TABLE = "sales_invoices";
@@ -8,8 +8,29 @@ const PRODUCTS_TABLE = "products";
 const CUSTOMERS_TABLE = "customers";
 const SETTINGS_TABLE = "store_settings";
 
-function mapInvoice(row: Record<string, unknown>): SaleInvoice {
-  const raw = row as any;
+export async function getNextInvoiceNumber(prefix = "INV-"): Promise<string> {
+  const today = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+
+  const { data, error } = await supabase
+    .from(INVOICE_TABLE)
+    .select("invoice_number")
+    .like("invoice_number", `${prefix}${today}%`)
+    .order("created_at", { ascending: false })
+    .limit(1);
+
+  if (error || !data || data.length === 0) {
+    return `${prefix}${today}-0001`;
+  }
+
+  const lastNumber = (data[0] as Record<string, unknown>).invoice_number as string;
+  const seqPart = lastNumber.split("-").pop() || "0000";
+  const nextSeq = (parseInt(seqPart, 10) + 1).toString().padStart(4, "0");
+
+  return `${prefix}${today}-${nextSeq}`;
+}
+
+function mapInvoice(row: RawRow): SaleInvoice {
+  const raw = row as Record<string, unknown>;
   return {
     id: raw.id,
     invoice_number: raw.invoice_number,
@@ -41,7 +62,7 @@ function mapInvoice(row: Record<string, unknown>): SaleInvoice {
       total_debt: toNumber(raw.customer.total_debt),
       debt_limit: toNumber(raw.customer.debt_limit),
     } : undefined,
-    items: (raw.items || []).map((item: any) => ({
+    items: ((raw as RawRow).items as RawRow[] || []).map((item) => ({
       id: item.id,
       invoice_id: item.invoice_id,
       product_id: item.product_id,
@@ -100,8 +121,8 @@ export async function createSaleInvoice(
       discount_value: invoice.discount_value,
       tax_rate: invoice.tax_rate,
       tax_total: invoice.tax_total,
-      second_tax_rate: (invoice as any).second_tax_rate || 0,
-      second_tax_total: (invoice as any).second_tax_total || 0,
+      second_tax_rate: invoice.second_tax_rate || 0,
+      second_tax_total: invoice.second_tax_total || 0,
       total: invoice.total,
       payment_method: invoice.payment_method,
       paid_amount: invoice.paid_amount,
@@ -142,7 +163,7 @@ export async function createSaleInvoice(
       .select("id, stock")
       .in("id", productIds);
 
-    const stockMap = new Map((stocks || []).map((p: any) => [p.id, p.stock || 0]));
+    const stockMap = new Map((stocks || []).map((p: RawRow) => [p.id as string, (p.stock as number) || 0]));
 
     const updates = productIds.map(async (productId) => {
       const currentStock = stockMap.get(productId) ?? 0;

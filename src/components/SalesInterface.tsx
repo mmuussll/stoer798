@@ -190,7 +190,7 @@ export default function SalesInterface() {
   };
 
   // Session guard
-  if (!activeSession && !_showSessionDialog && user) {
+  if (!activeSession && !showSessionDialog && user) {
     return (
       <SessionGuard
         openingBalance={openingBalance}

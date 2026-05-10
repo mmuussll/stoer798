@@ -9,12 +9,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import {
+  Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious,
+} from "@/components/ui/pagination";
 import {
   Landmark, Search, Plus, DollarSign, Wallet, Calendar, AlertTriangle,
   User2, Phone, FileText, Banknote, CreditCard,
-  ArrowRightLeft, CheckCircle2, Clock4, History, Filter,
-  ShoppingBag,
+  ArrowRightLeft, CheckCircle2, Clock4, History, Filter, ShoppingBag,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -33,15 +34,11 @@ const STATUS_MAP: Record<string, { label: string; color: string; icon: Component
 };
 
 const PAYMENT_ICONS: Record<string, ComponentType<{ className?: string }>> = {
-  cash: DollarSign,
-  card: CreditCard,
-  transfer: ArrowRightLeft,
+  cash: DollarSign, card: CreditCard, transfer: ArrowRightLeft,
 };
 
 const PAYMENT_LABELS: Record<string, string> = {
-  cash: "نقداً",
-  card: "بطاقة",
-  transfer: "تحويل",
+  cash: "نقداً", card: "بطاقة", transfer: "تحويل",
 };
 
 function getDaysDiff(dateStr?: string): number {
@@ -60,6 +57,18 @@ function getDueStatus(dateStr?: string): { label: string; color: string } {
   if (days <= 3) return { label: `متبقي ${days} أيام`, color: "text-blue-600" };
   return { label: `متبقي ${days} يوم`, color: "text-emerald-600" };
 }
+
+function todayStr(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function defaultDueDate(): string {
+  return new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
+// ============================================================
+// المكون الرئيسي
+// ============================================================
 
 export default function DebtManagement() {
   const { user } = useAuth();
@@ -83,85 +92,105 @@ export default function DebtManagement() {
 
   // Add debt dialog
   const [showAddDebtDialog, setShowAddDebtDialog] = useState(false);
-  const [addDebtCustomerSearch, setAddDebtCustomerSearch] = useState("");
-  const [addDebtSelectedCustomer, setAddDebtSelectedCustomer] = useState<Customer | null>(null);
-  const [addDebtCustomerName, setAddDebtCustomerName] = useState("");
-  const [addDebtCustomerPhone, setAddDebtCustomerPhone] = useState("");
-  const [addDebtAmount, setAddDebtAmount] = useState("");
-  const [addDebtDueDate, setAddDebtDueDate] = useState("");
-  const [addDebtDebtorPhone, setAddDebtDebtorPhone] = useState("");
-  const [addDebtGuarantorName, setAddDebtGuarantorName] = useState("");
-  const [addDebtGuarantorPhone, setAddDebtGuarantorPhone] = useState("");
-  const [addDebtNote, setAddDebtNote] = useState("");
-  const [addDebtItems, setAddDebtItems] = useState("");
-  const [addDebtInitialPayment, setAddDebtInitialPayment] = useState("");
-  const [addDebtPaymentMethod, setAddDebtPaymentMethod] = useState<"cash" | "card" | "transfer">("cash");
+  const [addCustomerSearch, setAddCustomerSearch] = useState("");
+  const [addSelectedCustomer, setAddSelectedCustomer] = useState<Customer | null>(null);
+  const [addCustomerName, setAddCustomerName] = useState("");
+  const [addCustomerPhone, setAddCustomerPhone] = useState("");
+  const [addAmount, setAddAmount] = useState("");
+  const [addDueDate, setAddDueDate] = useState(defaultDueDate());
+  const [addDebtorPhone, setAddDebtorPhone] = useState("");
+  const [addGuarantorName, setAddGuarantorName] = useState("");
+  const [addGuarantorPhone, setAddGuarantorPhone] = useState("");
+  const [addNote, setAddNote] = useState("");
+  const [addItems, setAddItems] = useState("");
+  const [addInitPayment, setAddInitPayment] = useState("");
+  const [addPaymentMethod, setAddPaymentMethod] = useState<"cash" | "card" | "transfer">("cash");
 
-  // Search customers for add-debt dialog
-  const { data: searchedCustomers = [], isLoading: customerSearchLoading } = useQuery({
-    queryKey: ["add-debt-customer-search", addDebtCustomerSearch],
-    queryFn: () => customersApi.searchCustomers(addDebtCustomerSearch),
-    enabled: addDebtCustomerSearch.length >= 2,
+  // ============ Queries ============
+
+  const { data: searchedCustomers = [], isLoading: searchLoading } = useQuery({
+    queryKey: ["add-debt-customer-search", addCustomerSearch],
+    queryFn: () => customersApi.searchCustomers(addCustomerSearch),
+    enabled: addCustomerSearch.trim().length >= 2,
+    staleTime: 10000,
   });
 
-  // Summary
   const { data: summary, isLoading: summaryLoading } = useQuery({
     queryKey: ["debt-summary"],
     queryFn: debtsApi.getDebtSummary,
-    refetchInterval: 30000,
   });
 
-  // All debts
-  const { data: debts = [], isLoading: debtsLoading } = useQuery({
+  const { data: debts = [], isLoading: debtsLoading, isError: debtsError } = useQuery({
     queryKey: ["debts"],
     queryFn: debtsApi.fetchDebts,
-    refetchInterval: 30000,
   });
+
+  // ============ Derived Data ============
 
   const filteredDebts = useMemo(() => {
     let result = debts;
-    if (statusFilter !== "all") {
-      result = result.filter((d) => d.status === statusFilter);
-    }
+    if (statusFilter !== "all") result = result.filter((d) => d.status === statusFilter);
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
       result = result.filter(
         (d) =>
-          (d.customer?.name && d.customer.name.toLowerCase().includes(term)) ||
-          (d.customer?.phone && d.customer.phone.includes(term)) ||
-          (d.invoice?.invoice_number && d.invoice.invoice_number.toLowerCase().includes(term))
+          d.customer_name.toLowerCase().includes(term) ||
+          d.customer_phone.includes(term) ||
+          (d.invoice_number && d.invoice_number.toLowerCase().includes(term))
       );
     }
     return result;
   }, [debts, statusFilter, searchTerm]);
 
-  const totalPages = Math.ceil(filteredDebts.length / ITEMS_PER_PAGE);
-  const paginatedDebts = filteredDebts.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  const totalPages = Math.max(1, Math.ceil(filteredDebts.length / ITEMS_PER_PAGE));
+  const paginatedDebts = filteredDebts.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   const activeStats = useMemo(() => {
     const active = debts.filter((d) => d.status !== "paid");
-    const totalRemaining = active.reduce((s, d) => s + d.remaining_amount, 0);
-    const overdue = active.filter(
-      (d) => d.due_date && d.due_date < new Date().toISOString().slice(0, 10)
-    );
+    const overdue = active.filter((d) => d.due_date && d.due_date < todayStr());
     return {
       totalActive: active.length,
-      totalRemaining,
       totalOverdue: overdue.length,
       totalOverdueAmount: overdue.reduce((s, d) => s + d.remaining_amount, 0),
     };
   }, [debts]);
 
+  // ============ Payment Mutation ============
+
   const openPaymentDialog = (debt: Debt) => {
     setSelectedDebt(debt);
-    setPaymentAmount(debt.remaining_amount.toString());
+    setPaymentAmount(debt.remaining_amount.toFixed(2));
     setPaymentMethod("cash");
     setPaymentNote("");
     setShowPaymentDialog(true);
   };
+
+  const paymentMutation = useMutation({
+    mutationFn: () =>
+      debtsApi.createDebtPayment({
+        debt_id: selectedDebt!.id,
+        customer_id: selectedDebt!.customer_id,
+        amount: parseFloat(paymentAmount) || 0,
+        payment_method: paymentMethod,
+        payment_date: todayStr(),
+        payment_time: new Date().toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" }),
+        notes: paymentNote || undefined,
+        cashier: user?.email || "البائع",
+        user_id: user?.id,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["debts"] });
+      queryClient.invalidateQueries({ queryKey: ["debt-summary"] });
+      toast({ title: "تم تسجيل الدفعة بنجاح" });
+      setShowPaymentDialog(false);
+    },
+    onError: (err: Error) => {
+      console.error("فشل تسجيل الدفعة:", err);
+      toast({ title: "فشل تسجيل الدفعة", description: err.message, variant: "destructive" });
+    },
+  });
+
+  // ============ Detail Dialog ============
 
   const openDetailDialog = async (debt: Debt) => {
     setSelectedDebt(debt);
@@ -174,116 +203,103 @@ export default function DebtManagement() {
     }
   };
 
-  const paymentMutation = useMutation({
-    mutationFn: () =>
-      debtsApi.createDebtPayment({
-        debt_id: selectedDebt!.id,
-        customer_id: selectedDebt!.customer_id,
-        invoice_id: selectedDebt?.invoice_id || undefined,
-        amount: parseFloat(paymentAmount) || 0,
-        payment_method: paymentMethod,
-        payment_date: new Date().toISOString().slice(0, 10),
-        payment_time: new Date().toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" }),
-        notes: paymentNote || undefined,
-        cashier: user?.email || "البائع",
-        user_id: user?.id,
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["debts"] });
-      queryClient.invalidateQueries({ queryKey: ["debt-summary"] });
-      queryClient.invalidateQueries({ queryKey: ["customers"] });
-      toast({ title: "تم تسجيل الدفعة بنجاح" });
-      setShowPaymentDialog(false);
-      setSelectedDebt(null);
-    },
-    onError: (err: Error) =>
-      toast({ title: "خطأ", description: err.message, variant: "destructive" }),
-  });
+  // ============ Add Debt Mutation ============
 
-  const openAddDebtDialog = () => {
-    setAddDebtCustomerSearch("");
-    setAddDebtSelectedCustomer(null);
-    setAddDebtCustomerName("");
-    setAddDebtCustomerPhone("");
-    setAddDebtAmount("");
-    setAddDebtDueDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10));
-    setAddDebtDebtorPhone("");
-    setAddDebtGuarantorName("");
-    setAddDebtGuarantorPhone("");
-    setAddDebtNote("");
-    setAddDebtItems("");
-    setAddDebtInitialPayment("");
-    setAddDebtPaymentMethod("cash");
+  const openAddDialog = () => {
+    setAddCustomerSearch("");
+    setAddSelectedCustomer(null);
+    setAddCustomerName("");
+    setAddCustomerPhone("");
+    setAddAmount("");
+    setAddDueDate(defaultDueDate());
+    setAddDebtorPhone("");
+    setAddGuarantorName("");
+    setAddGuarantorPhone("");
+    setAddNote("");
+    setAddItems("");
+    setAddInitPayment("");
+    setAddPaymentMethod("cash");
     setShowAddDebtDialog(true);
   };
 
   const addDebtMutation = useMutation({
     mutationFn: async () => {
-      const amount = parseFloat(addDebtAmount) || 0;
-      const initPayment = parseFloat(addDebtInitialPayment) || 0;
+      const amount = parseFloat(addAmount) || 0;
+      const initPayment = parseFloat(addInitPayment) || 0;
       const remaining = Math.max(0, amount - initPayment);
 
-      let customerId = addDebtSelectedCustomer?.id;
-      if (!customerId) {
-        const custName = addDebtCustomerName.trim() || addDebtCustomerPhone.trim() || addDebtDebtorPhone.trim() || "زبون بدون اسم";
-        if (custName) {
-          const newCustomer = await customersApi.createCustomer({
-            name: custName,
-            phone: addDebtCustomerPhone.trim() || addDebtDebtorPhone.trim() || undefined,
-            total_debt: 0,
-            debt_limit: 0,
-          });
-          customerId = newCustomer.id;
+      // Determine customer info
+      let customerId: string;
+      let customerName: string;
+      let customerPhone: string;
+
+      if (addSelectedCustomer) {
+        customerId = addSelectedCustomer.id;
+        customerName = addSelectedCustomer.name;
+        customerPhone = addSelectedCustomer.phone || "";
+      } else {
+        const name = addCustomerName.trim() || addCustomerPhone.trim() || addDebtorPhone.trim() || "زبون";
+        const phone = addCustomerPhone.trim() || addDebtorPhone.trim() || "";
+        try {
+          const c = await customersApi.createCustomer({ name, phone: phone || undefined, total_debt: 0, debt_limit: 0 });
+          customerId = c.id;
+          customerName = c.name;
+          customerPhone = c.phone || phone || "";
+        } catch (custErr) {
+          throw new Error(`فشل إنشاء الزبون: ${(custErr as Error).message}`);
         }
       }
 
-      if (!customerId) throw new Error("يرجى إدخال اسم أو رقم هاتف للزبون على الأقل");
+      if (!customerId) throw new Error("تعذر تحديد الزبون");
 
-      // Parse debt items from textarea (one per line: productName xQty)
+      // Parse items
       let parsedItems: DebtItem[] = [];
-      if (addDebtItems.trim()) {
-        parsedItems = addDebtItems
+      if (addItems.trim()) {
+        parsedItems = addItems
           .split("\n")
-          .map((line) => line.trim())
-          .filter((line) => line.length > 0)
+          .map((l) => l.trim())
+          .filter(Boolean)
           .map((line) => {
-            const match = line.match(/^(.+?)\s*x\s*(\d+)$/i);
-            if (match) {
-              return { name: match[1].trim(), price: 0, quantity: parseInt(match[2]) || 1 };
-            }
-            return { name: line, price: 0, quantity: 1 };
+            const m = line.match(/^(.+?)\s*x\s*(\d+)$/i);
+            return m
+              ? { name: m[1].trim(), price: 0, quantity: parseInt(m[2]) || 1 }
+              : { name: line, price: 0, quantity: 1 };
           });
       }
 
       const debt = await debtsApi.createDebt({
         customer_id: customerId,
-        invoice_id: undefined,
+        customer_name: customerName,
+        customer_phone: customerPhone,
         total_amount: amount,
         remaining_amount: remaining,
         status: remaining <= 0 ? "paid" : "active",
-        due_date: addDebtDueDate || undefined,
-        guarantor_name: addDebtGuarantorName || undefined,
-        guarantor_phone: addDebtGuarantorPhone || undefined,
-        debtor_phone: addDebtDebtorPhone || addDebtSelectedCustomer?.phone || addDebtCustomerPhone || undefined,
+        due_date: addDueDate || undefined,
+        guarantor_name: addGuarantorName || undefined,
+        guarantor_phone: addGuarantorPhone || undefined,
+        debtor_phone: addDebtorPhone || customerPhone || undefined,
         debt_items: parsedItems,
-        notes: addDebtNote || `دين مضاف يدوياً`,
+        notes: addNote || `دين مضاف يدوياً`,
       });
 
+      // Initial payment
       if (initPayment > 0 && remaining > 0) {
         try {
           await debtsApi.createDebtPayment({
             debt_id: debt.id,
             customer_id: debt.customer_id,
-            invoice_id: undefined,
             amount: initPayment,
-            payment_method: addDebtPaymentMethod,
-            payment_date: new Date().toISOString().slice(0, 10),
+            payment_method: addPaymentMethod,
+            payment_date: todayStr(),
             payment_time: new Date().toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" }),
-            notes: "دفعة أولية عند إنشاء الدين",
+            notes: "دفعة أولية",
             cashier: user?.email || "البائع",
             user_id: user?.id,
           });
-        } catch { /* intentional no-op: initial payment failure is non-critical */ }
+        } catch (payErr) {
+          console.error("فشل تسجيل الدفعة الأولية:", payErr);
+          toast({ title: "تنبيه", description: "تم إضافة الدين لكن فشل تسجيل الدفعة الأولية", variant: "destructive" });
+        }
       }
 
       return debt;
@@ -297,28 +313,16 @@ export default function DebtManagement() {
     },
     onError: (err: Error) => {
       console.error("فشل إضافة الدين:", err);
-      toast({
-        title: "فشل إضافة الدين",
-        description: err.message || "حدث خطأ غير معروف، تحقق من اتصال الانترنت أو صلاحيات الحساب",
-        variant: "destructive",
-      });
+      toast({ title: "فشل إضافة الدين", description: err.message, variant: "destructive" });
     },
   });
 
-  const StatCard = ({ title, value, icon: Icon, color, bg, sub }: { title: string; value: string; icon: ComponentType<{ className?: string }>; color: string; bg: string; sub?: string }) => (
-    <Card className={bg}>
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium">{title}</p>
-            <p className={`text-2xl font-bold mt-1 ${color}`}>{value}</p>
-            {sub && <p className="text-xs text-gray-500 mt-0.5">{sub}</p>}
-          </div>
-          <Icon className={`w-9 h-9 opacity-40 ${color}`} />
-        </div>
-      </CardContent>
-    </Card>
-  );
+  const canAddDebt =
+    (addSelectedCustomer || addCustomerName.trim() || addCustomerPhone.trim() || addDebtorPhone.trim()) &&
+    addAmount && parseFloat(addAmount) > 0 &&
+    (!addInitPayment || parseFloat(addInitPayment) <= (parseFloat(addAmount) || 0));
+
+  // ============ Loading State ============
 
   if (summaryLoading || debtsLoading) {
     return (
@@ -334,6 +338,25 @@ export default function DebtManagement() {
     );
   }
 
+  // ============ Render ============
+
+  const StatCard = ({ title, value, icon: Icon, color, bg, sub }: {
+    title: string; value: string; icon: ComponentType<{ className?: string }>; color: string; bg: string; sub?: string;
+  }) => (
+    <Card className={bg}>
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium">{title}</p>
+            <p className={`text-2xl font-bold mt-1 ${color}`}>{value}</p>
+            {sub && <p className="text-xs text-gray-500 mt-0.5">{sub}</p>}
+          </div>
+          <Icon className={`w-9 h-9 opacity-40 ${color}`} />
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <div className="space-y-6 p-4" dir="rtl">
       {/* Header */}
@@ -342,56 +365,42 @@ export default function DebtManagement() {
           <h1 className="text-2xl font-bold text-gray-900">إدارة الديون</h1>
           <p className="text-sm text-gray-500 mt-1">متابعة وإدارة ديون الزبائن والمدفوعات</p>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={openAddDebtDialog} className="bg-red-600 hover:bg-red-700 gap-2">
-            <Plus className="w-4 h-4" />
-            إضافة دين جديد
-          </Button>
-        </div>
+        <Button onClick={openAddDialog} className="bg-red-600 hover:bg-red-700 gap-2">
+          <Plus className="w-4 h-4" /> إضافة دين جديد
+        </Button>
       </div>
+
+      {/* Error banner */}
+      {debtsError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">
+          فشل تحميل قائمة الديون. تحقق من اتصال الانترنت أو صلاحيات الحساب.
+        </div>
+      )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <StatCard
-          title="إجمالي الديون المستحقة"
-          value={`${summary?.total_outstanding.toFixed(2) || "0.00"} ${CURRENCY}`}
-          icon={Landmark}
-          color="text-blue-600"
-          bg="bg-blue-50 border border-blue-200"
-          sub={`${activeStats.totalActive} دين نشط`}
-        />
-        <StatCard
-          title="الديون المتأخرة"
+        <StatCard title="إجمالي الديون المستحقة"
+          value={`${(summary?.total_outstanding || 0).toFixed(2)} ${CURRENCY}`}
+          icon={Landmark} color="text-blue-600" bg="bg-blue-50 border border-blue-200"
+          sub={`${activeStats.totalActive} دين نشط`} />
+        <StatCard title="الديون المتأخرة"
           value={`${activeStats.totalOverdueAmount.toFixed(2)} ${CURRENCY}`}
           icon={AlertTriangle}
           color={activeStats.totalOverdue > 0 ? "text-red-600" : "text-gray-600"}
           bg={activeStats.totalOverdue > 0 ? "bg-red-50 border border-red-200" : "bg-gray-50"}
-          sub={`${activeStats.totalOverdue} دين متأخر`}
-        />
-        <StatCard
-          title="الديون النشطة"
+          sub={`${activeStats.totalOverdue} دين متأخر`} />
+        <StatCard title="الديون النشطة"
           value={`${(summary?.total_active || 0).toFixed(2)} ${CURRENCY}`}
-          icon={Clock4}
-          color="text-amber-600"
-          bg="bg-amber-50 border border-amber-200"
-          sub={`غير متأخرة`}
-        />
-        <StatCard
-          title="زبائن مدينون"
+          icon={Clock4} color="text-amber-600" bg="bg-amber-50 border border-amber-200"
+          sub="غير متأخرة" />
+        <StatCard title="زبائن مدينون"
           value={String(summary?.total_customers_with_debt || 0)}
-          icon={User2}
-          color="text-violet-600"
-          bg="bg-violet-50 border border-violet-200"
-          sub="لديهم ديون نشطة"
-        />
-        <StatCard
-          title="إجمالي الديون المسددة"
+          icon={User2} color="text-violet-600" bg="bg-violet-50 border border-violet-200"
+          sub="لديهم ديون نشطة" />
+        <StatCard title="إجمالي الديون المسددة"
           value={`${debts.filter((d) => d.status === "paid").reduce((s, d) => s + d.total_amount, 0).toFixed(2)} ${CURRENCY}`}
-          icon={CheckCircle2}
-          color="text-emerald-600"
-          bg="bg-emerald-50 border border-emerald-200"
-          sub="تم تسديدها بالكامل"
-        />
+          icon={CheckCircle2} color="text-emerald-600" bg="bg-emerald-50 border border-emerald-200"
+          sub="تم تسديدها بالكامل" />
       </div>
 
       {/* Top Customers with Debt */}
@@ -439,12 +448,8 @@ export default function DebtManagement() {
           <div className="flex gap-3 items-center flex-wrap">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input
-                value={searchTerm}
-                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                placeholder="ابحث باسم الزبون أو رقم الفاتورة..."
-                className="pr-10"
-              />
+              <Input value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                placeholder="ابحث باسم الزبون أو رقم الفاتورة..." className="pr-10" />
             </div>
             <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setCurrentPage(1); }}>
               <SelectTrigger className="w-[160px]">
@@ -499,8 +504,7 @@ export default function DebtManagement() {
                       const StatusIcon = status.icon;
                       const dueStatus = getDueStatus(debt.due_date);
                       const paidPercent = debt.total_amount > 0
-                        ? ((debt.total_amount - debt.remaining_amount) / debt.total_amount) * 100
-                        : 0;
+                        ? ((debt.total_amount - debt.remaining_amount) / debt.total_amount) * 100 : 0;
 
                       return (
                         <TableRow key={debt.id} className="hover:bg-gray-50">
@@ -510,44 +514,34 @@ export default function DebtManagement() {
                                 <User2 className="w-3.5 h-3.5 text-gray-600" />
                               </div>
                               <div>
-                                <p className="font-medium text-sm">{debt.customer?.name || "غير معروف"}</p>
-                                {debt.customer?.phone && (
-                                  <p className="text-xs text-gray-400 flex items-center gap-1"><Phone className="w-2.5 h-2.5" />{debt.customer.phone}</p>
+                                <p className="font-medium text-sm">{debt.customer_name || "غير معروف"}</p>
+                                {debt.customer_phone && (
+                                  <p className="text-xs text-gray-400 flex items-center gap-1"><Phone className="w-2.5 h-2.5" />{debt.customer_phone}</p>
                                 )}
                               </div>
                             </div>
                           </TableCell>
                           <TableCell>
-                            {debt.invoice ? (
-                              <Badge variant="outline" className="text-xs font-mono text-blue-600">
-                                {debt.invoice.invoice_number}
-                              </Badge>
+                            {debt.invoice_number ? (
+                              <Badge variant="outline" className="text-xs font-mono text-blue-600">{debt.invoice_number}</Badge>
                             ) : (
                               <span className="text-gray-300 text-xs">-</span>
                             )}
                           </TableCell>
-                          <TableCell className="font-semibold">
-                            {debt.total_amount.toFixed(2)} {CURRENCY}
-                          </TableCell>
+                          <TableCell className="font-semibold">{debt.total_amount.toFixed(2)} {CURRENCY}</TableCell>
                           <TableCell>
                             <div>
-                              <p className="font-bold text-red-600">
-                                {debt.remaining_amount.toFixed(2)} {CURRENCY}
-                              </p>
+                              <p className="font-bold text-red-600">{debt.remaining_amount.toFixed(2)} {CURRENCY}</p>
                               {paidPercent > 0 && (
                                 <div className="w-full h-1.5 bg-gray-200 rounded-full mt-1 max-w-[100px]">
-                                  <div
-                                    className="h-1.5 bg-emerald-500 rounded-full"
-                                    style={{ width: `${paidPercent}%` }}
-                                  />
+                                  <div className="h-1.5 bg-emerald-500 rounded-full" style={{ width: `${paidPercent}%` }} />
                                 </div>
                               )}
                             </div>
                           </TableCell>
                           <TableCell className="text-center">
                             <Badge variant="outline" className={`text-xs flex items-center gap-1 w-fit mx-auto ${status.color}`}>
-                              <StatusIcon className="w-3 h-3" />
-                              {status.label}
+                              <StatusIcon className="w-3 h-3" />{status.label}
                             </Badge>
                           </TableCell>
                           <TableCell>
@@ -560,23 +554,13 @@ export default function DebtManagement() {
                           </TableCell>
                           <TableCell className="text-center">
                             <div className="flex items-center justify-center gap-1">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 text-blue-600 hover:bg-blue-50"
-                                onClick={() => openDetailDialog(debt)}
-                                title="التفاصيل والمدفوعات"
-                              >
+                              <Button variant="ghost" size="sm" className="h-8 text-blue-600 hover:bg-blue-50"
+                                onClick={() => openDetailDialog(debt)} title="التفاصيل والمدفوعات">
                                 <History className="w-3.5 h-3.5" />
                               </Button>
                               {debt.status !== "paid" && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 text-emerald-600 hover:bg-emerald-50"
-                                  onClick={() => openPaymentDialog(debt)}
-                                  title="تسجيل دفعة"
-                                >
+                                <Button variant="ghost" size="sm" className="h-8 text-emerald-600 hover:bg-emerald-50"
+                                  onClick={() => openPaymentDialog(debt)} title="تسجيل دفعة">
                                   <Banknote className="w-3.5 h-3.5" />
                                 </Button>
                               )}
@@ -594,10 +578,8 @@ export default function DebtManagement() {
                   <Pagination>
                     <PaginationContent>
                       <PaginationItem>
-                        <PaginationPrevious
-                          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                          className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                        />
+                        <PaginationPrevious onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                          className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"} />
                       </PaginationItem>
                       {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                         <PaginationItem key={page}>
@@ -607,10 +589,8 @@ export default function DebtManagement() {
                         </PaginationItem>
                       ))}
                       <PaginationItem>
-                        <PaginationNext
-                          onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                        />
+                        <PaginationNext onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"} />
                       </PaginationItem>
                     </PaginationContent>
                   </Pagination>
@@ -621,18 +601,15 @@ export default function DebtManagement() {
         </CardContent>
       </Card>
 
-      {/* Payment Dialog */}
+      {/* ==================== Payment Dialog ==================== */}
       <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
         <DialogContent dir="rtl" className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Banknote className="w-5 h-5 text-emerald-600" />
-              تسجيل دفعة دين
+              <Banknote className="w-5 h-5 text-emerald-600" />تسجيل دفعة دين
             </DialogTitle>
             <DialogDescription>
-              {selectedDebt?.customer?.name && (
-                <span>تسجيل دفعة من الزبون: <strong>{selectedDebt.customer.name}</strong></span>
-              )}
+              {selectedDebt && <span>تسجيل دفعة من الزبون: <strong>{selectedDebt.customer_name}</strong></span>}
             </DialogDescription>
           </DialogHeader>
           {selectedDebt && (
@@ -647,172 +624,85 @@ export default function DebtManagement() {
                   <p className="font-bold text-lg text-red-600">{selectedDebt.remaining_amount.toFixed(2)} {CURRENCY}</p>
                 </div>
               </div>
-
               <div>
                 <label className="text-sm font-medium mb-1 block">المبلغ المدفوع <span className="text-red-500">*</span></label>
-                <Input
-                  type="number"
-                  value={paymentAmount}
-                  onChange={(e) => setPaymentAmount(e.target.value)}
-                  placeholder="0.00"
-                  dir="ltr"
-                  min={0}
-                  max={selectedDebt.remaining_amount}
-                  autoFocus
-                />
+                <Input type="number" value={paymentAmount} onChange={(e) => setPaymentAmount(e.target.value)}
+                  placeholder="0.00" dir="ltr" min={0} max={selectedDebt.remaining_amount} autoFocus />
               </div>
-
               <div>
                 <label className="text-sm font-medium mb-1 block">طريقة الدفع</label>
                 <div className="flex gap-2">
                   {(["cash", "card", "transfer"] as const).map((m) => {
                     const Icon = PAYMENT_ICONS[m];
                     return (
-                      <Button
-                        key={m}
-                        variant={paymentMethod === m ? "default" : "outline"}
-                        size="sm"
-                        className="flex-1 gap-1"
-                        onClick={() => setPaymentMethod(m)}
-                      >
-                        <Icon className="w-3.5 h-3.5" />
-                        {PAYMENT_LABELS[m]}
+                      <Button key={m} variant={paymentMethod === m ? "default" : "outline"} size="sm" className="flex-1 gap-1"
+                        onClick={() => setPaymentMethod(m)}>
+                        <Icon className="w-3.5 h-3.5" />{PAYMENT_LABELS[m]}
                       </Button>
                     );
                   })}
                 </div>
               </div>
-
               <div>
                 <label className="text-sm font-medium mb-1 block">ملاحظات</label>
-                <Input
-                  value={paymentNote}
-                  onChange={(e) => setPaymentNote(e.target.value)}
-                  placeholder="ملاحظات إضافية..."
-                />
+                <Input value={paymentNote} onChange={(e) => setPaymentNote(e.target.value)} placeholder="ملاحظات إضافية..." />
               </div>
             </div>
           )}
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setShowPaymentDialog(false)}>إلغاء</Button>
-            <Button
-              className="bg-emerald-600 hover:bg-emerald-700"
-              onClick={() => paymentMutation.mutate()}
-              disabled={
-                !paymentAmount ||
-                parseFloat(paymentAmount) <= 0 ||
-                parseFloat(paymentAmount) > (selectedDebt?.remaining_amount || 0) ||
-                paymentMutation.isPending
-              }
-            >
+            <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={() => paymentMutation.mutate()}
+              disabled={!paymentAmount || parseFloat(paymentAmount) <= 0 || parseFloat(paymentAmount) > (selectedDebt?.remaining_amount || 0) || paymentMutation.isPending}>
               {paymentMutation.isPending ? "جاري التسجيل..." : "تسجيل الدفعة"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Debt Detail Dialog */}
+      {/* ==================== Detail Dialog ==================== */}
       <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
         <DialogContent dir="rtl" className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <History className="w-5 h-5 text-blue-600" />
-              تفاصيل الدين والمدفوعات
+              <History className="w-5 h-5 text-blue-600" />تفاصيل الدين والمدفوعات
             </DialogTitle>
           </DialogHeader>
           {selectedDebt && (
             <div className="space-y-4">
-              {/* Debt Info */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 bg-gray-50 rounded-lg">
-                <div>
-                  <p className="text-xs text-gray-500">الزبون</p>
-                  <p className="font-semibold text-sm">{selectedDebt.customer?.name || "-"}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">الفاتورة</p>
-                  <p className="font-semibold text-sm font-mono">{selectedDebt.invoice?.invoice_number || "-"}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">المبلغ الكلي</p>
-                  <p className="font-bold text-blue-600">{selectedDebt.total_amount.toFixed(2)} {CURRENCY}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">المتبقي</p>
-                  <p className="font-bold text-red-600">{selectedDebt.remaining_amount.toFixed(2)} {CURRENCY}</p>
-                </div>
+                <div><p className="text-xs text-gray-500">الزبون</p><p className="font-semibold text-sm">{selectedDebt.customer_name || "-"}</p></div>
+                <div><p className="text-xs text-gray-500">الفاتورة</p><p className="font-semibold text-sm font-mono">{selectedDebt.invoice_number || "-"}</p></div>
+                <div><p className="text-xs text-gray-500">المبلغ الكلي</p><p className="font-bold text-blue-600">{selectedDebt.total_amount.toFixed(2)} {CURRENCY}</p></div>
+                <div><p className="text-xs text-gray-500">المتبقي</p><p className="font-bold text-red-600">{selectedDebt.remaining_amount.toFixed(2)} {CURRENCY}</p></div>
               </div>
-
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                <div>
-                  <span className="text-gray-500">الحالة: </span>
-                  <Badge variant="outline" className={STATUS_MAP[selectedDebt.status]?.color}>
-                    {STATUS_MAP[selectedDebt.status]?.label}
-                  </Badge>
-                </div>
-                <div>
-                  <span className="text-gray-500">تاريخ الاستحقاق: </span>
-                  <span className={getDueStatus(selectedDebt.due_date).color}>
-                    {selectedDebt.due_date || "غير محدد"}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-gray-500">المدفوع: </span>
-                  <span className="text-emerald-600 font-semibold">
-                    {(selectedDebt.total_amount - selectedDebt.remaining_amount).toFixed(2)} {CURRENCY}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-gray-500">نسبة السداد: </span>
-                  <span className="text-emerald-600 font-semibold">
-                    {selectedDebt.total_amount > 0
-                      ? ((1 - selectedDebt.remaining_amount / selectedDebt.total_amount) * 100).toFixed(1)
-                      : "0"}%
-                  </span>
-                </div>
+                <div><span className="text-gray-500">الحالة: </span><Badge variant="outline" className={STATUS_MAP[selectedDebt.status]?.color}>{STATUS_MAP[selectedDebt.status]?.label}</Badge></div>
+                <div><span className="text-gray-500">تاريخ الاستحقاق: </span><span className={getDueStatus(selectedDebt.due_date).color}>{selectedDebt.due_date || "غير محدد"}</span></div>
+                <div><span className="text-gray-500">المدفوع: </span><span className="text-emerald-600 font-semibold">{(selectedDebt.total_amount - selectedDebt.remaining_amount).toFixed(2)} {CURRENCY}</span></div>
+                <div><span className="text-gray-500">نسبة السداد: </span><span className="text-emerald-600 font-semibold">{selectedDebt.total_amount > 0 ? ((1 - selectedDebt.remaining_amount / selectedDebt.total_amount) * 100).toFixed(1) : "0"}%</span></div>
               </div>
-
               {selectedDebt.notes && (
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
                   <p className="text-xs text-amber-700 font-medium mb-1">ملاحظات:</p>
                   <p className="text-sm text-amber-800">{selectedDebt.notes}</p>
                 </div>
               )}
-
-              {/* Guarantor Info */}
               {(selectedDebt.guarantor_name || selectedDebt.guarantor_phone) && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                   <p className="text-xs text-blue-700 font-medium mb-2">بيانات الكفيل:</p>
                   <div className="grid grid-cols-2 gap-2 text-sm">
-                    {selectedDebt.guarantor_name && (
-                      <div>
-                        <span className="text-gray-500">اسم الكفيل: </span>
-                        <span className="font-semibold">{selectedDebt.guarantor_name}</span>
-                      </div>
-                    )}
-                    {selectedDebt.guarantor_phone && (
-                      <div>
-                        <span className="text-gray-500">رقم الكفيل: </span>
-                        <span className="font-semibold" dir="ltr">{selectedDebt.guarantor_phone}</span>
-                      </div>
-                    )}
+                    {selectedDebt.guarantor_name && <div><span className="text-gray-500">اسم الكفيل: </span><span className="font-semibold">{selectedDebt.guarantor_name}</span></div>}
+                    {selectedDebt.guarantor_phone && <div><span className="text-gray-500">رقم الكفيل: </span><span className="font-semibold" dir="ltr">{selectedDebt.guarantor_phone}</span></div>}
                   </div>
                 </div>
               )}
-
-              {/* Debtor Phone */}
-              {selectedDebt.debtor_phone && selectedDebt.debtor_phone !== selectedDebt.customer?.phone && (
-                <div className="text-sm">
-                  <span className="text-gray-500">رقم هاتف المديون: </span>
-                  <span className="font-semibold" dir="ltr">{selectedDebt.debtor_phone}</span>
-                </div>
+              {selectedDebt.debtor_phone && selectedDebt.debtor_phone !== selectedDebt.customer_phone && (
+                <div className="text-sm"><span className="text-gray-500">رقم هاتف المديون: </span><span className="font-semibold" dir="ltr">{selectedDebt.debtor_phone}</span></div>
               )}
-
-              {/* Debt Items (products given) */}
               {selectedDebt.debt_items && selectedDebt.debt_items.length > 0 && (
                 <div>
                   <h3 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
-                    <ShoppingBag className="w-3.5 h-3.5 text-orange-500" />
-                    المنتجات المعطاة للمديون
+                    <ShoppingBag className="w-3.5 h-3.5 text-orange-500" />المنتجات المعطاة للمديون
                   </h3>
                   <div className="border rounded-lg overflow-hidden">
                     <Table>
@@ -828,9 +718,7 @@ export default function DebtManagement() {
                           <TableRow key={idx}>
                             <TableCell className="text-gray-400 text-xs">{idx + 1}</TableCell>
                             <TableCell className="font-medium text-sm">{item.name}</TableCell>
-                            <TableCell>
-                              <Badge variant="secondary" className="text-xs">{item.quantity}</Badge>
-                            </TableCell>
+                            <TableCell><Badge variant="secondary" className="text-xs">{item.quantity}</Badge></TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -838,19 +726,14 @@ export default function DebtManagement() {
                   </div>
                 </div>
               )}
-
               <Separator />
-
-              {/* Payments List */}
               <div>
                 <h3 className="text-base font-semibold mb-3 flex items-center gap-2">
-                  <Banknote className="w-4 h-4 text-gray-500" />
-                  سجل المدفوعات ({detailPayments.length})
+                  <Banknote className="w-4 h-4 text-gray-500" />سجل المدفوعات ({detailPayments.length})
                 </h3>
                 {detailPayments.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-8 text-gray-400">
-                    <Wallet className="w-8 h-8 mb-2" />
-                    <p className="text-sm">لا توجد مدفوعات حتى الآن</p>
+                    <Wallet className="w-8 h-8 mb-2" /><p className="text-sm">لا توجد مدفوعات حتى الآن</p>
                   </div>
                 ) : (
                   <div className="border rounded-lg overflow-hidden">
@@ -869,22 +752,9 @@ export default function DebtManagement() {
                           const PIcon = PAYMENT_ICONS[p.payment_method] || DollarSign;
                           return (
                             <TableRow key={p.id}>
-                              <TableCell>
-                                <div className="flex items-center gap-1 text-sm">
-                                  <Calendar className="w-3 h-3 text-gray-400" />
-                                  {p.payment_date}
-                                  {p.payment_time && <span className="text-gray-400 text-xs">{p.payment_time}</span>}
-                                </div>
-                              </TableCell>
-                              <TableCell className="font-bold text-emerald-600">
-                                +{p.amount.toFixed(2)} {CURRENCY}
-                              </TableCell>
-                              <TableCell>
-                                <Badge variant="outline" className="text-xs flex items-center gap-1 w-fit">
-                                  <PIcon className="w-3 h-3" />
-                                  {PAYMENT_LABELS[p.payment_method]}
-                                </Badge>
-                              </TableCell>
+                              <TableCell><div className="flex items-center gap-1 text-sm"><Calendar className="w-3 h-3 text-gray-400" />{p.payment_date}{p.payment_time && <span className="text-gray-400 text-xs">{p.payment_time}</span>}</div></TableCell>
+                              <TableCell className="font-bold text-emerald-600">+{p.amount.toFixed(2)} {CURRENCY}</TableCell>
+                              <TableCell><Badge variant="outline" className="text-xs flex items-center gap-1 w-fit"><PIcon className="w-3 h-3" />{PAYMENT_LABELS[p.payment_method]}</Badge></TableCell>
                               <TableCell className="text-sm">{p.cashier || "-"}</TableCell>
                               <TableCell className="text-sm text-gray-500">{p.notes || "-"}</TableCell>
                             </TableRow>
@@ -903,55 +773,37 @@ export default function DebtManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Add Debt Dialog */}
-      <Dialog open={showAddDebtDialog} onOpenChange={setShowAddDebtDialog}>
+      {/* ==================== Add Debt Dialog ==================== */}
+      <Dialog open={showAddDebtDialog} onOpenChange={(open) => { if (!open) setShowAddDebtDialog(false); }}>
         <DialogContent dir="rtl" className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Landmark className="w-5 h-5 text-red-600" />
-              إضافة دين جديد
+              <Landmark className="w-5 h-5 text-red-600" />إضافة دين جديد
             </DialogTitle>
-            <DialogDescription>
-              أضف ديناً جديداً على الزبون مع إمكانية تسجيل دفعة أولية
-            </DialogDescription>
+            <DialogDescription>أضف ديناً جديداً على الزبون مع إمكانية تسجيل دفعة أولية</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
-            {/* Customer Search */}
+            {/* Customer Search / Selection */}
             <div>
-              <label className="text-sm font-medium mb-1 block">
-                الزبون
-              </label>
-              {addDebtSelectedCustomer ? (
+              <label className="text-sm font-medium mb-1 block">الزبون</label>
+              {addSelectedCustomer ? (
                 <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg p-3">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center">
                       <User2 className="w-4 h-4 text-blue-600" />
                     </div>
                     <div>
-                      <p className="font-semibold text-sm">{addDebtSelectedCustomer.name}</p>
-                      {addDebtSelectedCustomer.phone && (
-                        <p className="text-xs text-gray-500 flex items-center gap-1">
-                          <Phone className="w-2.5 h-2.5" />{addDebtSelectedCustomer.phone}
-                        </p>
-                      )}
+                      <p className="font-semibold text-sm">{addSelectedCustomer.name}</p>
+                      {addSelectedCustomer.phone && <p className="text-xs text-gray-500 flex items-center gap-1"><Phone className="w-2.5 h-2.5" />{addSelectedCustomer.phone}</p>}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    {addDebtSelectedCustomer.total_debt > 0 && (
-                      <Badge variant="destructive" className="text-xs">
-                        عليه {addDebtSelectedCustomer.total_debt.toFixed(2)} {CURRENCY}
-                      </Badge>
+                    {addSelectedCustomer.total_debt > 0 && (
+                      <Badge variant="destructive" className="text-xs">عليه {addSelectedCustomer.total_debt.toFixed(2)} {CURRENCY}</Badge>
                     )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 text-gray-400 hover:text-red-500"
-                      onClick={() => {
-                        setAddDebtSelectedCustomer(null);
-                        setAddDebtCustomerSearch("");
-                      }}
-                    >
+                    <Button variant="ghost" size="sm" className="h-7 text-gray-400 hover:text-red-500"
+                      onClick={() => { setAddSelectedCustomer(null); setAddCustomerSearch(""); }}>
                       تغيير
                     </Button>
                   </div>
@@ -960,30 +812,19 @@ export default function DebtManagement() {
                 <div className="space-y-2">
                   <div className="relative">
                     <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <Input
-                      value={addDebtCustomerSearch}
-                      onChange={(e) => setAddDebtCustomerSearch(e.target.value)}
-                      placeholder="ابحث باسم الزبون أو رقم الهاتف..."
-                      className="pr-10"
-                      autoFocus
-                    />
+                    <Input value={addCustomerSearch} onChange={(e) => setAddCustomerSearch(e.target.value)}
+                      placeholder="ابحث باسم الزبون أو رقم الهاتف..." className="pr-10" autoFocus />
                   </div>
-                  {addDebtCustomerSearch.length >= 2 && (
+                  {addCustomerSearch.trim().length >= 2 && (
                     <div className="border rounded-lg max-h-40 overflow-y-auto divide-y">
-                      {customerSearchLoading ? (
+                      {searchLoading ? (
                         <div className="p-4 text-center text-sm text-gray-400">جاري البحث...</div>
                       ) : searchedCustomers.length === 0 ? (
                         <div className="p-4 text-center text-sm text-gray-400">لا توجد نتائج - أدخل بيانات الزبون يدوياً أدناه</div>
                       ) : (
                         searchedCustomers.map((c: Customer) => (
-                          <div
-                            key={c.id}
-                            className="flex items-center justify-between p-2.5 hover:bg-blue-50 cursor-pointer transition-colors"
-                            onClick={() => {
-                              setAddDebtSelectedCustomer(c);
-                              setAddDebtCustomerSearch("");
-                            }}
-                          >
+                          <div key={c.id} className="flex items-center justify-between p-2.5 hover:bg-blue-50 cursor-pointer transition-colors"
+                            onClick={() => { setAddSelectedCustomer(c); setAddCustomerSearch(""); }}>
                             <div className="flex items-center gap-2">
                               <User2 className="w-4 h-4 text-gray-400" />
                               <div>
@@ -992,9 +833,7 @@ export default function DebtManagement() {
                               </div>
                             </div>
                             {c.total_debt > 0 && (
-                              <Badge variant="outline" className="text-xs text-red-500 border-red-200">
-                                عليه {c.total_debt.toFixed(0)} {CURRENCY}
-                              </Badge>
+                              <Badge variant="outline" className="text-xs text-red-500 border-red-200">عليه {c.total_debt.toFixed(0)} {CURRENCY}</Badge>
                             )}
                           </div>
                         ))
@@ -1006,21 +845,11 @@ export default function DebtManagement() {
                     <div className="grid grid-cols-2 gap-2">
                       <div>
                         <label className="text-xs text-slate-500 block mb-0.5">الاسم</label>
-                        <Input
-                          value={addDebtCustomerName}
-                          onChange={(e) => setAddDebtCustomerName(e.target.value)}
-                          placeholder="اسم الزبون"
-                        />
+                        <Input value={addCustomerName} onChange={(e) => setAddCustomerName(e.target.value)} placeholder="اسم الزبون" />
                       </div>
                       <div>
                         <label className="text-xs text-slate-500 block mb-0.5">رقم الهاتف</label>
-                        <Input
-                          type="tel"
-                          value={addDebtCustomerPhone}
-                          onChange={(e) => setAddDebtCustomerPhone(e.target.value)}
-                          placeholder="07xxxxxxxxx"
-                          dir="ltr"
-                        />
+                        <Input type="tel" value={addCustomerPhone} onChange={(e) => setAddCustomerPhone(e.target.value)} placeholder="07xxxxxxxxx" dir="ltr" />
                       </div>
                     </div>
                   </div>
@@ -1030,47 +859,22 @@ export default function DebtManagement() {
 
             {/* Amount */}
             <div>
-              <label className="text-sm font-medium mb-1 block">
-                المبلغ
-              </label>
-              <Input
-                type="number"
-                value={addDebtAmount}
-                onChange={(e) => setAddDebtAmount(e.target.value)}
-                placeholder="0.00"
-                dir="ltr"
-                className="text-lg font-bold text-center"
-              />
-              {addDebtSelectedCustomer?.debt_limit > 0 && parseFloat(addDebtAmount) > 0 && (
-                <p className="text-xs text-gray-500 mt-1">
-                  الحد الائتماني المسموح: {addDebtSelectedCustomer.debt_limit.toFixed(2)} {CURRENCY}
-                  {parseFloat(addDebtAmount) + (addDebtSelectedCustomer.total_debt || 0) > addDebtSelectedCustomer.debt_limit && (
-                    <span className="text-red-500"> - تجاوز الحد!</span>
-                  )}
-                </p>
-              )}
+              <label className="text-sm font-medium mb-1 block">المبلغ <span className="text-red-500">*</span></label>
+              <Input type="number" value={addAmount} onChange={(e) => setAddAmount(e.target.value)}
+                placeholder="0.00" dir="ltr" className="text-lg font-bold text-center" />
             </div>
 
             {/* Due Date */}
             <div>
               <label className="text-sm font-medium mb-1 block">تاريخ الاستحقاق</label>
-              <Input
-                type="date"
-                value={addDebtDueDate}
-                onChange={(e) => setAddDebtDueDate(e.target.value)}
-              />
+              <Input type="date" value={addDueDate} onChange={(e) => setAddDueDate(e.target.value)} />
             </div>
 
             {/* Debtor Phone */}
             <div>
               <label className="text-sm font-medium mb-1 block">رقم هاتف المديون</label>
-              <Input
-                type="tel"
-                value={addDebtDebtorPhone}
-                onChange={(e) => setAddDebtDebtorPhone(e.target.value)}
-                placeholder={addDebtSelectedCustomer?.phone || "رقم الهاتف"}
-                dir="ltr"
-              />
+              <Input type="tel" value={addDebtorPhone} onChange={(e) => setAddDebtorPhone(e.target.value)}
+                placeholder={addSelectedCustomer?.phone || "رقم الهاتف"} dir="ltr" />
             </div>
 
             {/* Guarantor */}
@@ -1082,21 +886,11 @@ export default function DebtManagement() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-gray-500 block mb-1">اسم الكفيل</label>
-                  <Input
-                    value={addDebtGuarantorName}
-                    onChange={(e) => setAddDebtGuarantorName(e.target.value)}
-                    placeholder="اسم الكفيل الكامل"
-                  />
+                  <Input value={addGuarantorName} onChange={(e) => setAddGuarantorName(e.target.value)} placeholder="اسم الكفيل الكامل" />
                 </div>
                 <div>
                   <label className="text-xs text-gray-500 block mb-1">رقم هاتف الكفيل</label>
-                  <Input
-                    type="tel"
-                    value={addDebtGuarantorPhone}
-                    onChange={(e) => setAddDebtGuarantorPhone(e.target.value)}
-                    placeholder="07xxxxxxxxx"
-                    dir="ltr"
-                  />
+                  <Input type="tel" value={addGuarantorPhone} onChange={(e) => setAddGuarantorPhone(e.target.value)} placeholder="07xxxxxxxxx" dir="ltr" />
                 </div>
               </div>
             </div>
@@ -1104,29 +898,17 @@ export default function DebtManagement() {
             {/* Debt Items */}
             <div>
               <label className="text-sm font-medium mb-1 block">المنتجات / البضاعة المعطاة</label>
-              <textarea
-                value={addDebtItems}
-                onChange={(e) => setAddDebtItems(e.target.value)}
-                placeholder={`أدخل منتجاً في كل سطر...
-مثال:
-رز بسمتي x5
-زيت نباتي x3
-سكر x10`}
-                rows={4}
-                dir="rtl"
-                className="w-full rounded-md border border-gray-200 p-2 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+              <textarea value={addItems} onChange={(e) => setAddItems(e.target.value)}
+                placeholder="أدخل منتجاً في كل سطر...&#10;مثال:&#10;رز بسمتي x5&#10;زيت نباتي x3&#10;سكر x10"
+                rows={4} dir="rtl"
+                className="w-full rounded-md border border-gray-200 p-2 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
               <p className="text-xs text-gray-400 mt-1">لكل سطر: اسم المنتج ثم x ثم الكمية</p>
             </div>
 
             {/* Note */}
             <div>
               <label className="text-sm font-medium mb-1 block">ملاحظات</label>
-              <Input
-                value={addDebtNote}
-                onChange={(e) => setAddDebtNote(e.target.value)}
-                placeholder="سبب الدين، تفاصيل إضافية..."
-              />
+              <Input value={addNote} onChange={(e) => setAddNote(e.target.value)} placeholder="سبب الدين، تفاصيل إضافية..." />
             </div>
 
             {/* Initial Payment */}
@@ -1138,14 +920,8 @@ export default function DebtManagement() {
               <div className="flex gap-2">
                 <div className="flex-1">
                   <label className="text-xs text-gray-500 block mb-1">المبلغ المدفوع</label>
-                  <Input
-                    type="number"
-                    value={addDebtInitialPayment}
-                    onChange={(e) => setAddDebtInitialPayment(e.target.value)}
-                    placeholder="0.00"
-                    dir="ltr"
-                    max={addDebtAmount || undefined}
-                  />
+                  <Input type="number" value={addInitPayment} onChange={(e) => setAddInitPayment(e.target.value)}
+                    placeholder="0.00" dir="ltr" max={addAmount || undefined} />
                 </div>
                 <div className="flex-1">
                   <label className="text-xs text-gray-500 block mb-1">طريقة الدفع</label>
@@ -1154,27 +930,20 @@ export default function DebtManagement() {
                       const Icons: Record<string, ComponentType<{ className?: string }>> = { cash: DollarSign, card: CreditCard, transfer: ArrowRightLeft };
                       const Icon = Icons[m];
                       return (
-                        <Button
-                          key={m}
-                          variant={addDebtPaymentMethod === m ? "default" : "outline"}
-                          size="sm"
-                          className={`flex-1 h-8 px-2 text-xs gap-0.5 ${addDebtPaymentMethod === m ? "bg-amber-600 hover:bg-amber-700" : ""}`}
-                          onClick={() => setAddDebtPaymentMethod(m)}
-                        >
-                          <Icon className="w-3 h-3" />
-                          {m === "cash" ? "نقد" : m === "card" ? "بطاقة" : "تحويل"}
+                        <Button key={m} variant={addPaymentMethod === m ? "default" : "outline"} size="sm"
+                          className={`flex-1 h-8 px-2 text-xs gap-0.5 ${addPaymentMethod === m ? "bg-amber-600 hover:bg-amber-700" : ""}`}
+                          onClick={() => setAddPaymentMethod(m)}>
+                          <Icon className="w-3 h-3" />{m === "cash" ? "نقد" : m === "card" ? "بطاقة" : "تحويل"}
                         </Button>
                       );
                     })}
                   </div>
                 </div>
               </div>
-              {addDebtInitialPayment && parseFloat(addDebtInitialPayment) > 0 && addDebtAmount && (
+              {addInitPayment && parseFloat(addInitPayment) > 0 && addAmount && (
                 <div className="text-center text-sm">
                   <span className="text-gray-500">المبلغ المتبقي: </span>
-                  <span className="font-bold text-red-600">
-                    {Math.max(0, (parseFloat(addDebtAmount) || 0) - (parseFloat(addDebtInitialPayment) || 0)).toFixed(2)} {CURRENCY}
-                  </span>
+                  <span className="font-bold text-red-600">{Math.max(0, (parseFloat(addAmount) || 0) - (parseFloat(addInitPayment) || 0)).toFixed(2)} {CURRENCY}</span>
                 </div>
               )}
             </div>
@@ -1182,15 +951,7 @@ export default function DebtManagement() {
 
           <DialogFooter className="gap-2 mt-4">
             <Button variant="outline" onClick={() => setShowAddDebtDialog(false)}>إلغاء</Button>
-            <Button
-              onClick={() => addDebtMutation.mutate()}
-              disabled={
-                (!addDebtSelectedCustomer && !addDebtCustomerName.trim() && !addDebtCustomerPhone.trim() && !addDebtDebtorPhone.trim() && (!addDebtAmount || parseFloat(addDebtAmount) <= 0)) ||
-                (addDebtInitialPayment && parseFloat(addDebtInitialPayment) > (parseFloat(addDebtAmount) || 0)) ||
-                addDebtMutation.isPending
-              }
-              className="bg-red-600 hover:bg-red-700"
-            >
+            <Button onClick={() => addDebtMutation.mutate()} disabled={!canAddDebt || addDebtMutation.isPending} className="bg-red-600 hover:bg-red-700">
               {addDebtMutation.isPending ? "جاري الإضافة..." : "إضافة الدين"}
             </Button>
           </DialogFooter>

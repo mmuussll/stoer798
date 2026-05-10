@@ -338,25 +338,13 @@ export default function ReportsSection() {
 
     const customerMap = new Map<string, { name: string; total: number; count: number; paid: number }>();
     debts.forEach((d) => {
-      const c = d.customer;
-      if (!c) return;
-      const key = c.id;
-      const existing = customerMap.get(key) || { name: c.name, total: 0, count: 0, paid: 0 };
+      if (!d.customer_id) return;
+      const key = d.customer_id;
+      const existing = customerMap.get(key) || { name: d.customer_name, total: 0, count: 0, paid: 0 };
       existing.total += d.total_amount;
       existing.count += 1;
       existing.paid += d.total_amount - d.remaining_amount;
       customerMap.set(key, existing);
-    });
-
-    const paymentMethodMap = new Map<string, number>();
-    debts.forEach((d) => {
-      if (d.status === "paid" || d.status === "partially_paid") {
-        const paid_ = d.total_amount - d.remaining_amount;
-        if (d.invoice?.payment_method) {
-          const m = d.invoice.payment_method;
-          paymentMethodMap.set(m, (paymentMethodMap.get(m) || 0) + paid_);
-        }
-      }
     });
 
     return {
@@ -370,7 +358,6 @@ export default function ReportsSection() {
       topCustomers: Array.from(customerMap.values())
         .sort((a, b) => (b.total - b.paid) - (a.total - a.paid))
         .slice(0, 10),
-      paymentMethodData: Array.from(paymentMethodMap.entries()).map(([name, value]) => ({ name, value })),
     };
   }, [debts]);
 
@@ -1127,7 +1114,7 @@ export default function ReportsSection() {
                     };
                     return (
                       <TableRow key={d.id}>
-                        <TableCell className="font-medium">{d.customer?.name || "-"}</TableCell>
+                        <TableCell className="font-medium">{d.customer_name || "-"}</TableCell>
                         <TableCell>{d.total_amount.toFixed(2)} {CURRENCY}</TableCell>
                         <TableCell className="text-emerald-600">{(d.total_amount - d.remaining_amount).toFixed(2)} {CURRENCY}</TableCell>
                         <TableCell className="font-bold text-red-600">{d.remaining_amount.toFixed(2)} {CURRENCY}</TableCell>

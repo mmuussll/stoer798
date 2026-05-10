@@ -37,9 +37,10 @@ export interface Customer {
 export interface Debt {
   id: string;
   customer_id: string;
-  customer?: Customer;
+  customer_name: string;
+  customer_phone: string;
   invoice_id?: string;
-  invoice?: SaleInvoice;
+  invoice_number?: string;
   total_amount: number;
   remaining_amount: number;
   status: 'active' | 'partially_paid' | 'paid' | 'overdue';
@@ -63,10 +64,7 @@ export interface DebtItem {
 export interface DebtPayment {
   id: string;
   debt_id: string;
-  debt?: Debt;
   customer_id: string;
-  customer?: Customer;
-  invoice_id?: string;
   amount: number;
   payment_method: 'cash' | 'card' | 'transfer';
   payment_date: string;

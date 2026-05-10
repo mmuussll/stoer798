@@ -76,10 +76,15 @@ export function usePOSCheckout() {
       })));
 
       if (isCredit && selectedCustomer) {
+        const customerName = selectedCustomer.name;
+        const customerPhone = selectedCustomer.phone || "";
         try {
           await debtsApi.createDebt({
             customer_id: selectedCustomer.id,
+            customer_name: customerName,
+            customer_phone: customerPhone,
             invoice_id: result.id,
+            invoice_number: invoiceNumber,
             total_amount: t.total,
             remaining_amount: t.total,
             status: "active",
@@ -92,6 +97,7 @@ export function usePOSCheckout() {
           });
         } catch (debtErr) {
           console.error("Failed to create debt:", debtErr);
+          toast({ title: "تنبيه", description: "تم البيع لكن فشل تسجيل الدين. يرجى مراجعة قسم الديون.", variant: "destructive" });
         }
       }
 

@@ -16,6 +16,7 @@ import {
   Landmark, Search, Plus, DollarSign, Wallet, Calendar, AlertTriangle,
   User2, Phone, FileText, Banknote, CreditCard,
   ArrowRightLeft, CheckCircle2, Clock4, History, Filter, ShoppingBag,
+  Pencil, Trash2, X,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -105,6 +106,21 @@ export default function DebtManagement() {
   const [addItems, setAddItems] = useState("");
   const [addInitPayment, setAddInitPayment] = useState("");
   const [addPaymentMethod, setAddPaymentMethod] = useState<"cash" | "card" | "transfer">("cash");
+
+  // Edit debt dialog
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editAmount, setEditAmount] = useState("");
+  const [editDueDate, setEditDueDate] = useState("");
+  const [editStatus, setEditStatus] = useState("active");
+  const [editDebtorPhone, setEditDebtorPhone] = useState("");
+  const [editGuarantorName, setEditGuarantorName] = useState("");
+  const [editGuarantorPhone, setEditGuarantorPhone] = useState("");
+  const [editNote, setEditNote] = useState("");
+
+  // Delete confirmation
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [deleteTargetName, setDeleteTargetName] = useState("");
 
   // ============ Queries ============
 
@@ -315,6 +331,76 @@ export default function DebtManagement() {
       console.error("فشل إضافة الدين:", err);
       toast({ title: "فشل إضافة الدين", description: err.message, variant: "destructive" });
     },
+  });
+
+  // ============ Edit Debt Mutation ============
+
+  const openEditDialog = (debt: Debt) => {
+    setSelectedDebt(debt);
+    setEditAmount(debt.total_amount.toFixed(2));
+    setEditDueDate(debt.due_date || "");
+    setEditStatus(debt.status);
+    setEditDebtorPhone(debt.debtor_phone || "");
+    setEditGuarantorName(debt.guarantor_name || "");
+    setEditGuarantorPhone(debt.guarantor_phone || "");
+    setEditNote(debt.notes || "");
+    setShowEditDialog(true);
+  };
+
+  const editMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedDebt) throw new Error("لم يتم تحديد الدين");
+      const amount = parseFloat(editAmount) || 0;
+      const remain = Math.max(0, amount - (selectedDebt.total_amount - selectedDebt.remaining_amount));
+      await debtsApi.updateDebt(selectedDebt.id, {
+        total_amount: amount,
+        remaining_amount: remain,
+        status: remain <= 0 ? "paid" : editStatus === "paid" ? "active" : editStatus,
+        due_date: editDueDate || undefined,
+        guarantor_name: editGuarantorName || undefined,
+        guarantor_phone: editGuarantorPhone || undefined,
+        debtor_phone: editDebtorPhone || undefined,
+        notes: editNote || undefined,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["debts"] });
+      queryClient.invalidateQueries({ queryKey: ["debt-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      toast({ title: "تم تعديل الدين بنجاح" });
+      setShowEditDialog(false);
+    },
+    onError: (err: Error) => toast({ title: "فشل تعديل الدين", description: err.message, variant: "destructive" }),
+  });
+
+  // ============ Delete Debt Mutation ============
+
+  const deleteMutation = useMutation({
+    mutationFn: () => debtsApi.deleteDebt(deleteTargetId!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["debts"] });
+      queryClient.invalidateQueries({ queryKey: ["debt-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      toast({ title: "تم حذف الدين بنجاح" });
+      setShowDeleteConfirm(false);
+    },
+    onError: (err: Error) => toast({ title: "فشل حذف الدين", description: err.message, variant: "destructive" }),
+  });
+
+  // ============ Delete Payment Mutation ============
+
+  const deletePaymentMutation = useMutation({
+    mutationFn: (paymentId: string) => debtsApi.deleteDebtPayment(paymentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["debts"] });
+      queryClient.invalidateQueries({ queryKey: ["debt-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      if (selectedDebt) {
+        debtsApi.fetchPayments(selectedDebt.id).then(setDetailPayments).catch(() => {});
+      }
+      toast({ title: "تم حذف الدفعة بنجاح" });
+    },
+    onError: (err: Error) => toast({ title: "فشل حذف الدفعة", description: err.message, variant: "destructive" }),
   });
 
   const canAddDebt =
@@ -564,6 +650,15 @@ export default function DebtManagement() {
                                   <Banknote className="w-3.5 h-3.5" />
                                 </Button>
                               )}
+                              <Button variant="ghost" size="sm" className="h-8 text-amber-600 hover:bg-amber-50"
+                                onClick={() => openEditDialog(debt)} title="تعديل الدين">
+                                <Pencil className="w-3.5 h-3.5" />
+                              </Button>
+                              <Button variant="ghost" size="sm" className="h-8 text-red-500 hover:bg-red-50"
+                                onClick={() => { setDeleteTargetId(debt.id); setDeleteTargetName(debt.customer_name); setShowDeleteConfirm(true); }}
+                                title="حذف الدين">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -745,6 +840,7 @@ export default function DebtManagement() {
                           <TableHead className="text-right">الطريقة</TableHead>
                           <TableHead className="text-right">الكاشير</TableHead>
                           <TableHead className="text-right">ملاحظات</TableHead>
+                          <TableHead className="text-center">إجراءات</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -757,6 +853,14 @@ export default function DebtManagement() {
                               <TableCell><Badge variant="outline" className="text-xs flex items-center gap-1 w-fit"><PIcon className="w-3 h-3" />{PAYMENT_LABELS[p.payment_method]}</Badge></TableCell>
                               <TableCell className="text-sm">{p.cashier || "-"}</TableCell>
                               <TableCell className="text-sm text-gray-500">{p.notes || "-"}</TableCell>
+                              <TableCell className="text-center">
+                                <Button variant="ghost" size="sm"
+                                  className="h-7 w-7 p-0 text-red-400 hover:text-red-600 hover:bg-red-50"
+                                  onClick={() => { if (confirm("حذف هذه الدفعة؟")) deletePaymentMutation.mutate(p.id); }}
+                                  title="حذف الدفعة">
+                                  <X className="w-3.5 h-3.5" />
+                                </Button>
+                              </TableCell>
                             </TableRow>
                           );
                         })}
@@ -953,6 +1057,104 @@ export default function DebtManagement() {
             <Button variant="outline" onClick={() => setShowAddDebtDialog(false)}>إلغاء</Button>
             <Button onClick={() => addDebtMutation.mutate()} disabled={!canAddDebt || addDebtMutation.isPending} className="bg-red-600 hover:bg-red-700">
               {addDebtMutation.isPending ? "جاري الإضافة..." : "إضافة الدين"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ==================== Edit Debt Dialog ==================== */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent dir="rtl" className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="w-5 h-5 text-amber-600" />تعديل الدين
+            </DialogTitle>
+            <DialogDescription>
+              {selectedDebt && <span>تعديل بيانات الدين للزبون: <strong>{selectedDebt.customer_name}</strong></span>}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedDebt && (
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-1 block">المبلغ الكلي</label>
+                <Input type="number" value={editAmount} onChange={(e) => setEditAmount(e.target.value)}
+                  placeholder="0.00" dir="ltr" className="text-lg font-bold text-center" />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">تاريخ الاستحقاق</label>
+                <Input type="date" value={editDueDate} onChange={(e) => setEditDueDate(e.target.value)} />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">الحالة</label>
+                <Select value={editStatus} onValueChange={setEditStatus}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">نشط</SelectItem>
+                    <SelectItem value="partially_paid">مدفوع جزئياً</SelectItem>
+                    <SelectItem value="overdue">متأخر</SelectItem>
+                    <SelectItem value="paid">مدفوع</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">رقم هاتف المديون</label>
+                <Input type="tel" value={editDebtorPhone} onChange={(e) => setEditDebtorPhone(e.target.value)}
+                  dir="ltr" placeholder="رقم الهاتف" />
+              </div>
+              <div className="bg-gray-50 border rounded-lg p-3 space-y-3">
+                <span className="text-sm font-semibold text-gray-700">بيانات الكفيل</span>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-1">اسم الكفيل</label>
+                    <Input value={editGuarantorName} onChange={(e) => setEditGuarantorName(e.target.value)} placeholder="اسم الكفيل" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-1">رقم الكفيل</label>
+                    <Input type="tel" value={editGuarantorPhone} onChange={(e) => setEditGuarantorPhone(e.target.value)}
+                      dir="ltr" placeholder="07xxxxxxxxx" />
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">ملاحظات</label>
+                <Input value={editNote} onChange={(e) => setEditNote(e.target.value)} placeholder="ملاحظات..." />
+              </div>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p className="text-xs text-blue-700">
+                  المدفوع حتى الآن: <strong>{(selectedDebt.total_amount - selectedDebt.remaining_amount).toFixed(2)} {CURRENCY}</strong>
+                  {" | "}
+                  المتبقي: <strong>{selectedDebt.remaining_amount.toFixed(2)} {CURRENCY}</strong>
+                </p>
+              </div>
+            </div>
+          )}
+          <DialogFooter className="gap-2 mt-4">
+            <Button variant="outline" onClick={() => setShowEditDialog(false)}>إلغاء</Button>
+            <Button onClick={() => editMutation.mutate()} disabled={editMutation.isPending}
+              className="bg-amber-600 hover:bg-amber-700">
+              {editMutation.isPending ? "جاري الحفظ..." : "حفظ التعديلات"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ==================== Delete Confirmation Dialog ==================== */}
+      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <DialogContent dir="rtl" className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="w-5 h-5" />تأكيد الحذف
+            </DialogTitle>
+            <DialogDescription>
+              هل أنت متأكد من حذف دين <strong>{deleteTargetName}</strong>؟
+              <br />
+              <span className="text-red-500 text-sm">هذا الإجراء لا يمكن التراجع عنه وسيتم حذف جميع المدفوعات المرتبطة به.</span>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>إلغاء</Button>
+            <Button variant="destructive" onClick={() => deleteMutation.mutate()} disabled={deleteMutation.isPending}>
+              {deleteMutation.isPending ? "جاري الحذف..." : "تأكيد الحذف"}
             </Button>
           </DialogFooter>
         </DialogContent>

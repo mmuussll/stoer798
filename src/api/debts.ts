@@ -146,9 +146,10 @@ export async function createDebt(debt: {
 
 export async function updateDebt(
   id: string,
-  updates: { status?: string; due_date?: string; notes?: string; remaining_amount?: number; guarantor_name?: string; guarantor_phone?: string; debtor_phone?: string }
+  updates: { total_amount?: number; status?: string; due_date?: string; notes?: string; remaining_amount?: number; guarantor_name?: string; guarantor_phone?: string; debtor_phone?: string }
 ): Promise<Debt> {
   const payload: Record<string, unknown> = {};
+  if (updates.total_amount !== undefined) payload.total_amount = updates.total_amount;
   if (updates.status !== undefined) payload.status = updates.status;
   if (updates.due_date !== undefined) payload.due_date = updates.due_date;
   if (updates.notes !== undefined) payload.notes = updates.notes;

@@ -11,7 +11,7 @@ export default function MaintenanceGuard({ children }: MaintenanceGuardProps) {
   const { isAdmin, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: settings, isLoading: settingsLoading, refetch } = useQuery({
+  const { data: settings, isLoading: settingsLoading } = useQuery({
     queryKey: ["store-settings"],
     queryFn: fetchSettings,
     staleTime: 30_000,

@@ -15,8 +15,8 @@ import {
 } from "@/components/ui/pagination";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
-  Landmark, Play, X, Eye, TrendingUp, TrendingDown,
-  DollarSign, CreditCard, RotateCcw, Clock, CheckCircle2,
+  Landmark, Play, X, Eye,
+  DollarSign, CreditCard, RotateCcw, CheckCircle2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import * as sessionsApi from "@/api/sessions";
@@ -74,7 +74,7 @@ export default function CashSessions() {
       if (!closingSession) throw new Error("لا توجد جلسة");
       return sessionsApi.closeSession(closingSession.id, parseFloat(closingBalance) || 0);
     },
-    onSuccess: (data) => {
+    onSuccess: (_data) => {
       queryClient.invalidateQueries({ queryKey: ["cash-sessions"] });
       setShowCloseDialog(false);
       setClosingSession(null);
@@ -91,7 +91,6 @@ export default function CashSessions() {
   const totalCash = sessions.reduce((s, ss) => s + ss.total_cash, 0);
   const totalCard = sessions.reduce((s, ss) => s + ss.total_card, 0);
   const totalReturns = sessions.reduce((s, ss) => s + ss.total_returns, 0);
-  const totalInvoices = sessions.reduce((s, ss) => s + ss.invoice_count, 0);
 
   return (
     <div className="space-y-4 p-4" dir="rtl">

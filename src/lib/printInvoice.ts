@@ -4,11 +4,10 @@ import {
   connectSerialPrinter,
   printViaSerial,
   disconnectSerialPrinter,
-  type PrinterConfig,
 } from "@/lib/thermalPrinter";
+import { STORE_SETTINGS_DEFAULTS } from "@/api/settings";
 
 let cachedSettings: StoreSettings | null = null;
-let cachedSerialPort: any = null;
 
 export function setPrintSettings(s: StoreSettings) {
   cachedSettings = s;
@@ -98,7 +97,6 @@ function generateBarcodeSvg(text: string): string {
   const bars = encodeCode128B(text);
   const barWidth = 1.5;
   const height = 38;
-  const width = bars.length * barWidth;
   const quietZone = 10;
 
   let rects = "";
@@ -184,7 +182,7 @@ function getFontFamily(ff: string): string {
 }
 
 type InvoiceData = SaleInvoice | {
-  items: any[];
+  items: { name: string; quantity: number; price: number; barcode?: string }[];
   total: number;
   subtotal: number;
   discount_total?: number;
@@ -204,55 +202,17 @@ type InvoiceData = SaleInvoice | {
   change_amount?: number;
 };
 
-const defaultSettings: StoreSettings = {
-  id: 1,
-  store_name: "متجري", store_phone: "", store_address: "", store_email: "",
-  store_registration_number: "", store_tax_number: "", store_logo_url: "",
-  store_owner_name: "", store_mobile: "", store_website: "",
-  receipt_header: "", receipt_footer: "شكراً لتعاملکم معنا",
-  receipt_show_logo: true, receipt_show_barcode: false, receipt_show_qr: false,
-  receipt_paper_size: "80mm", receipt_show_store_info: true,
-  receipt_show_cashier: true, receipt_show_border: false,
-  receipt_copies: 1, receipt_auto_print: true,
-  tax_name: "الضريبة", tax_rate: 0, tax_enabled: false,
-  tax_include_in_price: false,
-  second_tax_name: "", second_tax_rate: 0, second_tax_enabled: false,
-  currency: "د.ع", currency_position: "after",
-  date_format: "yyyy-MM-dd", time_format: "12h",
-  enable_loyalty: false, enable_customer_required: false,
-  invoice_number_prefix: "INV-",
-  low_stock_alert: 5, max_discount_percentage: 100,
-  language: "ar",
-  printer_type: "browser", printer_ip: "", printer_port: "9100",
-  printer_encoding: "utf8", printer_chars_per_line: 48,
-  printer_cutter_enabled: false, printer_drawer_enabled: false,
-  printer_drawer_pin: 0, thermal_print_density: 5, thermal_print_speed: 2,
-  receipt_font_family: "monospace", receipt_font_size: 12,
-  receipt_compact_mode: false,
-  loyalty_points_per_amount: 1000, loyalty_points_value: 1,
-  loyalty_min_points_redeem: 100, loyalty_points_expire_days: 365,
-  loyalty_welcome_points: 0,
-  default_payment_method: "cash",
-  enable_hold_orders: true, enable_barcode_scanner: true,
-  enable_sound_notifications: true,
-  enable_negative_stock: false, enable_fast_sale: true,
-  show_product_images: true, grid_columns: 4,
-  backup_enabled: false, backup_frequency: "weekly", last_backup_date: "",
-  enable_desktop_notifications: false, session_timeout_minutes: 30,
-  password_min_length: 6, enable_2fa: false,
-  whatsapp_enabled: false, whatsapp_number: "", whatsapp_send_invoice: false,
-  api_key_enabled: false, api_key: "",
-};
+
 
 function buildInvoiceHTML(invoice: InvoiceData, isPreview = false): string {
-  const s = cachedSettings || defaultSettings;
+  const s = cachedSettings || STORE_SETTINGS_DEFAULTS;
 
-  const totalItems = invoice.items.reduce((sum: number, item: any) => sum + item.quantity, 0);
+  const totalItems = invoice.items.reduce((sum: number, item) => sum + item.quantity, 0);
   const hasDiscount = (invoice.discount_total || 0) > 0;
   const hasTax = (invoice.tax_total || 0) > 0;
-  const hasSecondTax = s.second_tax_enabled && (invoice as any).second_tax_total > 0;
+  const hasSecondTax = s.second_tax_enabled && invoice.second_tax_total > 0;
   const showCustomer = invoice.customer && invoice.customer.name;
-  const barcodeSvg = generateBarcodeSvg(invoice.invoice_number.replace(/[^A-Za-z0-9\-]/g, ""));
+  const barcodeSvg = generateBarcodeSvg(invoice.invoice_number.replace(/[^A-Za-z0-9-]/g, ""));
   const qrSvg = generateQRSvg(invoice.invoice_number);
 
   const fmtCurrency = (amount: number) => {
@@ -363,7 +323,7 @@ ${showCustomer ? `<div class="meta"><div><span class="label">الزبون:</span
 <th class="text-left" style="width:${s.receipt_paper_size === "58mm" ? "24%" : "23%"}">الإجمالي</th>
 </tr></thead>
 <tbody>
-${invoice.items.map((item: any) => `<tr>
+${invoice.items.map((item) => `<tr>
 <td class="item-name"><span>${item.name}</span>${item.barcode ? `<span class="barcode">${item.barcode}</span>` : ""}</td>
 <td class="text-center">${item.quantity}</td>
 <td class="text-left">${(+item.price).toFixed(2)}</td>
@@ -379,7 +339,7 @@ ${hasDiscount ? `<div class="total-row discount-row"><span class="label">الخ�
 
 ${hasTax ? `<div class="total-row tax-row"><span class="label">${s.tax_name} (${invoice.tax_rate || s.tax_rate}%):</span><span class="value">${fmtCurrency(invoice.tax_total!)}</span></div>` : ""}
 
-${hasSecondTax ? `<div class="total-row tax-row"><span class="label">${s.second_tax_name} (${s.second_tax_rate}%):</span><span class="value">${fmtCurrency((invoice as any).second_tax_total!)}</span></div>` : ""}
+${hasSecondTax ? `<div class="total-row tax-row"><span class="label">${s.second_tax_name} (${s.second_tax_rate}%):</span><span class="value">${fmtCurrency(invoice.second_tax_total!)}</span></div>` : ""}
 
 <div class="total-row"><span class="label">عدد القطع:</span><span class="value">${totalItems}</span></div>
 <div class="total-row"><span class="label">عدد الأصناف:</span><span class="value">${invoice.items.length}</span></div>
@@ -423,10 +383,10 @@ setTimeout(function(){if(!document.hasFocus())window.close()},${(s.receipt_copie
 
 // Send WhatsApp message with invoice info
 export function sendWhatsAppInvoice(invoice: InvoiceData) {
-  const s = cachedSettings || defaultSettings;
+  const s = cachedSettings || STORE_SETTINGS_DEFAULTS;
   if (!s.whatsapp_enabled || !s.whatsapp_number || !invoice.customer?.phone) return;
 
-  const items = invoice.items.map((item: any) =>
+  const items = invoice.items.map((item) =>
     `${item.name} x${item.quantity} = ${(item.price * item.quantity).toFixed(2)}`
   ).join("%0A");
 
@@ -451,7 +411,7 @@ export function sendWhatsAppInvoice(invoice: InvoiceData) {
 
 // Main print function
 export async function printSaleInvoice(invoice: InvoiceData) {
-  const s = cachedSettings || defaultSettings;
+  const s = cachedSettings || STORE_SETTINGS_DEFAULTS;
 
   // Try WhatsApp sending if enabled
   if (s.whatsapp_send_invoice && invoice.customer?.phone) {
@@ -469,7 +429,7 @@ export async function printSaleInvoice(invoice: InvoiceData) {
             date: invoice.date,
             time: invoice.time,
             cashier: invoice.cashier,
-            items: invoice.items.map((i: any) => ({
+            items: invoice.items.map((i) => ({
               name: i.name,
               quantity: i.quantity,
               price: i.price,
@@ -478,9 +438,9 @@ export async function printSaleInvoice(invoice: InvoiceData) {
             discount_total: invoice.discount_total,
             tax_total: invoice.tax_total,
             total: invoice.total,
-            payment_method: (invoice as any).payment_method || invoice.payment_method,
-            paid_amount: (invoice as any).paid_amount,
-            change_amount: (invoice as any).change_amount,
+            payment_method: invoice.payment_method,
+            paid_amount: invoice.paid_amount,
+            change_amount: invoice.change_amount,
             customer: invoice.customer ? { name: invoice.customer.name, phone: invoice.customer.phone } : undefined,
           },
           {
@@ -522,14 +482,14 @@ export async function printSaleInvoice(invoice: InvoiceData) {
         {
           invoice_number: invoice.invoice_number,
           date: invoice.date, time: invoice.time, cashier: invoice.cashier,
-          items: invoice.items.map((i: any) => ({ name: i.name, quantity: i.quantity, price: i.price })),
+          items: invoice.items.map((i) => ({ name: i.name, quantity: i.quantity, price: i.price })),
           subtotal: invoice.subtotal || invoice.total,
           discount_total: invoice.discount_total,
           tax_total: invoice.tax_total,
           total: invoice.total,
-          payment_method: (invoice as any).payment_method || invoice.payment_method,
-          paid_amount: (invoice as any).paid_amount,
-          change_amount: (invoice as any).change_amount,
+          payment_method: invoice.payment_method,
+          paid_amount: invoice.paid_amount,
+          change_amount: invoice.change_amount,
           customer: invoice.customer ? { name: invoice.customer.name, phone: invoice.customer.phone } : undefined,
         },
         {
@@ -569,7 +529,6 @@ export async function printSaleInvoice(invoice: InvoiceData) {
 
 // Preview cart before checkout
 export function printCartPreview(cart: CartItem[], cashier: string) {
-  const s = cachedSettings || defaultSettings;
   const printWindow = window.open("", "_blank", "width=400,height=500");
   if (!printWindow) return;
 

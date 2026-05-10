@@ -130,6 +130,8 @@ export interface SaleInvoice {
   discount_value: number;
   tax_rate: number;
   tax_total: number;
+  second_tax_rate?: number;
+  second_tax_total?: number;
   total: number;
   payment_method: string;
   paid_amount: number;

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, type ComponentType } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,9 +11,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import {
-  Landmark, Search, Plus, DollarSign, Wallet, Calendar, Clock, AlertTriangle,
-  User2, Phone, FileText, TrendingUp, TrendingDown, Banknote, CreditCard,
-  ArrowRightLeft, CheckCircle2, Clock4, Ban, Eye, History, Receipt, Filter,
+  Landmark, Search, Plus, DollarSign, Wallet, Calendar, AlertTriangle,
+  User2, Phone, FileText, Banknote, CreditCard,
+  ArrowRightLeft, CheckCircle2, Clock4, History, Filter,
   ShoppingBag,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -21,18 +21,18 @@ import { useAuth } from "@/contexts/AuthContext";
 import * as debtsApi from "@/api/debts";
 import * as customersApi from "@/api/customers";
 import { CURRENCY } from "@/constants";
-import type { Debt, DebtPayment, DebtSummary } from "@/types";
+import type { Customer, Debt, DebtItem, DebtPayment } from "@/types";
 
 const ITEMS_PER_PAGE = 15;
 
-const STATUS_MAP: Record<string, { label: string; color: string; icon: any }> = {
+const STATUS_MAP: Record<string, { label: string; color: string; icon: ComponentType<{ className?: string }> }> = {
   active: { label: "نشط", color: "bg-blue-100 text-blue-700 border-blue-200", icon: Clock4 },
   partially_paid: { label: "مدفوع جزئياً", color: "bg-amber-100 text-amber-700 border-amber-200", icon: Wallet },
   paid: { label: "مدفوع", color: "bg-emerald-100 text-emerald-700 border-emerald-200", icon: CheckCircle2 },
   overdue: { label: "متأخر", color: "bg-red-100 text-red-700 border-red-200", icon: AlertTriangle },
 };
 
-const PAYMENT_ICONS: Record<string, any> = {
+const PAYMENT_ICONS: Record<string, ComponentType<{ className?: string }>> = {
   cash: DollarSign,
   card: CreditCard,
   transfer: ArrowRightLeft,
@@ -84,7 +84,7 @@ export default function DebtManagement() {
   // Add debt dialog
   const [showAddDebtDialog, setShowAddDebtDialog] = useState(false);
   const [addDebtCustomerSearch, setAddDebtCustomerSearch] = useState("");
-  const [addDebtSelectedCustomer, setAddDebtSelectedCustomer] = useState<any>(null);
+  const [addDebtSelectedCustomer, setAddDebtSelectedCustomer] = useState<Customer | null>(null);
   const [addDebtAmount, setAddDebtAmount] = useState("");
   const [addDebtDueDate, setAddDebtDueDate] = useState("");
   const [addDebtDebtorPhone, setAddDebtDebtorPhone] = useState("");
@@ -220,7 +220,7 @@ export default function DebtManagement() {
       const remaining = Math.max(0, amount - initPayment);
 
       // Parse debt items from textarea (one per line: productName xQty)
-      let parsedItems: any[] = [];
+      let parsedItems: DebtItem[] = [];
       if (addDebtItems.trim()) {
         parsedItems = addDebtItems
           .split("\n")
@@ -263,7 +263,7 @@ export default function DebtManagement() {
             cashier: user?.email || "البائع",
             user_id: user?.id,
           });
-        } catch {}
+        } catch { /* intentional no-op: initial payment failure is non-critical */ }
       }
 
       return debt;
@@ -279,7 +279,7 @@ export default function DebtManagement() {
       toast({ title: "خطأ", description: err.message, variant: "destructive" }),
   });
 
-  const StatCard = ({ title, value, icon: Icon, color, bg, sub }: any) => (
+  const StatCard = ({ title, value, icon: Icon, color, bg, sub }: { title: string; value: string; icon: ComponentType<{ className?: string }>; color: string; bg: string; sub?: string }) => (
     <Card className={bg}>
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
@@ -949,7 +949,7 @@ export default function DebtManagement() {
                       ) : searchedCustomers.length === 0 ? (
                         <div className="p-4 text-center text-sm text-gray-400">لا توجد نتائج</div>
                       ) : (
-                        searchedCustomers.map((c: any) => (
+                        searchedCustomers.map((c: Customer) => (
                           <div
                             key={c.id}
                             className="flex items-center justify-between p-2.5 hover:bg-blue-50 cursor-pointer transition-colors"
@@ -1102,7 +1102,7 @@ export default function DebtManagement() {
                   <label className="text-xs text-gray-500 block mb-1">طريقة الدفع</label>
                   <div className="flex gap-1">
                     {(["cash", "card", "transfer"] as const).map((m) => {
-                      const Icons: Record<string, any> = { cash: DollarSign, card: CreditCard, transfer: ArrowRightLeft };
+                      const Icons: Record<string, ComponentType<{ className?: string }>> = { cash: DollarSign, card: CreditCard, transfer: ArrowRightLeft };
                       const Icon = Icons[m];
                       return (
                         <Button

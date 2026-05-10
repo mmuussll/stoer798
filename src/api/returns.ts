@@ -1,13 +1,13 @@
 import { supabase } from "@/lib/supabase";
-import { toNumber } from "@/lib/db";
+import { toNumber, type RawRow } from "@/lib/db";
 import type { SalesReturn, SalesReturnItem } from "@/types";
 
 const RETURNS_TABLE = "sales_returns";
 const ITEMS_TABLE = "sales_return_items";
 const PRODUCTS_TABLE = "products";
 
-function mapReturn(row: Record<string, unknown>): SalesReturn {
-  const raw = row as any;
+function mapReturn(row: RawRow): SalesReturn {
+  const raw = row as Record<string, unknown>;
   return {
     id: raw.id,
     return_number: raw.return_number,
@@ -19,7 +19,7 @@ function mapReturn(row: Record<string, unknown>): SalesReturn {
     cashier: raw.cashier,
     user_id: raw.user_id,
     created_at: raw.created_at,
-    items: (raw.items || []).map((item: any) => ({
+    items: ((raw as RawRow).items as Record<string, unknown>[] || []).map((item) => ({
       id: item.id,
       return_id: item.return_id,
       product_id: item.product_id,
@@ -114,7 +114,7 @@ export async function createSalesReturn(
       .select("id, stock")
       .in("id", productIds);
 
-    const stockMap = new Map((stocks || []).map((p: any) => [p.id, p.stock || 0]));
+    const stockMap = new Map((stocks || []).map((p: RawRow) => [p.id as string, (p.stock as number) || 0]));
 
     const updates = productIds.map(async (productId) => {
       const currentStock = stockMap.get(productId) ?? 0;
@@ -160,7 +160,7 @@ export async function deleteSalesReturn(id: string): Promise<void> {
       .select("id, stock")
       .in("id", itemProductIds);
 
-    const stockMap = new Map((stocks || []).map((p: any) => [p.id, p.stock || 0]));
+    const stockMap = new Map((stocks || []).map((p: RawRow) => [p.id as string, (p.stock as number) || 0]));
 
     const updates = itemProductIds.map(async (productId) => {
       const currentStock = stockMap.get(productId) ?? 0;

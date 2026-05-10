@@ -16,13 +16,13 @@ import * as settingsApi from "@/api/settings";
 import { generateTestPage, connectSerialPrinter, printViaSerial, disconnectSerialPrinter, isWebSerialSupported } from "@/lib/thermalPrinter";
 import type { StoreSettings } from "@/types";
 import {
-  Store, Receipt, Percent, Landmark, Coins, Settings2,
-  BellRing, Printer, CreditCard, Save, RotateCcw,
-  Users, Globe, Image, Hash, ClipboardCheck,
+  Store, Receipt, Percent, Coins, Settings2,
+  Printer, Save, RotateCcw,
+  Users,
   AlertTriangle, Shield, HardDrive, Clock,
-  Wifi, Usb, Network, Monitor, Smartphone, FileText,
+  Usb, Network, Monitor,
   MessageCircle, Key, Database, Download, Upload,
-  ScanLine, TestTube, Cog, Palette,
+  TestTube,
 } from "lucide-react";
 
 // ==================== Helper Components ====================
@@ -106,7 +106,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("store");
   const [hasChanges, setHasChanges] = useState(false);
-  const [serialPort, setSerialPort] = useState<any>(null);
+  const [serialPort, setSerialPort] = useState<Record<string, unknown> | null>(null);
   const [printerTesting, setPrinterTesting] = useState(false);
   const [serialSupported] = useState(() => isWebSerialSupported());
 
@@ -127,7 +127,7 @@ export default function SettingsPage() {
   const saveMutation = useMutation({
     mutationFn: () => {
       if (!settings) throw new Error("لا توجد إعدادات");
-      const { id, created_at, updated_at, ...rest } = settings;
+      const { id: _id, created_at: _created_at, updated_at: _updated_at, ...rest } = settings;
       return settingsApi.updateSettings(rest);
     },
     onSuccess: (saved) => {
@@ -209,7 +209,7 @@ export default function SettingsPage() {
         }
         toast({ title: "تم فتح نافذة اختبار الطباعة" });
       }
-    } catch (e: any) {
+    } catch (e: Record<string, unknown>) {
       toast({ title: "خطأ", description: e.message, variant: "destructive" });
     } finally {
       setPrinterTesting(false);
@@ -218,7 +218,7 @@ export default function SettingsPage() {
 
   const handleExportSettings = () => {
     if (!settings) return;
-    const { id, created_at, updated_at, ...exportData } = settings;
+    const { id: _id, created_at: _created_at, updated_at: _updated_at, ...exportData } = settings;
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -233,13 +233,13 @@ export default function SettingsPage() {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = ".json";
-    input.onchange = async (e: any) => {
+    input.onchange = async (e: Record<string, unknown>) => {
       const file = e.target.files?.[0];
       if (!file) return;
       try {
         const text = await file.text();
         const data = JSON.parse(text);
-        const { id, created_at, updated_at, ...rest } = data;
+        const { id: _id, created_at: _created_at, updated_at: _updated_at, ...rest } = data;
         await settingsApi.updateSettings(rest);
         const fresh = await settingsApi.fetchSettings();
         setSettings(fresh);

@@ -22,7 +22,7 @@ import {
   Calculator,
   Receipt,
   LogOut,
-  ChevronRight,
+  ChevronLeft,
   Users,
   RotateCcw,
   Landmark,
@@ -30,6 +30,7 @@ import {
   Wallet,
   Shield,
   Wrench,
+  ChevronRight,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -57,10 +58,10 @@ function SectionSkeleton() {
       <Skeleton className="h-8 w-48" />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-28 rounded-lg" />
+          <Skeleton key={i} className="h-28 rounded-xl" />
         ))}
       </div>
-      <Skeleton className="h-96 rounded-lg" />
+      <Skeleton className="h-96 rounded-xl" />
     </div>
   );
 }
@@ -112,98 +113,141 @@ export default function Index() {
   return (
     <SidebarProvider defaultOpen={true}>
       <WhatsAppSupport />
-      <Sidebar side="right" className="border-l border-blue-100">
-        <SidebarHeader className="p-4 pb-2">
+
+      {/* Premium Sidebar */}
+      <Sidebar side="right">
+        {/* Sidebar Header - Brand */}
+        <SidebarHeader className="flex flex-col gap-3 px-5 pt-5 pb-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shrink-0">
+            <div className="w-11 h-11 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/25 shrink-0">
               <Calculator className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <h1 className="text-base font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent leading-tight">
+              <h1 className="text-base font-bold text-white tracking-tight leading-tight">
                 الكوثر للحسابات
               </h1>
-              <p className="text-xs text-muted-foreground">إدارة ذكية للمبيعات والمخزون</p>
+              <p className="text-[11px] text-sidebar-accent-foreground/60">
+                إدارة ذكية للمبيعات والمخزون
+              </p>
             </div>
           </div>
         </SidebarHeader>
 
-        <SidebarSeparator />
-
-        <SidebarContent>
+        {/* Navigation */}
+        <SidebarContent className="px-3">
           <div className="px-3 py-2">
-            <p className="text-xs font-medium text-muted-foreground mb-2 px-2">القائمة الرئيسية</p>
-            <SidebarMenu>
-              {NAV_ITEMS.map((item) => (
+            <p className="text-[10.5px] font-semibold uppercase tracking-wider text-sidebar-accent-foreground/40 mb-1">
+              القائمة الرئيسية
+            </p>
+          </div>
+          <SidebarMenu>
+            {NAV_ITEMS.map((item) => {
+              const isActive = activeSection === item.id;
+              return (
                 <SidebarMenuItem key={item.id}>
                   <SidebarMenuButton
                     onClick={() => handleSectionChange(item.id)}
-                    isActive={activeSection === item.id}
+                    isActive={isActive}
                     tooltip={item.label}
                     size="lg"
+                    className={cn(
+                      "group relative transition-all duration-200",
+                      isActive
+                        ? "bg-sidebar-accent text-white shadow-sm"
+                        : "text-sidebar-accent-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60"
+                    )}
                   >
-                    <item.icon className="w-5 h-5" />
-                    <span className="font-medium">{item.label}</span>
+                    <item.icon className={cn(
+                      "w-[18px] h-[18px] transition-transform duration-200",
+                      isActive && "text-sidebar-primary"
+                    )} />
+                    <span className="font-medium tracking-wide">{item.label}</span>
+                    {isActive && (
+                      <span className="absolute right-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-sidebar-primary rounded-full" />
+                    )}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </div>
+              );
+            })}
+          </SidebarMenu>
         </SidebarContent>
 
-        <SidebarFooter className="p-2">
+        <SidebarSeparator className="bg-sidebar-border/50" />
+
+        {/* Sidebar Footer */}
+        <SidebarFooter className="p-3 space-y-1.5">
           {isAdmin && (
             <button
               onClick={() => navigate("/admin")}
-              className="flex items-center gap-2 px-3 py-2 mb-1 rounded-md text-purple-600 hover:bg-purple-50 hover:text-purple-700 transition-colors text-sm font-medium w-full"
+              className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-sidebar-accent-foreground/80 hover:text-white hover:bg-sidebar-accent transition-all duration-200 text-sm font-medium"
             >
-              <Shield className="w-4 h-4" />
+              <Shield className="w-4 h-4 text-purple-400" />
               <span>لوحة التحكم</span>
+              <ChevronLeft className="w-3.5 h-3.5 mr-auto opacity-50" />
             </button>
           )}
-          <div className="flex items-center gap-2 px-2 py-1">
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" />
-            <span className="text-xs text-muted-foreground truncate">{user?.email || "المتجر"}</span>
+          <div className="flex items-center gap-2.5 px-3 py-1.5">
+            <div className="relative">
+              <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]" />
+              <div className="absolute inset-0 rounded-full bg-emerald-400 animate-pulse opacity-50" />
+            </div>
+            <span className="text-[11.5px] text-sidebar-accent-foreground/60 truncate">
+              {user?.email || "المتجر"}
+            </span>
           </div>
-          <SidebarMenuButton onClick={signOut} size="sm" className="text-red-500 hover:text-red-700 hover:bg-red-50">
+          <SidebarMenuButton
+            onClick={signOut}
+            size="sm"
+            className="text-red-400/80 hover:text-red-300 hover:bg-red-500/10 transition-all duration-200"
+          >
             <LogOut className="w-4 h-4" />
             <span>تسجيل الخروج</span>
           </SidebarMenuButton>
         </SidebarFooter>
       </Sidebar>
 
-      <SidebarInset className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50" dir="rtl">
-        <header className="flex h-14 items-center gap-2 border-b border-blue-100 bg-white px-4 sticky top-0 z-40">
-          <SidebarTrigger className="ml-2" />
+      {/* Main Content Area */}
+      <SidebarInset className="bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20" dir="rtl">
+        {/* Top Header Bar */}
+        <header className="flex h-14 items-center gap-2 border-b border-slate-200/70 bg-white/90 backdrop-blur-md px-4 sticky top-0 z-30">
           <div className="flex items-center gap-2">
-            <ChevronRight className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm font-medium text-blue-800">
+            <SidebarTrigger className="hover:bg-slate-100 rounded-lg -mr-1" />
+            <ChevronRight className="w-4 h-4 text-muted-foreground/50" />
+            <span className="text-sm font-semibold text-slate-700 tracking-tight">
               {NAV_ITEMS.find((i) => i.id === activeSection)?.label}
             </span>
           </div>
           <div className="flex-1" />
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <NotificationsBell />
             <SubscriptionStatusBar />
-          <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200 text-xs">
-            متصل
-          </Badge>
+            <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-200/60 text-[11px] px-2 py-0.5 font-medium">
+              متصل
+            </Badge>
           </div>
         </header>
 
+        {/* Maintenance Banner */}
         {isAdmin && settings?.maintenance_mode && (
-          <div className="bg-gradient-to-r from-orange-500 to-yellow-500 text-white px-4 py-2 text-center text-sm font-medium flex items-center justify-center gap-2 sticky top-14 z-30">
+          <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-4 py-2 text-center text-sm font-semibold flex items-center justify-center gap-2 sticky top-14 z-20 shadow-md">
             <Wrench className="w-4 h-4" />
             <span>وضع الصيانة مفعل - الموقع غير متاح للمستخدمين العاديين</span>
           </div>
         )}
 
-        <main className={cn("p-4 md:p-6", activeSection === "sales" && "p-0 md:p-0", "pb-16 lg:pb-0")}>
+        {/* Page Content */}
+        <main className={cn(
+          "flex-1 overflow-hidden",
+          activeSection === "sales" ? "p-0" : "p-4 md:p-6",
+          "pb-20 lg:pb-4"
+        )}>
           <Suspense fallback={<SectionSkeleton />}>
             {renderContent()}
           </Suspense>
         </main>
       </SidebarInset>
 
+      {/* Mobile Bottom Navigation */}
       <MobileBottomNav
         items={[...NAV_ITEMS]}
         activeSection={activeSection}

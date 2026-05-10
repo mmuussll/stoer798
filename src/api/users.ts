@@ -134,7 +134,7 @@ export async function extendSubscription(
   userId: string,
   extraDays: number
 ): Promise<UserSubscription> {
-  const { data: existing, error: fetchError } = await supabase
+  const { data: existing } = await supabase
     .from("user_subscriptions")
     .select("*")
     .eq("user_id", userId)

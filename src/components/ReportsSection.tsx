@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, type ElementType } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import {
   FileText, Calendar, TrendingUp, Package, DollarSign, Download,
   BarChart3, PieChart as PieChartIcon, Activity, RefreshCw,
   TrendingDown, AlertTriangle, Layers, ShoppingCart, Target,
-  Clock, Zap, Receipt, Landmark, User2, CreditCard, Wallet, CheckCircle2
+  Clock, Zap, Receipt, Landmark, User2, Wallet, CheckCircle2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import * as salesApi from "@/api/sales";
@@ -95,7 +95,9 @@ function getPeriodLabel(key: string, period: ReportPeriod): string {
   }
 }
 
-function ArabicXAxisTick(props: { x?: number; y?: number; payload?: { value: string } }) {
+type XAxisTickProps = { x?: number; y?: number; payload?: { value: string } };
+
+function ArabicXAxisTick(props: XAxisTickProps) {
   if (props.x == null || props.y == null || !props.payload) return null;
   return (
     <foreignObject x={props.x - 65} y={props.y - 2} width="130" height="28" style={{ overflow: "visible" }}>
@@ -130,7 +132,7 @@ export default function ReportsSection() {
     queryFn: () => productsApi.fetchProducts(),
     staleTime: 5 * 60_000,
   });
-  const { data: debts = [], isLoading: debtsLoading } = useQuery({
+  const { data: debts = [] } = useQuery({
     queryKey: ["debts"],
     queryFn: () => debtsApi.fetchDebts(),
     staleTime: 2 * 60_000,
@@ -430,7 +432,7 @@ export default function ReportsSection() {
   };
 
   // ===================== Stat Card Component =====================
-  const StatCard = ({ title, value, icon: Icon, color, bg }: { title: string; value: string; icon: any; color: string; bg: string }) => (
+  const StatCard = ({ title, value, icon: Icon, color, bg }: { title: string; value: string; icon: ElementType; color: string; bg: string }) => (
     <Card className={bg}>
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
@@ -513,10 +515,10 @@ export default function ReportsSection() {
                 {chartType === "bar" ? (
                   <BarChart data={salesPeriodData}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" tick={(p: any) => <ArabicXAxisTick {...p} />} height={50} />
+                    <XAxis dataKey="date" tick={(p: XAxisTickProps) => <ArabicXAxisTick {...p} />} height={50} />
                     <YAxis />
                     <Tooltip
-                      formatter={(value: any, name: any) => {
+                      formatter={(value: number, name: string) => {
                         if (name === "total") return [`${CURRENCY} ${value}`, "المبيعات"];
                         if (name === "invoices") return [value, "الفواتير"];
                         return [value, "القطع"];
@@ -528,9 +530,9 @@ export default function ReportsSection() {
                 ) : (
                   <LineChart data={salesPeriodData}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" tick={(p: any) => <ArabicXAxisTick {...p} />} height={50} />
+                    <XAxis dataKey="date" tick={(p: XAxisTickProps) => <ArabicXAxisTick {...p} />} height={50} />
                     <YAxis />
-                    <Tooltip formatter={(value: any) => [`${CURRENCY} ${value}`, "المبيعات"]} />
+                    <Tooltip formatter={(value: number) => [`${CURRENCY} ${value}`, "المبيعات"]} />
                     <Legend formatter={() => "المبيعات"} />
                     <Line type="monotone" dataKey="total" stroke="#3B82F6" strokeWidth={2} dot={{ r: 4 }} name="total" />
                   </LineChart>
@@ -625,9 +627,9 @@ export default function ReportsSection() {
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={selectedProductChartData}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" tick={(p: any) => <ArabicXAxisTick {...p} />} height={50} />
+                    <XAxis dataKey="date" tick={(p: XAxisTickProps) => <ArabicXAxisTick {...p} />} height={50} />
                     <YAxis />
-                    <Tooltip formatter={(value: any, name: any) => [name === "revenue" ? `${CURRENCY} ${value}` : value, name === "revenue" ? "الإيرادات" : "الكمية"]} />
+                    <Tooltip formatter={(value: number, name: string) => [name === "revenue" ? `${CURRENCY} ${value}` : value, name === "revenue" ? "الإيرادات" : "الكمية"]} />
                     <Legend formatter={(v) => (v === "revenue" ? "الإيرادات" : "الكمية")} />
                     <Line type="monotone" dataKey="revenue" stroke="#3B82F6" strokeWidth={2} dot={{ r: 4 }} name="revenue" />
                     <Line type="monotone" dataKey="quantity" stroke="#10B981" strokeWidth={2} dot={{ r: 4 }} name="quantity" />
@@ -782,9 +784,9 @@ export default function ReportsSection() {
               <ResponsiveContainer width="100%" height={350}>
                 <BarChart data={profitPeriodData}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" tick={(p: any) => <ArabicXAxisTick {...p} />} height={50} />
+                  <XAxis dataKey="date" tick={(p: XAxisTickProps) => <ArabicXAxisTick {...p} />} height={50} />
                   <YAxis />
-                  <Tooltip formatter={(value: any) => [`${CURRENCY} ${value}`, ""]} />
+                  <Tooltip formatter={(value: number) => [`${CURRENCY} ${value}`, ""]} />
                   <Legend formatter={(v) => (v === "sales" ? "المبيعات" : v === "purchases" ? "المشتريات" : "الربح")} />
                   <Bar dataKey="sales" fill="#3B82F6" radius={[4, 4, 0, 0]} name="sales" />
                   <Bar dataKey="purchases" fill="#F59E0B" radius={[4, 4, 0, 0]} name="purchases" />
@@ -947,7 +949,7 @@ export default function ReportsSection() {
                     <Cell key={`cell-${i}`} fill={COLORS[i % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value: any) => [`${CURRENCY} ${value}`, "المبيعات"]} />
+                <Tooltip formatter={(value: number) => [`${CURRENCY} ${value}`, "المبيعات"]} />
               </PieChart>
             </ResponsiveContainer>
           ) : (
@@ -1081,7 +1083,7 @@ export default function ReportsSection() {
                       <Cell fill="#EF4444" />
                       <Cell fill="#10B981" />
                     </Pie>
-                    <Tooltip formatter={(value: any) => [`${CURRENCY} ${value}`, ""]} />
+                  <Tooltip formatter={(value: number) => [`${CURRENCY} ${value}`, ""]} />
                   </PieChart>
                 </ResponsiveContainer>
               )}

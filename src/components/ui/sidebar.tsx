@@ -42,18 +42,22 @@ function Sidebar({ className, children, side = "right", ...props }: React.HTMLAt
 
   return (
     <>
-      {isMobile && open && (
+      {isMobile && (
         <div
-          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm transition-opacity duration-300"
+          className={cn(
+            "fixed inset-0 z-40 bg-black/60 backdrop-blur-[2px] transition-all duration-300 ease-out",
+            open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          )}
           onClick={() => setOpen(false)}
+          aria-hidden="true"
         />
       )}
       <div
         className={cn(
-          "fixed inset-y-0 z-[60] flex w-60 flex-col border bg-background transition-transform duration-300",
+          "fixed inset-y-0 z-50 flex w-72 flex-col bg-sidebar border-sidebar-border transition-all duration-300 ease-out",
           side === "right" ? "right-0 border-l" : "left-0 border-r",
           !open && side === "right" ? "translate-x-full" : !open && side === "left" ? "-translate-x-full" : "",
-          isMobile && "shadow-2xl",
+          isMobile ? "shadow-2xl rounded-l-2xl" : "shadow-xl",
           className
         )}
         {...props}
@@ -65,15 +69,15 @@ function Sidebar({ className, children, side = "right", ...props }: React.HTMLAt
 }
 
 function SidebarHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("flex h-16 items-center border-b px-4 pt-safe", className)} {...props} />;
+  return <div className={cn("flex items-center gap-2 border-b border-sidebar-border px-4 pt-safe min-h-16", className)} {...props} />;
 }
 
 function SidebarContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("flex-1 overflow-auto py-2 pb-safe", className)} {...props} />;
+  return <div className={cn("flex-1 overflow-auto py-2 pb-safe scrollbar-thin", className)} {...props} />;
 }
 
 function SidebarFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("border-t p-4 pb-safe", className)} {...props} />;
+  return <div className={cn("border-t border-sidebar-border p-3 pb-safe", className)} {...props} />;
 }
 
 function SidebarMenu({ className, ...props }: React.HTMLAttributes<HTMLUListElement>) {
@@ -87,7 +91,7 @@ function SidebarMenuItem({ className, ...props }: React.HTMLAttributes<HTMLLIEle
 function SidebarMenuButton({
   className,
   isActive,
-  tooltip,
+  _tooltip,
   size = "default",
   ...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & { isActive?: boolean; tooltip?: string; size?: "sm" | "default" | "lg" }) {
@@ -111,10 +115,14 @@ function SidebarTrigger({ className, ...props }: React.ButtonHTMLAttributes<HTML
   return (
     <button
       onClick={() => setOpen(!open)}
-      className={cn("inline-flex items-center justify-center rounded-md text-sm font-medium h-10 w-10", className)}
+      className={cn(
+        "inline-flex items-center justify-center rounded-lg text-sm font-medium h-9 w-9 transition-colors",
+        "hover:bg-slate-100 text-slate-500",
+        className
+      )}
       {...props}
     >
-      {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+      {open ? <X className="w-[18px] h-[18px]" /> : <Menu className="w-[18px] h-[18px]" />}
     </button>
   );
 }
@@ -124,8 +132,8 @@ function SidebarInset({ className, ...props }: React.HTMLAttributes<HTMLDivEleme
   return (
     <div
       className={cn(
-        "flex min-h-svh flex-1 flex-col transition-[margin] duration-300",
-        !isMobile && open ? "mr-60" : "mr-0",
+        "flex min-h-svh flex-1 flex-col transition-all duration-300 ease-out",
+        !isMobile && open ? "lg:mr-72" : "lg:mr-0",
         className
       )}
       {...props}
@@ -134,7 +142,7 @@ function SidebarInset({ className, ...props }: React.HTMLAttributes<HTMLDivEleme
 }
 
 function SidebarSeparator({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("mx-2 w-auto bg-sidebar-border", className)} {...props} />;
+  return <div className={cn("mx-3 my-1 h-px bg-sidebar-border", className)} {...props} />;
 }
 
 export {

@@ -1,12 +1,12 @@
 import { supabase } from "@/lib/supabase";
-import { toNumber } from "@/lib/db";
-import type { Debt, DebtPayment, DebtSummary, DebtItem } from "@/types";
+import { toNumber, type RawRow } from "@/lib/db";
+import type { Debt, DebtPayment, DebtSummary } from "@/types";
 
 const DEBTS_TABLE = "debts";
 const PAYMENTS_TABLE = "debt_payments";
 
-function mapDebt(row: Record<string, unknown>): Debt {
-  const r = row as any;
+function mapDebt(row: RawRow): Debt {
+  const r = row as Record<string, unknown>;
   return {
     id: r.id,
     customer_id: r.customer_id,
@@ -61,8 +61,8 @@ function mapDebt(row: Record<string, unknown>): Debt {
   };
 }
 
-function mapPayment(row: Record<string, unknown>): DebtPayment {
-  const r = row as any;
+function mapPayment(row: RawRow): DebtPayment {
+  const r = row as Record<string, unknown>;
   return {
     id: r.id,
     debt_id: r.debt_id,
@@ -272,7 +272,7 @@ export async function createDebtPayment(
     .single();
 
   if (error) throw error;
-  return mapPayment(data as any);
+  return mapPayment(data as unknown as RawRow);
 }
 
 export async function deleteDebtPayment(id: string): Promise<void> {
@@ -290,7 +290,7 @@ export async function getDebtSummary(): Promise<DebtSummary> {
 
   if (error) throw error;
 
-  const activeDebts = (debts || []) as any[];
+  const activeDebts = (debts || []) as RawRow[];
   const today = new Date().toISOString().slice(0, 10);
 
   let total_outstanding = 0;
@@ -355,7 +355,7 @@ export async function searchDebts(term: string): Promise<Debt[]> {
     .select("id")
     .or(`name.ilike.%${term}%,phone.ilike.%${term}%`);
 
-  const customerIds = (customers || []).map((c: any) => c.id);
+  const customerIds = (customers || []).map((c: RawRow) => c.id as string);
 
   if (customerIds.length === 0) return [];
 

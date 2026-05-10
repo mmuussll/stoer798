@@ -1,5 +1,4 @@
 import { supabase } from "@/lib/supabase";
-import { toNumber } from "@/lib/db";
 import type { Category } from "@/types";
 
 const TABLE = "categories";

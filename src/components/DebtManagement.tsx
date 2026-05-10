@@ -85,6 +85,8 @@ export default function DebtManagement() {
   const [showAddDebtDialog, setShowAddDebtDialog] = useState(false);
   const [addDebtCustomerSearch, setAddDebtCustomerSearch] = useState("");
   const [addDebtSelectedCustomer, setAddDebtSelectedCustomer] = useState<Customer | null>(null);
+  const [addDebtCustomerName, setAddDebtCustomerName] = useState("");
+  const [addDebtCustomerPhone, setAddDebtCustomerPhone] = useState("");
   const [addDebtAmount, setAddDebtAmount] = useState("");
   const [addDebtDueDate, setAddDebtDueDate] = useState("");
   const [addDebtDebtorPhone, setAddDebtDebtorPhone] = useState("");
@@ -201,6 +203,8 @@ export default function DebtManagement() {
   const openAddDebtDialog = () => {
     setAddDebtCustomerSearch("");
     setAddDebtSelectedCustomer(null);
+    setAddDebtCustomerName("");
+    setAddDebtCustomerPhone("");
     setAddDebtAmount("");
     setAddDebtDueDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10));
     setAddDebtDebtorPhone("");
@@ -219,6 +223,19 @@ export default function DebtManagement() {
       const initPayment = parseFloat(addDebtInitialPayment) || 0;
       const remaining = Math.max(0, amount - initPayment);
 
+      let customerId = addDebtSelectedCustomer?.id;
+      if (!customerId && addDebtCustomerName.trim()) {
+        const newCustomer = await customersApi.createCustomer({
+          name: addDebtCustomerName.trim(),
+          phone: addDebtCustomerPhone.trim() || undefined,
+          total_debt: 0,
+          debt_limit: 0,
+        });
+        customerId = newCustomer.id;
+      }
+
+      if (!customerId || !addDebtAmount || parseFloat(addDebtAmount) <= 0) throw new Error("بيانات غير مكتملة");
+
       // Parse debt items from textarea (one per line: productName xQty)
       let parsedItems: DebtItem[] = [];
       if (addDebtItems.trim()) {
@@ -236,7 +253,7 @@ export default function DebtManagement() {
       }
 
       const debt = await debtsApi.createDebt({
-        customer_id: addDebtSelectedCustomer.id,
+        customer_id: customerId,
         invoice_id: undefined,
         total_amount: amount,
         remaining_amount: remaining,
@@ -244,7 +261,7 @@ export default function DebtManagement() {
         due_date: addDebtDueDate || undefined,
         guarantor_name: addDebtGuarantorName || undefined,
         guarantor_phone: addDebtGuarantorPhone || undefined,
-        debtor_phone: addDebtDebtorPhone || addDebtSelectedCustomer.phone || undefined,
+        debtor_phone: addDebtDebtorPhone || addDebtSelectedCustomer?.phone || addDebtCustomerPhone || undefined,
         debt_items: parsedItems,
         notes: addDebtNote || `دين مضاف يدوياً`,
       });
@@ -894,7 +911,7 @@ export default function DebtManagement() {
             {/* Customer Search */}
             <div>
               <label className="text-sm font-medium mb-1 block">
-                الزبون <span className="text-red-500">*</span>
+                الزبون
               </label>
               {addDebtSelectedCustomer ? (
                 <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg p-3">
@@ -947,7 +964,7 @@ export default function DebtManagement() {
                       {customerSearchLoading ? (
                         <div className="p-4 text-center text-sm text-gray-400">جاري البحث...</div>
                       ) : searchedCustomers.length === 0 ? (
-                        <div className="p-4 text-center text-sm text-gray-400">لا توجد نتائج</div>
+                        <div className="p-4 text-center text-sm text-gray-400">لا توجد نتائج - أدخل بيانات الزبون يدوياً أدناه</div>
                       ) : (
                         searchedCustomers.map((c: Customer) => (
                           <div
@@ -975,6 +992,29 @@ export default function DebtManagement() {
                       )}
                     </div>
                   )}
+                  <div className="bg-slate-50 border border-dashed border-slate-300 rounded-lg p-3 space-y-2">
+                    <p className="text-xs text-slate-500 font-medium">أو أدخل بيانات زبون جديد:</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-xs text-slate-500 block mb-0.5">الاسم</label>
+                        <Input
+                          value={addDebtCustomerName}
+                          onChange={(e) => setAddDebtCustomerName(e.target.value)}
+                          placeholder="اسم الزبون"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-500 block mb-0.5">رقم الهاتف</label>
+                        <Input
+                          type="tel"
+                          value={addDebtCustomerPhone}
+                          onChange={(e) => setAddDebtCustomerPhone(e.target.value)}
+                          placeholder="07xxxxxxxxx"
+                          dir="ltr"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -1136,7 +1176,7 @@ export default function DebtManagement() {
             <Button
               onClick={() => addDebtMutation.mutate()}
               disabled={
-                !addDebtSelectedCustomer ||
+                (!addDebtSelectedCustomer && !addDebtCustomerName.trim()) ||
                 !addDebtAmount ||
                 parseFloat(addDebtAmount) <= 0 ||
                 (addDebtInitialPayment && parseFloat(addDebtInitialPayment) > parseFloat(addDebtAmount)) ||

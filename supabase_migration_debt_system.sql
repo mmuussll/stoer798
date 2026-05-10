@@ -179,3 +179,27 @@ EXECUTE FUNCTION update_debt_after_payment_change();
 -- 10. Add enable_credit_sales to store_settings
 ALTER TABLE store_settings 
 ADD COLUMN IF NOT EXISTS enable_credit_sales boolean DEFAULT true;
+
+-- 11. Enable RLS on debts and debt_payments
+ALTER TABLE debts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE debt_payments ENABLE ROW LEVEL SECURITY;
+
+-- 12. RLS Policies for debts
+DROP POLICY IF EXISTS "Authenticated users can read debts" ON debts;
+CREATE POLICY "Authenticated users can read debts" ON debts FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "Authenticated users can insert debts" ON debts;
+CREATE POLICY "Authenticated users can insert debts" ON debts FOR INSERT TO authenticated WITH CHECK (true);
+DROP POLICY IF EXISTS "Authenticated users can update debts" ON debts;
+CREATE POLICY "Authenticated users can update debts" ON debts FOR UPDATE TO authenticated USING (true);
+DROP POLICY IF EXISTS "Authenticated users can delete debts" ON debts;
+CREATE POLICY "Authenticated users can delete debts" ON debts FOR DELETE TO authenticated USING (true);
+
+-- 13. RLS Policies for debt_payments
+DROP POLICY IF EXISTS "Authenticated users can read debt_payments" ON debt_payments;
+CREATE POLICY "Authenticated users can read debt_payments" ON debt_payments FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "Authenticated users can insert debt_payments" ON debt_payments;
+CREATE POLICY "Authenticated users can insert debt_payments" ON debt_payments FOR INSERT TO authenticated WITH CHECK (true);
+DROP POLICY IF EXISTS "Authenticated users can update debt_payments" ON debt_payments;
+CREATE POLICY "Authenticated users can update debt_payments" ON debt_payments FOR UPDATE TO authenticated USING (true);
+DROP POLICY IF EXISTS "Authenticated users can delete debt_payments" ON debt_payments;
+CREATE POLICY "Authenticated users can delete debt_payments" ON debt_payments FOR DELETE TO authenticated USING (true);

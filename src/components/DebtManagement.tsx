@@ -295,8 +295,14 @@ export default function DebtManagement() {
       toast({ title: "تم إضافة الدين بنجاح" });
       setShowAddDebtDialog(false);
     },
-    onError: (err: Error) =>
-      toast({ title: "خطأ", description: err.message, variant: "destructive" }),
+    onError: (err: Error) => {
+      console.error("فشل إضافة الدين:", err);
+      toast({
+        title: "فشل إضافة الدين",
+        description: err.message || "حدث خطأ غير معروف، تحقق من اتصال الانترنت أو صلاحيات الحساب",
+        variant: "destructive",
+      });
+    },
   });
 
   const StatCard = ({ title, value, icon: Icon, color, bg, sub }: { title: string; value: string; icon: ComponentType<{ className?: string }>; color: string; bg: string; sub?: string }) => (

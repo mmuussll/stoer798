@@ -6,12 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { StatCard } from "@/components/StatCard";
 import {
   User2, Phone, Wallet, Calendar, AlertTriangle,
   Pencil, Trash2, X, Banknote, History,
@@ -675,6 +674,9 @@ export function DebtorDetail({
             <DialogTitle className="flex items-center gap-2">
               <Banknote className="w-5 h-5 text-emerald-600" />تسجيل دفعة
             </DialogTitle>
+            <DialogDescription>
+              {selectedDebt && <span>تسجيل دفعة من الزبون: <strong>{customerName}</strong></span>}
+            </DialogDescription>
           </DialogHeader>
           {selectedDebt && (
             <div className="space-y-4">
@@ -730,8 +732,10 @@ export function DebtorDetail({
             <DialogTitle className="flex items-center gap-2 text-red-600">
               <AlertTriangle className="w-5 h-5" />تأكيد الحذف
             </DialogTitle>
+            <DialogDescription>
+              هل أنت متأكد من حذف هذا الدين؟ جميع المدفوعات المرتبطة به ستحذف أيضاً.
+            </DialogDescription>
           </DialogHeader>
-          <p className="text-sm">هل أنت متأكد من حذف هذا الدين؟ جميع المدفوعات المرتبطة به ستحذف أيضاً.</p>
           <div className="flex gap-2 justify-end mt-4">
             <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>إلغاء</Button>
             <Button variant="destructive" onClick={() => deleteMutation.mutate()} disabled={deleteMutation.isPending}>

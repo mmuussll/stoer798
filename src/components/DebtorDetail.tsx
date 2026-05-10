@@ -1,10 +1,8 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
@@ -15,9 +13,9 @@ import {
 } from "@/components/ui/table";
 import { StatCard } from "@/components/StatCard";
 import {
-  User2, Phone, Wallet, Calendar, AlertTriangle, Clock4,
-  Pencil, Trash2, X, Banknote, History, CheckCircle2,
-  FileText, Landmark, Shield, Save, ExternalLink,
+  User2, Phone, Wallet, Calendar, AlertTriangle,
+  Pencil, Trash2, X, Banknote, History,
+  FileText, Shield, Save, Landmark,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -28,7 +26,7 @@ import {
   STATUS_MAP, PAYMENT_ICONS, PAYMENT_LABELS,
   getDueStatus, todayStr,
 } from "@/lib/debt-utils";
-import type { Customer, Debt, DebtPayment } from "@/types";
+import type { Debt } from "@/types";
 
 interface DebtorDetailProps {
   open: boolean;
@@ -67,22 +65,58 @@ export function DebtorDetail({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
-  // ============ Edit Debt ============
-  const [showEditDebtDialog, setShowEditDebtDialog] = useState(false);
-  const [editDebtId, setEditDebtId] = useState("");
-  const [editDebtAmount, setEditDebtAmount] = useState("");
-  const [editDebtDueDate, setEditDebtDueDate] = useState("");
-  const [editDebtStatus, setEditDebtStatus] = useState("active");
-  const [editDebtDebtorPhone, setEditDebtDebtorPhone] = useState("");
-  const [editDebtGuarantorName, setEditDebtGuarantorName] = useState("");
-  const [editDebtGuarantorPhone, setEditDebtGuarantorPhone] = useState("");
-  const [editDebtNote, setEditDebtNote] = useState("");
+  // ============ Edit Debt Inline ============
+  const [editingDebtId, setEditingDebtId] = useState<string | null>(null);
+  const [editAmount, setEditAmount] = useState("");
+  const [editDueDate, setEditDueDate] = useState("");
+  const [editStatus, setEditStatus] = useState("active");
+  const [editDebtorPhone, setEditDebtorPhone] = useState("");
+  const [editGuarantorName, setEditGuarantorName] = useState("");
+  const [editGuarantorPhone, setEditGuarantorPhone] = useState("");
+  const [editNote, setEditNote] = useState("");
 
-  // ============ Queries ============
-  const { data: customer, isLoading: customerLoading } = useQuery({
-    queryKey: ["customer", customerId],
-    queryFn: () => customersApi.getCustomer(customerId),
-    enabled: open && !!customerId,
+  const startEditDebt = (debt: Debt) => {
+    setEditingDebtId(debt.id);
+    setEditAmount(debt.total_amount.toFixed(2));
+    setEditDueDate(debt.due_date || "");
+    setEditStatus(debt.status);
+    setEditDebtorPhone(debt.debtor_phone || "");
+    setEditGuarantorName(debt.guarantor_name || "");
+    setEditGuarantorPhone(debt.guarantor_phone || "");
+    setEditNote(debt.notes || "");
+  };
+
+  const cancelEditDebt = () => {
+    setEditingDebtId(null);
+  };
+
+  const editDebtMutation = useMutation({
+    mutationFn: async () => {
+      const debt = debts.find((d) => d.id === editingDebtId);
+      if (!debt) throw new Error("الدين غير موجود");
+      const amount = parseFloat(editAmount) || 0;
+      const alreadyPaid = debt.total_amount - debt.remaining_amount;
+      const remain = Math.max(0, amount - alreadyPaid);
+      await debtsApi.updateDebt(editingDebtId!, {
+        total_amount: amount,
+        remaining_amount: remain,
+        status: remain <= 0 ? "paid" : editStatus === "paid" ? "active" : editStatus,
+        due_date: editDueDate || undefined,
+        guarantor_name: editGuarantorName || undefined,
+        guarantor_phone: editGuarantorPhone || undefined,
+        debtor_phone: editDebtorPhone || undefined,
+        notes: editNote || undefined,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["customer-debts", customerId] });
+      queryClient.invalidateQueries({ queryKey: ["debt-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["debts"] });
+      toast({ title: "تم تعديل الدين بنجاح" });
+      setEditingDebtId(null);
+    },
+    onError: (err: Error) =>
+      toast({ title: "فشل تعديل الدين", description: err.message, variant: "destructive" }),
   });
 
   const { data: debts = [], isLoading: debtsLoading } = useQuery({
@@ -235,7 +269,7 @@ export function DebtorDetail({
     if (!open) {
       setEditing(false);
       setShowPaymentDialog(false);
-      setShowEditDebtDialog(false);
+      setEditingDebtId(null);
       setShowDeleteConfirm(false);
     }
   }, [open]);
@@ -422,76 +456,153 @@ export function DebtorDetail({
                                 </div>
                               </div>
                               <div className="flex items-center gap-1">
-                                {debt.status !== "paid" && (
+                                {debt.status !== "paid" && editingDebtId !== debt.id && (
                                   <Button variant="ghost" size="sm" className="h-8 text-emerald-600 hover:bg-emerald-50"
                                     onClick={() => openPayment(debt)} title="تسجيل دفعة">
                                     <Banknote className="w-3.5 h-3.5" />
                                   </Button>
                                 )}
-                                <Button variant="ghost" size="sm" className="h-8 text-amber-600 hover:bg-amber-50"
-                                  onClick={() => openEditDebtDialog(debt)} title="تعديل الدين">
-                                  <Pencil className="w-3.5 h-3.5" />
-                                </Button>
-                                <Button variant="ghost" size="sm" className="h-8 text-red-400 hover:text-red-600 hover:bg-red-50"
-                                  onClick={() => { setDeleteTargetId(debt.id); setShowDeleteConfirm(true); }}
-                                  title="حذف الدين">
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </Button>
-                              </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                              <div>
-                                <span className="text-gray-400 text-xs">المبلغ الكلي</span>
-                                <p className="font-bold">{debt.total_amount.toFixed(2)} {CURRENCY}</p>
-                              </div>
-                              <div>
-                                <span className="text-gray-400 text-xs">المتبقي</span>
-                                <p className={`font-bold ${debt.remaining_amount > 0 ? "text-red-600" : "text-emerald-600"}`}>
-                                  {debt.remaining_amount.toFixed(2)} {CURRENCY}
-                                </p>
-                              </div>
-                              <div>
-                                <span className="text-gray-400 text-xs">المدفوع</span>
-                                <p className="font-bold text-emerald-600">
-                                  {(debt.total_amount - debt.remaining_amount).toFixed(2)} {CURRENCY}
-                                </p>
-                              </div>
-                              <div>
-                                <span className="text-gray-400 text-xs">تاريخ الاستحقاق</span>
-                                <p className={`font-medium flex items-center gap-1 ${dueStatus.color}`}>
-                                  <Calendar className="w-3 h-3" />
-                                  {debt.due_date || "غير محدد"}
-                                </p>
-                              </div>
-                            </div>
-
-                            {/* Progress bar */}
-                            {paidPercent > 0 && debt.status !== "paid" && (
-                              <div className="mt-3">
-                                <div className="flex justify-between text-xs text-gray-400 mb-1">
-                                  <span>نسبة السداد</span>
-                                  <span>{paidPercent.toFixed(0)}%</span>
-                                </div>
-                                <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                                  <div
-                                    className="h-full bg-emerald-500 rounded-full transition-all duration-500"
-                                    style={{ width: `${paidPercent}%` }}
-                                  />
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Guarantor info */}
-                            {(debt.guarantor_name || debt.guarantor_phone) && (
-                              <div className="mt-3 bg-amber-50 border border-amber-200 rounded p-2 text-xs">
-                                <span className="text-amber-700 font-medium">الكفيل: </span>
-                                {debt.guarantor_name && <span>{debt.guarantor_name}</span>}
-                                {debt.guarantor_phone && (
-                                  <span className="mr-2" dir="ltr">{debt.guarantor_phone}</span>
+                                {editingDebtId !== debt.id && (
+                                  <Button variant="ghost" size="sm" className="h-8 text-amber-600 hover:bg-amber-50"
+                                    onClick={() => startEditDebt(debt)} title="تعديل الدين">
+                                    <Pencil className="w-3.5 h-3.5" />
+                                  </Button>
+                                )}
+                                {editingDebtId !== debt.id && (
+                                  <Button variant="ghost" size="sm" className="h-8 text-red-400 hover:text-red-600 hover:bg-red-50"
+                                    onClick={() => { setDeleteTargetId(debt.id); setShowDeleteConfirm(true); }}
+                                    title="حذف الدين">
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </Button>
                                 )}
                               </div>
-                            )}
+                            </div>
+
+                            {editingDebtId === debt.id ? (
+                              /* === Inline Edit Mode === */
+                              <div className="space-y-3 mt-3 pt-3 border-t">
+                                <div className="grid grid-cols-2 gap-3">
+                                  <div>
+                                    <label className="text-xs text-gray-500 block mb-1">المبلغ الكلي</label>
+                                    <Input type="number" value={editAmount} onChange={(e) => setEditAmount(e.target.value)}
+                                      dir="ltr" className="text-sm font-bold text-center" />
+                                  </div>
+                                  <div>
+                                    <label className="text-xs text-gray-500 block mb-1">المدفوع</label>
+                                    <Input type="text" dir="ltr" className="text-sm font-bold text-center bg-gray-100"
+                                      disabled value={(debt.total_amount - debt.remaining_amount).toFixed(2)} />
+                                  </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                  <div>
+                                    <label className="text-xs text-gray-500 block mb-1">تاريخ الاستحقاق</label>
+                                    <Input type="date" value={editDueDate} onChange={(e) => setEditDueDate(e.target.value)} className="text-sm" />
+                                  </div>
+                                  <div>
+                                    <label className="text-xs text-gray-500 block mb-1">الحالة</label>
+                                    <Select value={editStatus} onValueChange={setEditStatus}>
+                                      <SelectTrigger className="text-sm h-9"><SelectValue /></SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="active">نشط</SelectItem>
+                                        <SelectItem value="partially_paid">مدفوع جزئياً</SelectItem>
+                                        <SelectItem value="overdue">متأخر</SelectItem>
+                                        <SelectItem value="paid">مدفوع</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="text-xs text-gray-500 block mb-1">رقم هاتف المديون</label>
+                                  <Input type="tel" value={editDebtorPhone} onChange={(e) => setEditDebtorPhone(e.target.value)}
+                                    dir="ltr" className="text-sm" placeholder="رقم الهاتف" />
+                                </div>
+                                <div className="bg-gray-50 border rounded-lg p-2 space-y-2">
+                                  <span className="text-xs font-medium text-gray-600">بيانات الكفيل</span>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                      <label className="text-[11px] text-gray-400 block mb-0.5">اسم الكفيل</label>
+                                      <Input value={editGuarantorName} onChange={(e) => setEditGuarantorName(e.target.value)}
+                                        className="text-sm h-8" placeholder="اسم الكفيل" />
+                                    </div>
+                                    <div>
+                                      <label className="text-[11px] text-gray-400 block mb-0.5">رقم الكفيل</label>
+                                      <Input type="tel" value={editGuarantorPhone} onChange={(e) => setEditGuarantorPhone(e.target.value)}
+                                        dir="ltr" className="text-sm h-8" placeholder="رقم الهاتف" />
+                                    </div>
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="text-xs text-gray-500 block mb-1">ملاحظات</label>
+                                  <Input value={editNote} onChange={(e) => setEditNote(e.target.value)}
+                                    className="text-sm" placeholder="ملاحظات..." />
+                                </div>
+                                <div className="flex gap-2 justify-end pt-1">
+                                  <Button size="sm" variant="outline" className="h-8" onClick={cancelEditDebt}>
+                                    <X className="w-3 h-3 ml-1" />إلغاء
+                                  </Button>
+                                  <Button size="sm" className="h-8 bg-amber-600 hover:bg-amber-700"
+                                    onClick={() => editDebtMutation.mutate()}
+                                    disabled={editDebtMutation.isPending || !editAmount || parseFloat(editAmount) <= 0}>
+                                    {editDebtMutation.isPending ? "جاري..." : <><Save className="w-3 h-3 ml-1" />حفظ</>}
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              /* === Normal Display === */
+                              <>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                                  <div>
+                                    <span className="text-gray-400 text-xs">المبلغ الكلي</span>
+                                    <p className="font-bold">{debt.total_amount.toFixed(2)} {CURRENCY}</p>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-400 text-xs">المتبقي</span>
+                                    <p className={`font-bold ${debt.remaining_amount > 0 ? "text-red-600" : "text-emerald-600"}`}>
+                                      {debt.remaining_amount.toFixed(2)} {CURRENCY}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-400 text-xs">المدفوع</span>
+                                    <p className="font-bold text-emerald-600">
+                                      {(debt.total_amount - debt.remaining_amount).toFixed(2)} {CURRENCY}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-400 text-xs">تاريخ الاستحقاق</span>
+                                    <p className={`font-medium flex items-center gap-1 ${dueStatus.color}`}>
+                                      <Calendar className="w-3 h-3" />
+                                      {debt.due_date || "غير محدد"}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* Progress bar */}
+                                {paidPercent > 0 && debt.status !== "paid" && (
+                                  <div className="mt-3">
+                                    <div className="flex justify-between text-xs text-gray-400 mb-1">
+                                      <span>نسبة السداد</span>
+                                      <span>{paidPercent.toFixed(0)}%</span>
+                                    </div>
+                                    <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                                      <div
+                                        className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                                        style={{ width: `${paidPercent}%` }}
+                                      />
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Guarantor info */}
+                                {(debt.guarantor_name || debt.guarantor_phone) && (
+                                  <div className="mt-3 bg-amber-50 border border-amber-200 rounded p-2 text-xs">
+                                    <span className="text-amber-700 font-medium">الكفيل: </span>
+                                    {debt.guarantor_name && <span>{debt.guarantor_name}</span>}
+                                    {debt.guarantor_phone && (
+                                      <span className="mr-2" dir="ltr">{debt.guarantor_phone}</span>
+                                    )}
+                                  </div>
+                                )}
+                              </>)}
                           </div>
                         );
                       })
@@ -607,70 +718,6 @@ export function DebtorDetail({
             <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={() => paymentMutation.mutate()}
               disabled={!paymentAmount || parseFloat(paymentAmount) <= 0 || parseFloat(paymentAmount) > (selectedDebt?.remaining_amount || 0) || paymentMutation.isPending}>
               {paymentMutation.isPending ? "جاري التسجيل..." : "تسجيل الدفعة"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Debt Dialog */}
-      <Dialog open={showEditDebtDialog} onOpenChange={setShowEditDebtDialog}>
-        <DialogContent dir="rtl" className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Pencil className="w-5 h-5 text-amber-600" />تعديل الدين
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div>
-              <label className="text-sm font-medium mb-1 block">المبلغ الكلي</label>
-              <Input type="number" value={editDebtAmount} onChange={(e) => setEditDebtAmount(e.target.value)}
-                placeholder="0.00" dir="ltr" className="text-lg font-bold text-center" />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-1 block">تاريخ الاستحقاق</label>
-              <Input type="date" value={editDebtDueDate} onChange={(e) => setEditDebtDueDate(e.target.value)} />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-1 block">الحالة</label>
-              <Select value={editDebtStatus} onValueChange={setEditDebtStatus}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">نشط</SelectItem>
-                  <SelectItem value="partially_paid">مدفوع جزئياً</SelectItem>
-                  <SelectItem value="overdue">متأخر</SelectItem>
-                  <SelectItem value="paid">مدفوع</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-1 block">رقم هاتف المديون</label>
-              <Input type="tel" value={editDebtDebtorPhone} onChange={(e) => setEditDebtDebtorPhone(e.target.value)}
-                dir="ltr" placeholder="رقم الهاتف" />
-            </div>
-            <div className="bg-gray-50 border rounded-lg p-3 space-y-2">
-              <span className="text-sm font-semibold text-gray-700">بيانات الكفيل</span>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-xs text-gray-500 block mb-1">اسم الكفيل</label>
-                  <Input value={editDebtGuarantorName} onChange={(e) => setEditDebtGuarantorName(e.target.value)} placeholder="اسم الكفيل" />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 block mb-1">رقم الكفيل</label>
-                  <Input type="tel" value={editDebtGuarantorPhone} onChange={(e) => setEditDebtGuarantorPhone(e.target.value)}
-                    dir="ltr" placeholder="07xxxxxxxxx" />
-                </div>
-              </div>
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-1 block">ملاحظات</label>
-              <Input value={editDebtNote} onChange={(e) => setEditDebtNote(e.target.value)} placeholder="ملاحظات..." />
-            </div>
-          </div>
-          <div className="flex gap-2 justify-end mt-4">
-            <Button variant="outline" onClick={() => setShowEditDebtDialog(false)}>إلغاء</Button>
-            <Button className="bg-amber-600 hover:bg-amber-700" onClick={() => editDebtMutation.mutate()}
-              disabled={editDebtMutation.isPending || !editDebtAmount || parseFloat(editDebtAmount) <= 0}>
-              {editDebtMutation.isPending ? "جاري الحفظ..." : "حفظ التعديلات"}
             </Button>
           </div>
         </DialogContent>

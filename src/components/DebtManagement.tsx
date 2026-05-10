@@ -19,6 +19,7 @@ import {
   Pencil, Trash2, X, ChevronDown, ChevronUp,
 } from "lucide-react";
 import { StatCard } from "@/components/StatCard";
+import { DebtorDetail } from "@/components/DebtorDetail";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import * as debtsApi from "@/api/debts";
@@ -87,6 +88,14 @@ export default function DebtManagement() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [deleteTargetName, setDeleteTargetName] = useState("");
+
+  // Debtor detail
+  const [showDebtorDetail, setShowDebtorDetail] = useState(false);
+  const [debtorDetailId, setDebtorDetailId] = useState("");
+  const [debtorDetailName, setDebtorDetailName] = useState("");
+  const [debtorDetailPhone, setDebtorDetailPhone] = useState<string | undefined>("");
+  const [debtorDetailTotal, setDebtorDetailTotal] = useState(0);
+  const [debtorDetailCount, setDebtorDetailCount] = useState(0);
 
   // ============ Queries ============
 
@@ -443,7 +452,15 @@ export default function DebtManagement() {
       {summary && summary.customers.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {summary.customers.slice(0, 8).map((c) => (
-            <Card key={c.id} className="border-l-4 border-l-red-400 hover:shadow-md transition-shadow">
+            <Card key={c.id} className="border-l-4 border-l-red-400 hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => {
+                setDebtorDetailId(c.id);
+                setDebtorDetailName(c.name);
+                setDebtorDetailPhone(c.phone);
+                setDebtorDetailTotal(c.total_debt);
+                setDebtorDetailCount(c.debt_count);
+                setShowDebtorDetail(true);
+              }}>
               <CardContent className="p-3">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
@@ -545,7 +562,15 @@ export default function DebtManagement() {
                       return (
                         <TableRow key={debt.id} className="hover:bg-gray-50">
                           <TableCell>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                              onClick={() => {
+                                setDebtorDetailId(debt.customer_id);
+                                setDebtorDetailName(debt.customer_name);
+                                setDebtorDetailPhone(debt.customer_phone);
+                                setDebtorDetailTotal(debts.filter((d) => d.customer_id === debt.customer_id && d.status !== "paid").reduce((s, d) => s + d.remaining_amount, 0));
+                                setDebtorDetailCount(debts.filter((d) => d.customer_id === debt.customer_id && d.status !== "paid").length);
+                                setShowDebtorDetail(true);
+                              }}>
                               <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
                                 <User2 className="w-3.5 h-3.5 text-gray-600" />
                               </div>
@@ -1126,6 +1151,18 @@ export default function DebtManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ==================== Debtor Detail ==================== */}
+      <DebtorDetail
+        open={showDebtorDetail}
+        onOpenChange={setShowDebtorDetail}
+        customerId={debtorDetailId}
+        customerName={debtorDetailName}
+        customerPhone={debtorDetailPhone}
+        totalDebt={debtorDetailTotal}
+        debtCount={debtorDetailCount}
+      />
+
     </div>
   );
 }

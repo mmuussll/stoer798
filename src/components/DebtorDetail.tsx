@@ -244,6 +244,10 @@ export function DebtorDetail({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent dir="rtl" className="max-w-3xl max-h-[92vh] overflow-y-auto p-0">
+          <DialogHeader className="sr-only">
+            <DialogTitle>معلومات المديون</DialogTitle>
+            <DialogDescription>تفاصيل ديون ومدفوعات الزبون</DialogDescription>
+          </DialogHeader>
           {isLoading ? (
             <div className="space-y-4 p-6">
               <Skeleton className="h-12 w-48" />

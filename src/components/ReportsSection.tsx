@@ -1,4 +1,4 @@
-import { useState, useMemo, type ElementType } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,12 +16,14 @@ import {
   TrendingDown, AlertTriangle, Layers, ShoppingCart, Target,
   Clock, Zap, Receipt, Landmark, User2, Wallet, CheckCircle2
 } from "lucide-react";
+import { StatCard } from "@/components/StatCard";
 import { useToast } from "@/hooks/use-toast";
 import * as salesApi from "@/api/sales";
 import * as purchasesApi from "@/api/purchases";
 import * as productsApi from "@/api/products";
 import * as debtsApi from "@/api/debts";
 import { CURRENCY } from "@/constants";
+import { STATUS_MAP } from "@/lib/debt-utils";
 
 const COLORS = ["#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#06B6D4", "#EC4899", "#14B8A6", "#F97316", "#6366F1"];
 
@@ -417,36 +419,6 @@ export default function ReportsSection() {
     link.click();
     toast({ title: "تم التصدير", description: "تم تصدير التقرير بنجاح" });
   };
-
-  // ===================== Stat Card Component =====================
-  const StatCard = ({ title, value, icon: Icon, color, bg }: { title: string; value: string; icon: ElementType; color: string; bg: string }) => (
-    <Card className={bg}>
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-600">{title}</p>
-            <p className={`text-2xl font-bold mt-1 ${color}`}>{value}</p>
-          </div>
-          <Icon className={`w-8 h-8 opacity-40 ${color}`} />
-        </div>
-      </CardContent>
-    </Card>
-  );
-
-  // ===================== Loading State =====================
-  if (isLoading) {
-    return (
-      <div className="space-y-6" dir="rtl">
-        <Skeleton className="h-8 w-48" />
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-28 rounded-lg" />
-          ))}
-        </div>
-        <Skeleton className="h-96 rounded-lg" />
-      </div>
-    );
-  }
 
   // ===================== Render Functions =====================
   const renderSalesTab = () => (
@@ -1105,13 +1077,7 @@ export default function ReportsSection() {
                 </TableHeader>
                 <TableBody>
                   {debts.slice(0, 20).map((d) => {
-                    const statusColors: Record<string, string> = {
-                      active: "bg-blue-100 text-blue-700", partially_paid: "bg-amber-100 text-amber-700",
-                      paid: "bg-emerald-100 text-emerald-700", overdue: "bg-red-100 text-red-700",
-                    };
-                    const statusLabels: Record<string, string> = {
-                      active: "نشط", partially_paid: "مدفوع جزئياً", paid: "مدفوع", overdue: "متأخر",
-                    };
+                    const statusInfo = STATUS_MAP[d.status] || STATUS_MAP.active;
                     return (
                       <TableRow key={d.id}>
                         <TableCell className="font-medium">{d.customer_name || "-"}</TableCell>
@@ -1119,7 +1085,7 @@ export default function ReportsSection() {
                         <TableCell className="text-emerald-600">{(d.total_amount - d.remaining_amount).toFixed(2)} {CURRENCY}</TableCell>
                         <TableCell className="font-bold text-red-600">{d.remaining_amount.toFixed(2)} {CURRENCY}</TableCell>
                         <TableCell>
-                          <Badge variant="outline" className={statusColors[d.status]}>{statusLabels[d.status]}</Badge>
+                          <Badge variant="outline" className={statusInfo.color}>{statusInfo.label}</Badge>
                         </TableCell>
                         <TableCell className="text-sm">{d.due_date || "-"}</TableCell>
                       </TableRow>

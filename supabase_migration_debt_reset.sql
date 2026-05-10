@@ -37,6 +37,7 @@ CREATE TABLE debts (
   customer_name text NOT NULL DEFAULT '',
   customer_phone text DEFAULT '',
   invoice_id uuid REFERENCES sales_invoices(id) ON DELETE SET NULL,
+  invoice_number text,
   total_amount numeric NOT NULL DEFAULT 0,
   remaining_amount numeric NOT NULL DEFAULT 0,
   status text NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'partially_paid', 'paid', 'overdue')),
@@ -73,6 +74,7 @@ CREATE TABLE debt_payments (
 CREATE INDEX IF NOT EXISTS idx_debts_customer_id ON debts(customer_id);
 CREATE INDEX IF NOT EXISTS idx_debts_status ON debts(status);
 CREATE INDEX IF NOT EXISTS idx_debts_invoice_id ON debts(invoice_id);
+CREATE INDEX IF NOT EXISTS idx_debts_invoice_number ON debts(invoice_number);
 CREATE INDEX IF NOT EXISTS idx_debts_due_date ON debts(due_date);
 CREATE INDEX IF NOT EXISTS idx_debts_created_at ON debts(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_debt_payments_debt_id ON debt_payments(debt_id);

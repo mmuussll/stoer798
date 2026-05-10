@@ -229,78 +229,28 @@ export async function deleteDebtPayment(id: string): Promise<void> {
 // ==================== SUMMARY ====================
 
 export async function getDebtSummary(): Promise<DebtSummary> {
-  const { data, error } = await supabase
-    .from(DEBTS_TABLE)
-    .select("*")
-    .in("status", ["active", "partially_paid", "overdue"]);
+  const { data, error } = await supabase.rpc("get_debt_summary");
 
   if (error) throw error;
 
-  const debts = (data || []) as RawRow[];
-  const today = new Date().toISOString().slice(0, 10);
-
-  let total_outstanding = 0;
-  let total_overdue = 0;
-  let total_active = 0;
-  const customerMap = new Map<string, {
-    id: string;
-    name: string;
-    phone?: string;
-    total_debt: number;
-    debt_limit: number;
-    debt_count: number;
-    oldest_due_date?: string;
-  }>();
-
-  for (const d of debts) {
-    const remaining = toNumber(d.remaining_amount);
-    total_outstanding += remaining;
-
-    if (d.due_date && (d.due_date as string) < today) {
-      total_overdue += remaining;
-    } else {
-      total_active += remaining;
-    }
-
-    const cid = d.customer_id as string;
-    const cname = (d.customer_name as string) || "";
-    const cphone = d.customer_phone as string | undefined;
-
-    const existing = customerMap.get(cid);
-    if (existing) {
-      existing.total_debt += remaining;
-      existing.debt_count += 1;
-      const dd = d.due_date as string | undefined;
-      if (dd && (!existing.oldest_due_date || dd < existing.oldest_due_date)) {
-        existing.oldest_due_date = dd;
-      }
-    } else {
-      // Fetch debt_limit from customers table
-      let debtLimit = 0;
-      try {
-        const { data: cust } = await supabase.from("customers").select("debt_limit").eq("id", cid).single();
-        debtLimit = toNumber((cust as RawRow)?.debt_limit);
-      } catch { /* ignore */ }
-
-      customerMap.set(cid, {
-        id: cid,
-        name: cname,
-        phone: cphone || undefined,
-        total_debt: remaining,
-        debt_limit: debtLimit,
-        debt_count: 1,
-        oldest_due_date: d.due_date as string | undefined,
-      });
-    }
-  }
-
+  const result = data as Record<string, unknown>;
   return {
-    total_outstanding,
-    total_overdue,
-    total_active,
-    total_customers_with_debt: customerMap.size,
-    total_debts: debts.length,
-    customers: Array.from(customerMap.values()).sort((a, b) => b.total_debt - a.total_debt),
+    total_outstanding: toNumber(result.total_outstanding),
+    total_overdue: toNumber(result.total_overdue),
+    total_active: toNumber(result.total_active),
+    total_customers_with_debt: toNumber(result.total_customers_with_debt),
+    total_debts: toNumber(result.total_debts),
+    customers: Array.isArray(result.customers)
+      ? (result.customers as Array<Record<string, unknown>>).map((c) => ({
+          id: c.id as string,
+          name: (c.name as string) || "",
+          phone: c.phone as string | undefined,
+          total_debt: toNumber(c.total_debt),
+          debt_limit: toNumber(c.debt_limit),
+          debt_count: toNumber(c.debt_count),
+          oldest_due_date: c.oldest_due_date as string | undefined,
+        }))
+      : [],
   };
 }
 
@@ -308,7 +258,7 @@ export async function searchDebts(term: string): Promise<Debt[]> {
   const { data, error } = await supabase
     .from(DEBTS_TABLE)
     .select("*")
-    .or(`customer_name.ilike.%${term}%,customer_phone.ilike.%${term}%`)
+    .or(`customer_name.ilike.%${term}%,customer_phone.ilike.%${term}%,invoice_number.ilike.%${term}%`)
     .in("status", ["active", "partially_paid", "overdue"])
     .order("created_at", { ascending: false })
     .limit(50);

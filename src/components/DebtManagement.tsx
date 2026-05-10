@@ -1,4 +1,4 @@
-import { useState, useMemo, type ComponentType } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,59 +13,24 @@ import {
   Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious,
 } from "@/components/ui/pagination";
 import {
-  Landmark, Search, Plus, DollarSign, Wallet, Calendar, AlertTriangle,
-  User2, Phone, FileText, Banknote, CreditCard,
-  ArrowRightLeft, CheckCircle2, Clock4, History, Filter, ShoppingBag,
+  Landmark, Search, Plus, Wallet, Calendar, AlertTriangle,
+  User2, Phone, FileText, Banknote, CheckCircle2,
+  Clock4, History, Filter, ShoppingBag,
   Pencil, Trash2, X,
 } from "lucide-react";
+import { StatCard } from "@/components/StatCard";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import * as debtsApi from "@/api/debts";
 import * as customersApi from "@/api/customers";
 import { CURRENCY } from "@/constants";
+import {
+  STATUS_MAP, PAYMENT_ICONS, PAYMENT_LABELS,
+  getDueStatus, todayStr, defaultDueDate,
+} from "@/lib/debt-utils";
 import type { Customer, Debt, DebtItem, DebtPayment } from "@/types";
 
 const ITEMS_PER_PAGE = 15;
-
-const STATUS_MAP: Record<string, { label: string; color: string; icon: ComponentType<{ className?: string }> }> = {
-  active: { label: "نشط", color: "bg-blue-100 text-blue-700 border-blue-200", icon: Clock4 },
-  partially_paid: { label: "مدفوع جزئياً", color: "bg-amber-100 text-amber-700 border-amber-200", icon: Wallet },
-  paid: { label: "مدفوع", color: "bg-emerald-100 text-emerald-700 border-emerald-200", icon: CheckCircle2 },
-  overdue: { label: "متأخر", color: "bg-red-100 text-red-700 border-red-200", icon: AlertTriangle },
-};
-
-const PAYMENT_ICONS: Record<string, ComponentType<{ className?: string }>> = {
-  cash: DollarSign, card: CreditCard, transfer: ArrowRightLeft,
-};
-
-const PAYMENT_LABELS: Record<string, string> = {
-  cash: "نقداً", card: "بطاقة", transfer: "تحويل",
-};
-
-function getDaysDiff(dateStr?: string): number {
-  if (!dateStr) return 0;
-  const d = new Date(dateStr);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return Math.ceil((d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-}
-
-function getDueStatus(dateStr?: string): { label: string; color: string } {
-  if (!dateStr) return { label: "غير محدد", color: "text-gray-400" };
-  const days = getDaysDiff(dateStr);
-  if (days < 0) return { label: `متأخر ${Math.abs(days)} يوم`, color: "text-red-600" };
-  if (days === 0) return { label: "اليوم", color: "text-amber-600" };
-  if (days <= 3) return { label: `متبقي ${days} أيام`, color: "text-blue-600" };
-  return { label: `متبقي ${days} يوم`, color: "text-emerald-600" };
-}
-
-function todayStr(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function defaultDueDate(): string {
-  return new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-}
 
 // ============================================================
 // المكون الرئيسي
@@ -426,23 +391,6 @@ export default function DebtManagement() {
 
   // ============ Render ============
 
-  const StatCard = ({ title, value, icon: Icon, color, bg, sub }: {
-    title: string; value: string; icon: ComponentType<{ className?: string }>; color: string; bg: string; sub?: string;
-  }) => (
-    <Card className={bg}>
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium">{title}</p>
-            <p className={`text-2xl font-bold mt-1 ${color}`}>{value}</p>
-            {sub && <p className="text-xs text-gray-500 mt-0.5">{sub}</p>}
-          </div>
-          <Icon className={`w-9 h-9 opacity-40 ${color}`} />
-        </div>
-      </CardContent>
-    </Card>
-  );
-
   return (
     <div className="space-y-6 p-4" dir="rtl">
       {/* Header */}
@@ -451,7 +399,7 @@ export default function DebtManagement() {
           <h1 className="text-2xl font-bold text-gray-900">إدارة الديون</h1>
           <p className="text-sm text-gray-500 mt-1">متابعة وإدارة ديون الزبائن والمدفوعات</p>
         </div>
-        <Button onClick={openAddDialog} className="bg-red-600 hover:bg-red-700 gap-2">
+        <Button onClick={openAddDialog} className="bg-emerald-600 hover:bg-emerald-700 gap-2">
           <Plus className="w-4 h-4" /> إضافة دين جديد
         </Button>
       </div>
@@ -1031,13 +979,12 @@ export default function DebtManagement() {
                   <label className="text-xs text-gray-500 block mb-1">طريقة الدفع</label>
                   <div className="flex gap-1">
                     {(["cash", "card", "transfer"] as const).map((m) => {
-                      const Icons: Record<string, ComponentType<{ className?: string }>> = { cash: DollarSign, card: CreditCard, transfer: ArrowRightLeft };
-                      const Icon = Icons[m];
+                      const Icon = PAYMENT_ICONS[m];
                       return (
                         <Button key={m} variant={addPaymentMethod === m ? "default" : "outline"} size="sm"
                           className={`flex-1 h-8 px-2 text-xs gap-0.5 ${addPaymentMethod === m ? "bg-amber-600 hover:bg-amber-700" : ""}`}
                           onClick={() => setAddPaymentMethod(m)}>
-                          <Icon className="w-3 h-3" />{m === "cash" ? "نقد" : m === "card" ? "بطاقة" : "تحويل"}
+                          <Icon className="w-3 h-3" />{PAYMENT_LABELS[m]}
                         </Button>
                       );
                     })}
@@ -1055,7 +1002,7 @@ export default function DebtManagement() {
 
           <DialogFooter className="gap-2 mt-4">
             <Button variant="outline" onClick={() => setShowAddDebtDialog(false)}>إلغاء</Button>
-            <Button onClick={() => addDebtMutation.mutate()} disabled={!canAddDebt || addDebtMutation.isPending} className="bg-red-600 hover:bg-red-700">
+            <Button onClick={() => addDebtMutation.mutate()} disabled={!canAddDebt || addDebtMutation.isPending} className="bg-emerald-600 hover:bg-emerald-700">
               {addDebtMutation.isPending ? "جاري الإضافة..." : "إضافة الدين"}
             </Button>
           </DialogFooter>

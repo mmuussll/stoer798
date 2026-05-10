@@ -1,4 +1,4 @@
-import { useState, Suspense, lazy } from "react";
+import { Suspense, useEffect } from "react";
 import {
   SidebarProvider,
   Sidebar,
@@ -33,7 +33,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import WhatsAppSupport from "@/components/WhatsAppSupport";
 import SubscriptionStatusBar from "@/components/SubscriptionStatusBar";
@@ -41,16 +41,6 @@ import NotificationsBell from "@/components/NotificationsBell";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { useQuery } from "@tanstack/react-query";
 import { fetchSettings } from "@/api/settings";
-
-const SalesInterface = lazy(() => import("@/components/SalesInterface"));
-const ProductManagement = lazy(() => import("@/components/ProductManagement"));
-const ReportsSection = lazy(() => import("@/components/ReportsSection"));
-const SalesInvoices = lazy(() => import("@/components/SalesInvoices"));
-const CustomerManagement = lazy(() => import("@/components/CustomerManagement"));
-const SalesReturns = lazy(() => import("@/components/SalesReturns"));
-const CashSessions = lazy(() => import("@/components/CashSessions"));
-const DebtManagement = lazy(() => import("@/components/DebtManagement"));
-const SettingsPage = lazy(() => import("@/components/SettingsPage"));
 
 function SectionSkeleton() {
   return (
@@ -67,22 +57,24 @@ function SectionSkeleton() {
 }
 
 const NAV_ITEMS = [
-  { id: "sales", label: "نقطة البيع", icon: ShoppingCart },
-  { id: "products", label: "المنتجات", icon: Package },
-  { id: "customers", label: "الزبائن", icon: Users },
-  { id: "sales-invoices", label: "فواتير المبيعات", icon: Receipt },
-  { id: "sales-returns", label: "المرتجعات", icon: RotateCcw },
-  { id: "debts", label: "الديون", icon: Wallet },
-  { id: "cash-sessions", label: "جلسات الصندوق", icon: Landmark },
-  { id: "reports", label: "التقارير", icon: BarChart3 },
-  { id: "settings", label: "الإعدادات", icon: Settings },
+  { id: "sales", path: "/sales", label: "نقطة البيع", icon: ShoppingCart },
+  { id: "products", path: "/products", label: "المنتجات", icon: Package },
+  { id: "customers", path: "/customers", label: "الزبائن", icon: Users },
+  { id: "sales-invoices", path: "/sales-invoices", label: "فواتير المبيعات", icon: Receipt },
+  { id: "sales-returns", path: "/sales-returns", label: "المرتجعات", icon: RotateCcw },
+  { id: "debts", path: "/debts", label: "الديون", icon: Wallet },
+  { id: "cash-sessions", path: "/cash-sessions", label: "جلسات الصندوق", icon: Landmark },
+  { id: "reports", path: "/reports", label: "التقارير", icon: BarChart3 },
+  { id: "settings", path: "/settings", label: "الإعدادات", icon: Settings },
 ] as const;
 
 export default function Index() {
-  const [activeSection, setActiveSection] = useState("sales");
   const { user, signOut, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { setOpen, isMobile, open } = useSidebar();
+
+  const activeSection = location.pathname.replace("/", "") || "sales";
 
   const { data: settings } = useQuery({
     queryKey: ["store-settings"],
@@ -91,24 +83,20 @@ export default function Index() {
   });
 
   const handleSectionChange = (id: string) => {
-    setActiveSection(id);
+    const item = NAV_ITEMS.find((i) => i.id === id);
+    if (item) navigate(item.path);
     if (isMobile) setOpen(false);
   };
 
-  const renderContent = () => {
-    switch (activeSection) {
-      case "sales": return <SalesInterface />;
-      case "products": return <ProductManagement />;
-      case "customers": return <CustomerManagement />;
-      case "sales-invoices": return <SalesInvoices />;
-      case "sales-returns": return <SalesReturns />;
-      case "debts": return <DebtManagement />;
-      case "cash-sessions": return <CashSessions />;
-      case "reports": return <ReportsSection />;
-      case "settings": return <SettingsPage />;
-      default: return null;
-    }
-  };
+  const activeLabel = NAV_ITEMS.find((i) => `/${i.id}` === location.pathname || location.pathname.startsWith(`/${i.id}`))?.label
+    ?? NAV_ITEMS.find((i) => `/sales` === location.pathname || location.pathname === "/")?.label
+    ?? NAV_ITEMS[0].label;
+
+  const isSalesPage = activeSection === "sales";
+
+  useEffect(() => {
+    document.title = `${activeLabel} | الكوثر للحسابات`;
+  }, [activeLabel]);
 
   return (
     <SidebarProvider defaultOpen={true}>
@@ -142,7 +130,8 @@ export default function Index() {
           </div>
           <SidebarMenu>
             {NAV_ITEMS.map((item) => {
-              const isActive = activeSection === item.id;
+              const isActive = `/${item.id}` === location.pathname
+                || (item.id === "sales" && location.pathname === "/");
               return (
                 <SidebarMenuItem key={item.id}>
                   <SidebarMenuButton
@@ -214,7 +203,7 @@ export default function Index() {
             <SidebarTrigger className="hover:bg-slate-100 rounded-lg -mr-1" />
             <ChevronRight className="w-4 h-4 text-muted-foreground/50" />
             <span className="text-sm font-semibold text-slate-700 tracking-tight">
-              {NAV_ITEMS.find((i) => i.id === activeSection)?.label}
+              {activeLabel}
             </span>
           </div>
           <div className="flex-1" />
@@ -238,11 +227,11 @@ export default function Index() {
         {/* Page Content */}
         <main className={cn(
           "flex-1 overflow-hidden",
-          activeSection === "sales" ? "p-0" : "p-4 md:p-6",
+          isSalesPage ? "p-0" : "p-4 md:p-6",
           "pb-20 lg:pb-4"
         )}>
           <Suspense fallback={<SectionSkeleton />}>
-            {renderContent()}
+            <Outlet />
           </Suspense>
         </main>
       </SidebarInset>
@@ -250,7 +239,7 @@ export default function Index() {
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav
         items={[...NAV_ITEMS]}
-        activeSection={activeSection}
+        activeSection={location.pathname.replace("/", "")}
         onSelect={handleSectionChange}
         sidebarOpen={open}
         onToggleSidebar={() => setOpen(!open)}

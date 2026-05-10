@@ -14,6 +14,16 @@ import Welcome from "./pages/Welcome";
 import AuthPage from "./auth/AuthPage";
 
 const AdminPanel = lazy(() => import("@/components/AdminPanel"));
+const SalesInterface = lazy(() => import("@/components/SalesInterface"));
+const ProductManagement = lazy(() => import("@/components/ProductManagement"));
+const ReportsSection = lazy(() => import("@/components/ReportsSection"));
+const SalesInvoices = lazy(() => import("@/components/SalesInvoices"));
+const CustomerManagement = lazy(() => import("@/components/CustomerManagement"));
+const SalesReturns = lazy(() => import("@/components/SalesReturns"));
+const CashSessions = lazy(() => import("@/components/CashSessions"));
+const DebtManagement = lazy(() => import("@/components/DebtManagement"));
+const SettingsPage = lazy(() => import("@/components/SettingsPage"));
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -61,6 +71,14 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+const Section = ({ children }: { children: React.ReactNode }) => (
+  <ProtectedRoute>
+    <MaintenanceGuard>
+      <SubscriptionGuard>{children}</SubscriptionGuard>
+    </MaintenanceGuard>
+  </ProtectedRoute>
+);
+
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
@@ -71,15 +89,117 @@ const App = () => (
             <AuthProvider>
               <Routes>
                 <Route path="/welcome" element={<Welcome />} />
-                <Route path="/auth" element={<PublicRoute><AuthPage /></PublicRoute>} />
-                <Route path="/" element={<ProtectedRoute><MaintenanceGuard><SubscriptionGuard><Index /></SubscriptionGuard></MaintenanceGuard></ProtectedRoute>} />
-                <Route path="/admin" element={
-                  <AdminRoute>
-                    <Suspense fallback={<LoadingSpinner />}>
-                      <AdminPanel />
-                    </Suspense>
-                  </AdminRoute>
-                } />
+                <Route
+                  path="/auth"
+                  element={
+                    <PublicRoute>
+                      <AuthPage />
+                    </PublicRoute>
+                  }
+                />
+                <Route element={<Index />}>
+                  <Route index element={<Navigate to="/sales" replace />} />
+                  <Route
+                    path="sales"
+                    element={
+                      <Section>
+                        <Suspense fallback={<LoadingSpinner />}>
+                          <SalesInterface />
+                        </Suspense>
+                      </Section>
+                    }
+                  />
+                  <Route
+                    path="debts"
+                    element={
+                      <Section>
+                        <Suspense fallback={<LoadingSpinner />}>
+                          <DebtManagement />
+                        </Suspense>
+                      </Section>
+                    }
+                  />
+                  <Route
+                    path="products"
+                    element={
+                      <Section>
+                        <Suspense fallback={<LoadingSpinner />}>
+                          <ProductManagement />
+                        </Suspense>
+                      </Section>
+                    }
+                  />
+                  <Route
+                    path="customers"
+                    element={
+                      <Section>
+                        <Suspense fallback={<LoadingSpinner />}>
+                          <CustomerManagement />
+                        </Suspense>
+                      </Section>
+                    }
+                  />
+                  <Route
+                    path="sales-invoices"
+                    element={
+                      <Section>
+                        <Suspense fallback={<LoadingSpinner />}>
+                          <SalesInvoices />
+                        </Suspense>
+                      </Section>
+                    }
+                  />
+                  <Route
+                    path="sales-returns"
+                    element={
+                      <Section>
+                        <Suspense fallback={<LoadingSpinner />}>
+                          <SalesReturns />
+                        </Suspense>
+                      </Section>
+                    }
+                  />
+                  <Route
+                    path="cash-sessions"
+                    element={
+                      <Section>
+                        <Suspense fallback={<LoadingSpinner />}>
+                          <CashSessions />
+                        </Suspense>
+                      </Section>
+                    }
+                  />
+                  <Route
+                    path="reports"
+                    element={
+                      <Section>
+                        <Suspense fallback={<LoadingSpinner />}>
+                          <ReportsSection />
+                        </Suspense>
+                      </Section>
+                    }
+                  />
+                  <Route
+                    path="settings"
+                    element={
+                      <Section>
+                        <Suspense fallback={<LoadingSpinner />}>
+                          <SettingsPage />
+                        </Suspense>
+                      </Section>
+                    }
+                  />
+                </Route>
+                <Route
+                  path="/admin"
+                  element={
+                    <AdminRoute>
+                      <Suspense fallback={<LoadingSpinner />}>
+                        <AdminPanel />
+                      </Suspense>
+                    </AdminRoute>
+                  }
+                />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </AuthProvider>

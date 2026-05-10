@@ -224,17 +224,20 @@ export default function DebtManagement() {
       const remaining = Math.max(0, amount - initPayment);
 
       let customerId = addDebtSelectedCustomer?.id;
-      if (!customerId && addDebtCustomerName.trim()) {
-        const newCustomer = await customersApi.createCustomer({
-          name: addDebtCustomerName.trim(),
-          phone: addDebtCustomerPhone.trim() || undefined,
-          total_debt: 0,
-          debt_limit: 0,
-        });
-        customerId = newCustomer.id;
+      if (!customerId) {
+        const custName = addDebtCustomerName.trim() || addDebtCustomerPhone.trim() || addDebtDebtorPhone.trim() || "زبون بدون اسم";
+        if (custName) {
+          const newCustomer = await customersApi.createCustomer({
+            name: custName,
+            phone: addDebtCustomerPhone.trim() || addDebtDebtorPhone.trim() || undefined,
+            total_debt: 0,
+            debt_limit: 0,
+          });
+          customerId = newCustomer.id;
+        }
       }
 
-      if (!customerId || !addDebtAmount || parseFloat(addDebtAmount) <= 0) throw new Error("بيانات غير مكتملة");
+      if (!customerId) throw new Error("يرجى إدخال اسم أو رقم هاتف للزبون على الأقل");
 
       // Parse debt items from textarea (one per line: productName xQty)
       let parsedItems: DebtItem[] = [];
@@ -1022,7 +1025,7 @@ export default function DebtManagement() {
             {/* Amount */}
             <div>
               <label className="text-sm font-medium mb-1 block">
-                المبلغ <span className="text-red-500">*</span>
+                المبلغ
               </label>
               <Input
                 type="number"
@@ -1176,10 +1179,8 @@ export default function DebtManagement() {
             <Button
               onClick={() => addDebtMutation.mutate()}
               disabled={
-                (!addDebtSelectedCustomer && !addDebtCustomerName.trim()) ||
-                !addDebtAmount ||
-                parseFloat(addDebtAmount) <= 0 ||
-                (addDebtInitialPayment && parseFloat(addDebtInitialPayment) > parseFloat(addDebtAmount)) ||
+                (!addDebtSelectedCustomer && !addDebtCustomerName.trim() && !addDebtCustomerPhone.trim() && !addDebtDebtorPhone.trim() && (!addDebtAmount || parseFloat(addDebtAmount) <= 0)) ||
+                (addDebtInitialPayment && parseFloat(addDebtInitialPayment) > (parseFloat(addDebtAmount) || 0)) ||
                 addDebtMutation.isPending
               }
               className="bg-red-600 hover:bg-red-700"

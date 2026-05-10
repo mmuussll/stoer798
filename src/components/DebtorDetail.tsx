@@ -206,48 +206,6 @@ export function DebtorDetail({
       toast({ title: "فشل تسجيل الدفعة", description: err.message, variant: "destructive" }),
   });
 
-  // ============ Edit Debt ============
-  const openEditDebtDialog = (debt: Debt) => {
-    setEditDebtId(debt.id);
-    setEditDebtAmount(debt.total_amount.toFixed(2));
-    setEditDebtDueDate(debt.due_date || "");
-    setEditDebtStatus(debt.status);
-    setEditDebtDebtorPhone(debt.debtor_phone || "");
-    setEditDebtGuarantorName(debt.guarantor_name || "");
-    setEditDebtGuarantorPhone(debt.guarantor_phone || "");
-    setEditDebtNote(debt.notes || "");
-    setShowEditDebtDialog(true);
-  };
-
-  const editDebtMutation = useMutation({
-    mutationFn: async () => {
-      const debt = debts.find((d) => d.id === editDebtId);
-      if (!debt) throw new Error("الدين غير موجود");
-      const amount = parseFloat(editDebtAmount) || 0;
-      const alreadyPaid = debt.total_amount - debt.remaining_amount;
-      const remain = Math.max(0, amount - alreadyPaid);
-      await debtsApi.updateDebt(editDebtId, {
-        total_amount: amount,
-        remaining_amount: remain,
-        status: remain <= 0 ? "paid" : editDebtStatus === "paid" ? "active" : editDebtStatus,
-        due_date: editDebtDueDate || undefined,
-        guarantor_name: editDebtGuarantorName || undefined,
-        guarantor_phone: editDebtGuarantorPhone || undefined,
-        debtor_phone: editDebtDebtorPhone || undefined,
-        notes: editDebtNote || undefined,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["customer-debts", customerId] });
-      queryClient.invalidateQueries({ queryKey: ["debt-summary"] });
-      queryClient.invalidateQueries({ queryKey: ["debts"] });
-      toast({ title: "تم تعديل الدين بنجاح" });
-      setShowEditDebtDialog(false);
-    },
-    onError: (err: Error) =>
-      toast({ title: "فشل تعديل الدين", description: err.message, variant: "destructive" }),
-  });
-
   // ============ Delete ============
   const deleteMutation = useMutation({
     mutationFn: () => debtsApi.deleteDebt(deleteTargetId!),

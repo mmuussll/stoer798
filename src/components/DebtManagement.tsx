@@ -16,7 +16,7 @@ import {
   Landmark, Search, Plus, Wallet, Calendar, AlertTriangle,
   User2, Phone, FileText, Banknote, CheckCircle2,
   Clock4, History, Filter, ShoppingBag,
-  Pencil, Trash2, X, ChevronDown, ChevronUp,
+  Pencil, Trash2, X, ChevronDown, ChevronUp, DollarSign,
 } from "lucide-react";
 import { StatCard } from "@/components/StatCard";
 import { DebtorDetail } from "@/components/DebtorDetail";
@@ -172,6 +172,10 @@ export default function DebtManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["debts"] });
       queryClient.invalidateQueries({ queryKey: ["debt-summary"] });
+      if (selectedDebt) {
+        queryClient.invalidateQueries({ queryKey: ["customer-debts", selectedDebt.customer_id] });
+        queryClient.invalidateQueries({ queryKey: ["customer-payments", selectedDebt.customer_id] });
+      }
       toast({ title: "تم تسجيل الدفعة بنجاح" });
       setShowPaymentDialog(false);
     },
@@ -343,40 +347,48 @@ export default function DebtManagement() {
       queryClient.invalidateQueries({ queryKey: ["debts"] });
       queryClient.invalidateQueries({ queryKey: ["debt-summary"] });
       queryClient.invalidateQueries({ queryKey: ["customers"] });
+      if (selectedDebt) {
+        queryClient.invalidateQueries({ queryKey: ["customer-debts", selectedDebt.customer_id] });
+        queryClient.invalidateQueries({ queryKey: ["customer-payments", selectedDebt.customer_id] });
+      }
       toast({ title: "تم تعديل الدين بنجاح" });
       setShowEditDialog(false);
     },
     onError: (err: Error) => toast({ title: "فشل تعديل الدين", description: err.message, variant: "destructive" }),
   });
 
-  // ============ Delete Debt Mutation ============
+  // ============ Cancel Debt Mutation ============
 
-  const deleteMutation = useMutation({
-    mutationFn: () => debtsApi.deleteDebt(deleteTargetId!),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["debts"] });
-      queryClient.invalidateQueries({ queryKey: ["debt-summary"] });
-      queryClient.invalidateQueries({ queryKey: ["customers"] });
-      toast({ title: "تم حذف الدين بنجاح" });
-      setShowDeleteConfirm(false);
-    },
-    onError: (err: Error) => toast({ title: "فشل حذف الدين", description: err.message, variant: "destructive" }),
-  });
-
-  // ============ Delete Payment Mutation ============
-
-  const deletePaymentMutation = useMutation({
-    mutationFn: (paymentId: string) => debtsApi.deleteDebtPayment(paymentId),
+  const cancelMutation = useMutation({
+    mutationFn: () => debtsApi.cancelDebt(deleteTargetId!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["debts"] });
       queryClient.invalidateQueries({ queryKey: ["debt-summary"] });
       queryClient.invalidateQueries({ queryKey: ["customers"] });
       if (selectedDebt) {
+        queryClient.invalidateQueries({ queryKey: ["customer-debts", selectedDebt.customer_id] });
+      }
+      toast({ title: "تم إلغاء الدين بنجاح" });
+      setShowDeleteConfirm(false);
+    },
+    onError: (err: Error) => toast({ title: "فشل إلغاء الدين", description: err.message, variant: "destructive" }),
+  });
+
+  // ============ Cancel Payment Mutation ============
+
+  const cancelPaymentMutation = useMutation({
+    mutationFn: (paymentId: string) => debtsApi.cancelDebtPayment(paymentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["debts"] });
+      queryClient.invalidateQueries({ queryKey: ["debt-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      if (selectedDebt) {
+        debtsApi.getDebt(selectedDebt.id).then((d) => { if (d) setSelectedDebt(d); }).catch(() => {});
         debtsApi.fetchPayments(selectedDebt.id).then(setDetailPayments).catch(() => {});
       }
-      toast({ title: "تم حذف الدفعة بنجاح" });
+      toast({ title: "تم إلغاء الدفعة بنجاح" });
     },
-    onError: (err: Error) => toast({ title: "فشل حذف الدفعة", description: err.message, variant: "destructive" }),
+    onError: (err: Error) => toast({ title: "فشل إلغاء الدفعة", description: err.message, variant: "destructive" }),
   });
 
   const canAddDebt =
@@ -515,6 +527,7 @@ export default function DebtManagement() {
                 <SelectItem value="partially_paid">مدفوع جزئياً</SelectItem>
                 <SelectItem value="overdue">متأخر</SelectItem>
                 <SelectItem value="paid">مدفوع</SelectItem>
+                <SelectItem value="cancelled">ملغي</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -631,7 +644,7 @@ export default function DebtManagement() {
                               </Button>
                               <Button variant="ghost" size="sm" className="h-8 text-red-500 hover:bg-red-50"
                                 onClick={() => { setDeleteTargetId(debt.id); setDeleteTargetName(debt.customer_name); setShowDeleteConfirm(true); }}
-                                title="حذف الدين">
+                                title="إلغاء الدين">
                                 <Trash2 className="w-3.5 h-3.5" />
                               </Button>
                             </div>
@@ -831,8 +844,8 @@ export default function DebtManagement() {
                               <TableCell className="text-center">
                                 <Button variant="ghost" size="sm"
                                   className="h-7 w-7 p-0 text-red-400 hover:text-red-600 hover:bg-red-50"
-                                  onClick={() => { if (confirm("حذف هذه الدفعة؟")) deletePaymentMutation.mutate(p.id); }}
-                                  title="حذف الدفعة">
+                                  onClick={() => { if (confirm("إلغاء هذه الدفعة؟")) cancelPaymentMutation.mutate(p.id); }}
+                                  title="إلغاء الدفعة">
                                   <X className="w-3.5 h-3.5" />
                                 </Button>
                               </TableCell>
@@ -1085,6 +1098,7 @@ export default function DebtManagement() {
                     <SelectItem value="partially_paid">مدفوع جزئياً</SelectItem>
                     <SelectItem value="overdue">متأخر</SelectItem>
                     <SelectItem value="paid">مدفوع</SelectItem>
+                    <SelectItem value="cancelled">ملغي</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1135,18 +1149,18 @@ export default function DebtManagement() {
         <DialogContent dir="rtl" className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-red-600">
-              <AlertTriangle className="w-5 h-5" />تأكيد الحذف
+              <AlertTriangle className="w-5 h-5" />تأكيد الإلغاء
             </DialogTitle>
             <DialogDescription>
-              هل أنت متأكد من حذف دين <strong>{deleteTargetName}</strong>؟
+              هل أنت متأكد من إلغاء دين <strong>{deleteTargetName}</strong>؟
               <br />
-              <span className="text-red-500 text-sm">هذا الإجراء لا يمكن التراجع عنه وسيتم حذف جميع المدفوعات المرتبطة به.</span>
+              <span className="text-red-500 text-sm">هذا الإجراء لا يمكن التراجع عنه وسيتم إلغاء جميع المدفوعات المرتبطة به.</span>
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>إلغاء</Button>
-            <Button variant="destructive" onClick={() => deleteMutation.mutate()} disabled={deleteMutation.isPending}>
-              {deleteMutation.isPending ? "جاري الحذف..." : "تأكيد الحذف"}
+            <Button variant="destructive" onClick={() => cancelMutation.mutate()} disabled={cancelMutation.isPending}>
+              {cancelMutation.isPending ? "جاري الإلغاء..." : "تأكيد الإلغاء"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -43,7 +43,7 @@ export interface Debt {
   invoice_number?: string;
   total_amount: number;
   remaining_amount: number;
-  status: 'active' | 'partially_paid' | 'paid' | 'overdue';
+  status: 'active' | 'partially_paid' | 'paid' | 'overdue' | 'cancelled';
   due_date?: string;
   guarantor_name?: string;
   guarantor_phone?: string;

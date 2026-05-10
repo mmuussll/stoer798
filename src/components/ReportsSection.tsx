@@ -334,7 +334,7 @@ export default function ReportsSection() {
     const paid = debts.filter((d) => d.status === "paid");
     const overdue = active.filter((d) => d.due_date && d.due_date < new Date().toISOString().slice(0, 10));
     const totalOutstanding = active.reduce((s, d) => s + d.remaining_amount, 0);
-    const totalPaid = paid.reduce((s, d) => s + d.total_amount, 0);
+    const totalPaid = debts.reduce((s, d) => s + (d.total_amount - d.remaining_amount), 0);
     const totalDebtValue = debts.reduce((s, d) => s + d.total_amount, 0);
     const overdueAmount = overdue.reduce((s, d) => s + d.remaining_amount, 0);
 

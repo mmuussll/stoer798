@@ -9,6 +9,7 @@ export const STATUS_MAP: Record<string, { label: string; color: string; icon: Co
   partially_paid: { label: "مدفوع جزئياً", color: "bg-amber-100 text-amber-700 border-amber-200", icon: Wallet },
   paid: { label: "مدفوع", color: "bg-emerald-100 text-emerald-700 border-emerald-200", icon: CheckCircle2 },
   overdue: { label: "متأخر", color: "bg-red-100 text-red-700 border-red-200", icon: AlertTriangle },
+  cancelled: { label: "ملغي", color: "bg-gray-100 text-gray-500 border-gray-200", icon: AlertTriangle },
 };
 
 export const PAYMENT_ICONS: Record<string, ComponentType<{ className?: string }>> = {

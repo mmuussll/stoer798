@@ -172,6 +172,8 @@ export function DebtorDetail({
       queryClient.invalidateQueries({ queryKey: ["customer", customerId] });
       queryClient.invalidateQueries({ queryKey: ["customers"] });
       queryClient.invalidateQueries({ queryKey: ["debt-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["debts"] });
+      queryClient.invalidateQueries({ queryKey: ["customer-debts", customerId] });
       toast({ title: "تم حفظ بيانات الزبون" });
       setEditing(false);
     },
@@ -213,19 +215,19 @@ export function DebtorDetail({
       toast({ title: "فشل تسجيل الدفعة", description: err.message, variant: "destructive" }),
   });
 
-  // ============ Delete ============
-  const deleteMutation = useMutation({
-    mutationFn: () => debtsApi.deleteDebt(deleteTargetId!),
+  // ============ Cancel Debt Mutation ============
+  const cancelMutation = useMutation({
+    mutationFn: () => debtsApi.cancelDebt(deleteTargetId!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customer-debts", customerId] });
       queryClient.invalidateQueries({ queryKey: ["customer-payments", customerId] });
       queryClient.invalidateQueries({ queryKey: ["debt-summary"] });
       queryClient.invalidateQueries({ queryKey: ["debts"] });
-      toast({ title: "تم حذف الدين بنجاح" });
+      toast({ title: "تم إلغاء الدين بنجاح" });
       setShowDeleteConfirm(false);
     },
     onError: (err: Error) =>
-      toast({ title: "فشل حذف الدين", description: err.message, variant: "destructive" }),
+      toast({ title: "فشل إلغاء الدين", description: err.message, variant: "destructive" }),
   });
 
   // Reset state when dialog opens/closes
@@ -439,7 +441,7 @@ export function DebtorDetail({
                                 {editingDebtId !== debt.id && (
                                   <Button variant="ghost" size="sm" className="h-8 text-red-400 hover:text-red-600 hover:bg-red-50"
                                     onClick={() => { setDeleteTargetId(debt.id); setShowDeleteConfirm(true); }}
-                                    title="حذف الدين">
+                                    title="إلغاء الدين">
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </Button>
                                 )}
@@ -475,6 +477,7 @@ export function DebtorDetail({
                                         <SelectItem value="partially_paid">مدفوع جزئياً</SelectItem>
                                         <SelectItem value="overdue">متأخر</SelectItem>
                                         <SelectItem value="paid">مدفوع</SelectItem>
+                                        <SelectItem value="cancelled">ملغي</SelectItem>
                                       </SelectContent>
                                     </Select>
                                   </div>
@@ -699,16 +702,16 @@ export function DebtorDetail({
         <DialogContent dir="rtl" className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-red-600">
-              <AlertTriangle className="w-5 h-5" />تأكيد الحذف
+              <AlertTriangle className="w-5 h-5" />تأكيد الإلغاء
             </DialogTitle>
             <DialogDescription>
-              هل أنت متأكد من حذف هذا الدين؟ جميع المدفوعات المرتبطة به ستحذف أيضاً.
+              هل أنت متأكد من إلغاء هذا الدين؟ جميع المدفوعات المرتبطة به ستبقى محفوظة.
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-2 justify-end mt-4">
             <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>إلغاء</Button>
-            <Button variant="destructive" onClick={() => deleteMutation.mutate()} disabled={deleteMutation.isPending}>
-              {deleteMutation.isPending ? "جاري الحذف..." : "تأكيد الحذف"}
+            <Button variant="destructive" onClick={() => cancelMutation.mutate()} disabled={cancelMutation.isPending}>
+              {cancelMutation.isPending ? "جاري الإلغاء..." : "تأكيد الإلغاء"}
             </Button>
           </div>
         </DialogContent>

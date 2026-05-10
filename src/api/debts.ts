@@ -141,6 +141,23 @@ export async function createDebt(debt: {
     .single();
 
   if (error) throw error;
+
+  // Update customer's total_debt
+  const { data: custRow } = await supabase
+    .from("customers")
+    .select("total_debt")
+    .eq("id", debt.customer_id)
+    .single();
+
+  if (custRow) {
+    const currentDebt = toNumber((custRow as Record<string, unknown>).total_debt);
+    const newDebt = currentDebt + debt.remaining_amount;
+    await supabase
+      .from("customers")
+      .update({ total_debt: newDebt, updated_at: new Date().toISOString() })
+      .eq("id", debt.customer_id);
+  }
+
   return mapDebt(data as unknown as RawRow);
 }
 
@@ -157,6 +174,7 @@ export async function updateDebt(
   if (updates.guarantor_name !== undefined) payload.guarantor_name = updates.guarantor_name;
   if (updates.guarantor_phone !== undefined) payload.guarantor_phone = updates.guarantor_phone;
   if (updates.debtor_phone !== undefined) payload.debtor_phone = updates.debtor_phone;
+  payload.updated_at = new Date().toISOString();
 
   const { data, error } = await supabase
     .from(DEBTS_TABLE)
@@ -169,9 +187,42 @@ export async function updateDebt(
   return mapDebt(data as unknown as RawRow);
 }
 
-export async function deleteDebt(id: string): Promise<void> {
-  const { error } = await supabase.from(DEBTS_TABLE).delete().eq("id", id);
+export async function cancelDebt(id: string): Promise<void> {
+  // Fetch debt first to get remaining_amount and customer_id
+  const { data: debtRow } = await supabase
+    .from(DEBTS_TABLE)
+    .select("remaining_amount, customer_id")
+    .eq("id", id)
+    .single();
+
+  const debt = debtRow as Record<string, unknown> | null;
+  const remaining = toNumber(debt?.remaining_amount);
+  const customerId = debt?.customer_id as string | undefined;
+
+  // Mark debt as cancelled with zero remaining
+  const { error } = await supabase
+    .from(DEBTS_TABLE)
+    .update({ status: "cancelled", remaining_amount: 0, updated_at: new Date().toISOString() })
+    .eq("id", id);
   if (error) throw error;
+
+  // Restore customer's total_debt by subtracting the cancelled remaining
+  if (customerId && remaining > 0) {
+    const { data: custRow } = await supabase
+      .from("customers")
+      .select("total_debt")
+      .eq("id", customerId)
+      .single();
+
+    if (custRow) {
+      const currentDebt = toNumber((custRow as Record<string, unknown>).total_debt);
+      const newDebt = Math.max(0, currentDebt - remaining);
+      await supabase
+        .from("customers")
+        .update({ total_debt: newDebt, updated_at: new Date().toISOString() })
+        .eq("id", customerId);
+    }
+  }
 }
 
 // ==================== DEBT PAYMENTS ====================
@@ -201,6 +252,7 @@ export async function createDebtPayment(payment: {
   cashier?: string;
   user_id?: string;
 }): Promise<DebtPayment> {
+  // 1. Insert payment record
   const { data, error } = await supabase
     .from(PAYMENTS_TABLE)
     .insert({
@@ -218,12 +270,123 @@ export async function createDebtPayment(payment: {
     .single();
 
   if (error) throw error;
+
+  // 2. Fetch current debt to calculate new remaining
+  const { data: debtRow } = await supabase
+    .from(DEBTS_TABLE)
+    .select("remaining_amount, total_amount, status")
+    .eq("id", payment.debt_id)
+    .single();
+
+  if (debtRow) {
+    const remaining = toNumber((debtRow as Record<string, unknown>).remaining_amount);
+    const total = toNumber((debtRow as Record<string, unknown>).total_amount);
+    const newRemaining = Math.max(0, remaining - payment.amount);
+    const paidSoFar = total - newRemaining;
+
+    let newStatus: string;
+    if (newRemaining <= 0) {
+      newStatus = "paid";
+    } else if (paidSoFar > 0) {
+      newStatus = "partially_paid";
+    } else {
+      newStatus = (debtRow as Record<string, unknown>).status as string || "active";
+    }
+
+    await supabase
+      .from(DEBTS_TABLE)
+      .update({ remaining_amount: newRemaining, status: newStatus, updated_at: new Date().toISOString() })
+      .eq("id", payment.debt_id);
+  }
+
+  // 3. Update customer's total_debt (subtract payment)
+  const { data: custRow } = await supabase
+    .from("customers")
+    .select("total_debt")
+    .eq("id", payment.customer_id)
+    .single();
+
+  if (custRow) {
+    const currentDebt = toNumber((custRow as Record<string, unknown>).total_debt);
+    const newDebt = Math.max(0, currentDebt - payment.amount);
+    await supabase
+      .from("customers")
+      .update({ total_debt: newDebt, updated_at: new Date().toISOString() })
+      .eq("id", payment.customer_id);
+  }
+
   return mapPayment(data as unknown as RawRow);
 }
 
-export async function deleteDebtPayment(id: string): Promise<void> {
-  const { error } = await supabase.from(PAYMENTS_TABLE).delete().eq("id", id);
+export async function cancelDebtPayment(id: string): Promise<void> {
+  // Fetch payment to get amount, debt_id, and customer_id
+  const { data: paymentRow } = await supabase
+    .from(PAYMENTS_TABLE)
+    .select("amount, debt_id, customer_id, notes")
+    .eq("id", id)
+    .single();
+
+  const payment = paymentRow as Record<string, unknown> | null;
+  if (!payment) throw new Error("الدفعة غير موجودة");
+
+  const amount = toNumber(payment.amount);
+  const debtId = payment.debt_id as string;
+  const customerId = payment.customer_id as string;
+  const currentNote = (payment.notes as string) || "";
+  const cancelledNote = currentNote ? `${currentNote} [ملغاة]` : "[ملغاة]";
+
+  // Mark payment as cancelled
+  const { error } = await supabase
+    .from(PAYMENTS_TABLE)
+    .update({ notes: cancelledNote })
+    .eq("id", id);
   if (error) throw error;
+
+  // Restore debt's remaining_amount
+  if (amount > 0) {
+    const { data: debtRow } = await supabase
+      .from(DEBTS_TABLE)
+      .select("remaining_amount, total_amount, status")
+      .eq("id", debtId)
+      .single();
+
+    if (debtRow) {
+      const remaining = toNumber((debtRow as Record<string, unknown>).remaining_amount);
+      const total = toNumber((debtRow as Record<string, unknown>).total_amount);
+      const newRemaining = remaining + amount;
+      const paidSoFar = total - newRemaining;
+
+      let newStatus: string;
+      if (newRemaining >= total) {
+        newStatus = "active";
+      } else if (paidSoFar > 0) {
+        newStatus = "partially_paid";
+      } else {
+        newStatus = "active";
+      }
+
+      await supabase
+        .from(DEBTS_TABLE)
+        .update({ remaining_amount: newRemaining, status: newStatus, updated_at: new Date().toISOString() })
+        .eq("id", debtId);
+    }
+
+    // Restore customer's total_debt
+    const { data: custRow } = await supabase
+      .from("customers")
+      .select("total_debt")
+      .eq("id", customerId)
+      .single();
+
+    if (custRow) {
+      const currentDebt = toNumber((custRow as Record<string, unknown>).total_debt);
+      const newDebt = currentDebt + amount;
+      await supabase
+        .from("customers")
+        .update({ total_debt: newDebt, updated_at: new Date().toISOString() })
+        .eq("id", customerId);
+    }
+  }
 }
 
 // ==================== SUMMARY ====================

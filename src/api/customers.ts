@@ -61,10 +61,12 @@ export async function createCustomer(
     .from(TABLE)
     .insert({
       name: customer.name,
-      phone: customer.phone,
-      email: customer.email,
-      address: customer.address,
-      note: customer.note,
+      phone: customer.phone || null,
+      email: customer.email || null,
+      address: customer.address || null,
+      note: customer.note || null,
+      total_debt: customer.total_debt ?? 0,
+      debt_limit: customer.debt_limit ?? 0,
     })
     .select()
     .single();
@@ -93,6 +95,18 @@ export async function updateCustomer(
     .single();
 
   if (error) throw error;
+
+  // Sync customer name/phone to all related debt records
+  if (updates.name !== undefined || updates.phone !== undefined) {
+    const debtUpdate: Record<string, unknown> = {};
+    if (updates.name !== undefined) debtUpdate.customer_name = updates.name;
+    if (updates.phone !== undefined) debtUpdate.customer_phone = updates.phone;
+    await supabase
+      .from("debts")
+      .update(debtUpdate)
+      .eq("customer_id", id);
+  }
+
   return mapCustomer(data);
 }
 

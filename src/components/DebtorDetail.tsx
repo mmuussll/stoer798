@@ -118,6 +118,13 @@ export function DebtorDetail({
       toast({ title: "فشل تعديل الدين", description: err.message, variant: "destructive" }),
   });
 
+  // ============ Queries ============
+  const { data: customer, isLoading: customerLoading } = useQuery({
+    queryKey: ["customer", customerId],
+    queryFn: () => customersApi.getCustomer(customerId),
+    enabled: open && !!customerId,
+  });
+
   const { data: debts = [], isLoading: debtsLoading } = useQuery({
     queryKey: ["customer-debts", customerId],
     queryFn: () => debtsApi.fetchCustomerDebts(customerId),

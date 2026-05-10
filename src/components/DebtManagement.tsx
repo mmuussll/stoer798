@@ -16,7 +16,7 @@ import {
   Landmark, Search, Plus, Wallet, Calendar, AlertTriangle,
   User2, Phone, FileText, Banknote, CheckCircle2,
   Clock4, History, Filter, ShoppingBag,
-  Pencil, Trash2, X,
+  Pencil, Trash2, X, ChevronDown, ChevronUp,
 } from "lucide-react";
 import { StatCard } from "@/components/StatCard";
 import { useToast } from "@/hooks/use-toast";
@@ -71,6 +71,7 @@ export default function DebtManagement() {
   const [addItems, setAddItems] = useState("");
   const [addInitPayment, setAddInitPayment] = useState("");
   const [addPaymentMethod, setAddPaymentMethod] = useState<"cash" | "card" | "transfer">("cash");
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   // Edit debt dialog
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -200,6 +201,7 @@ export default function DebtManagement() {
     setAddItems("");
     setAddInitPayment("");
     setAddPaymentMethod("cash");
+    setShowAdvanced(false);
     setShowAddDebtDialog(true);
   };
 
@@ -830,15 +832,15 @@ export default function DebtManagement() {
         <DialogContent dir="rtl" className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Landmark className="w-5 h-5 text-red-600" />إضافة دين جديد
+              <Landmark className="w-5 h-5 text-emerald-600" />إضافة دين جديد
             </DialogTitle>
             <DialogDescription>أضف ديناً جديداً على الزبون مع إمكانية تسجيل دفعة أولية</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
-            {/* Customer Search / Selection */}
+            {/* 1. Customer */}
             <div>
-              <label className="text-sm font-medium mb-1 block">الزبون</label>
+              <label className="text-sm font-medium mb-1.5 block">الزبون <span className="text-red-500">*</span></label>
               {addSelectedCustomer ? (
                 <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg p-3">
                   <div className="flex items-center gap-3">
@@ -909,92 +911,110 @@ export default function DebtManagement() {
               )}
             </div>
 
-            {/* Amount */}
-            <div>
-              <label className="text-sm font-medium mb-1 block">المبلغ <span className="text-red-500">*</span></label>
-              <Input type="number" value={addAmount} onChange={(e) => setAddAmount(e.target.value)}
-                placeholder="0.00" dir="ltr" className="text-lg font-bold text-center" />
-            </div>
-
-            {/* Due Date */}
-            <div>
-              <label className="text-sm font-medium mb-1 block">تاريخ الاستحقاق</label>
-              <Input type="date" value={addDueDate} onChange={(e) => setAddDueDate(e.target.value)} />
-            </div>
-
-            {/* Debtor Phone */}
-            <div>
-              <label className="text-sm font-medium mb-1 block">رقم هاتف المديون</label>
-              <Input type="tel" value={addDebtorPhone} onChange={(e) => setAddDebtorPhone(e.target.value)}
-                placeholder={addSelectedCustomer?.phone || "رقم الهاتف"} dir="ltr" />
-            </div>
-
-            {/* Guarantor */}
-            <div className="bg-gray-50 border rounded-lg p-3 space-y-3">
-              <div className="flex items-center gap-2">
-                <User2 className="w-4 h-4 text-gray-600" />
-                <span className="text-sm font-semibold text-gray-700">بيانات الكفيل</span>
+            {/* 2. Amount + Due Date (side by side) */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-sm font-medium mb-1.5 block">المبلغ <span className="text-red-500">*</span></label>
+                <Input type="number" value={addAmount} onChange={(e) => setAddAmount(e.target.value)}
+                  placeholder="0.00" dir="ltr" className="text-lg font-bold text-center" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs text-gray-500 block mb-1">اسم الكفيل</label>
-                  <Input value={addGuarantorName} onChange={(e) => setAddGuarantorName(e.target.value)} placeholder="اسم الكفيل الكامل" />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 block mb-1">رقم هاتف الكفيل</label>
-                  <Input type="tel" value={addGuarantorPhone} onChange={(e) => setAddGuarantorPhone(e.target.value)} placeholder="07xxxxxxxxx" dir="ltr" />
-                </div>
+              <div>
+                <label className="text-sm font-medium mb-1.5 block">تاريخ الاستحقاق</label>
+                <Input type="date" value={addDueDate} onChange={(e) => setAddDueDate(e.target.value)} />
               </div>
             </div>
 
-            {/* Debt Items */}
+            {/* 3. Notes */}
             <div>
-              <label className="text-sm font-medium mb-1 block">المنتجات / البضاعة المعطاة</label>
-              <textarea value={addItems} onChange={(e) => setAddItems(e.target.value)}
-                placeholder="أدخل منتجاً في كل سطر...&#10;مثال:&#10;رز بسمتي x5&#10;زيت نباتي x3&#10;سكر x10"
-                rows={4} dir="rtl"
-                className="w-full rounded-md border border-gray-200 p-2 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-              <p className="text-xs text-gray-400 mt-1">لكل سطر: اسم المنتج ثم x ثم الكمية</p>
+              <label className="text-sm font-medium mb-1.5 block">ملاحظات</label>
+              <Input value={addNote} onChange={(e) => setAddNote(e.target.value)} placeholder="سبب الدين، وصف البضاعة..." />
             </div>
 
-            {/* Note */}
-            <div>
-              <label className="text-sm font-medium mb-1 block">ملاحظات</label>
-              <Input value={addNote} onChange={(e) => setAddNote(e.target.value)} placeholder="سبب الدين، تفاصيل إضافية..." />
-            </div>
-
-            {/* Initial Payment */}
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-2">
+            {/* 4. Initial Payment */}
+            <div className="bg-amber-50/50 border border-amber-200 rounded-lg p-3 space-y-2">
               <div className="flex items-center gap-2">
                 <Wallet className="w-4 h-4 text-amber-600" />
                 <span className="text-sm font-semibold text-amber-800">دفعة أولية (اختياري)</span>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-end">
                 <div className="flex-1">
                   <label className="text-xs text-gray-500 block mb-1">المبلغ المدفوع</label>
                   <Input type="number" value={addInitPayment} onChange={(e) => setAddInitPayment(e.target.value)}
                     placeholder="0.00" dir="ltr" max={addAmount || undefined} />
                 </div>
-                <div className="flex-1">
-                  <label className="text-xs text-gray-500 block mb-1">طريقة الدفع</label>
-                  <div className="flex gap-1">
-                    {(["cash", "card", "transfer"] as const).map((m) => {
-                      const Icon = PAYMENT_ICONS[m];
-                      return (
-                        <Button key={m} variant={addPaymentMethod === m ? "default" : "outline"} size="sm"
-                          className={`flex-1 h-8 px-2 text-xs gap-0.5 ${addPaymentMethod === m ? "bg-amber-600 hover:bg-amber-700" : ""}`}
-                          onClick={() => setAddPaymentMethod(m)}>
-                          <Icon className="w-3 h-3" />{PAYMENT_LABELS[m]}
-                        </Button>
-                      );
-                    })}
-                  </div>
+                <div className="flex gap-1">
+                  {(["cash", "card", "transfer"] as const).map((m) => {
+                    const Icon = PAYMENT_ICONS[m];
+                    return (
+                      <Button key={m} variant={addPaymentMethod === m ? "default" : "outline"} size="sm"
+                        className={`h-9 px-2.5 text-xs gap-1 ${addPaymentMethod === m ? "bg-amber-600 hover:bg-amber-700" : ""}`}
+                        onClick={() => setAddPaymentMethod(m)}>
+                        <Icon className="w-3 h-3" />{PAYMENT_LABELS[m]}
+                      </Button>
+                    );
+                  })}
                 </div>
               </div>
               {addInitPayment && parseFloat(addInitPayment) > 0 && addAmount && (
                 <div className="text-center text-sm">
                   <span className="text-gray-500">المبلغ المتبقي: </span>
                   <span className="font-bold text-red-600">{Math.max(0, (parseFloat(addAmount) || 0) - (parseFloat(addInitPayment) || 0)).toFixed(2)} {CURRENCY}</span>
+                </div>
+              )}
+            </div>
+
+            {/* 5. Advanced Options Toggle */}
+            <div>
+              <button
+                type="button"
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                className="w-full flex items-center justify-between text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <span className="flex items-center gap-1.5">
+                  {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  خيارات متقدمة
+                </span>
+                <span className="text-xs text-gray-400 font-normal">كفيل، بضاعة، هاتف المديون</span>
+              </button>
+
+              {showAdvanced && (
+                <div className="mt-3 space-y-3">
+                  {/* Guarantor */}
+                  <div className="bg-gray-50 border rounded-lg p-3 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <User2 className="w-4 h-4 text-gray-600" />
+                      <span className="text-sm font-semibold text-gray-700">بيانات الكفيل</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs text-gray-500 block mb-1">اسم الكفيل</label>
+                        <Input value={addGuarantorName} onChange={(e) => setAddGuarantorName(e.target.value)} placeholder="اسم الكفيل الكامل" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500 block mb-1">رقم هاتف الكفيل</label>
+                        <Input type="tel" value={addGuarantorPhone} onChange={(e) => setAddGuarantorPhone(e.target.value)} placeholder="07xxxxxxxxx" dir="ltr" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Debtor Phone (different from customer) */}
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-1">رقم هاتف المديون (إذا كان مختلفاً عن الزبون)</label>
+                    <Input type="tel" value={addDebtorPhone} onChange={(e) => setAddDebtorPhone(e.target.value)}
+                      placeholder={addSelectedCustomer?.phone || addCustomerPhone || "رقم الهاتف"} dir="ltr" />
+                  </div>
+
+                  {/* Debt Items */}
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-1 flex items-center gap-1">
+                      <ShoppingBag className="w-3 h-3" />المنتجات / البضاعة المعطاة
+                    </label>
+                    <textarea value={addItems} onChange={(e) => setAddItems(e.target.value)}
+                      placeholder={"أدخل منتجاً في كل سطر...\nمثال:\nرز بسمتي x5\nزيت نباتي x3\nسكر x10"}
+                      rows={3} dir="rtl"
+                      className="w-full rounded-md border border-gray-200 p-2 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                    <p className="text-xs text-gray-400 mt-1">لكل سطر: اسم المنتج ثم x ثم الكمية</p>
+                  </div>
                 </div>
               )}
             </div>

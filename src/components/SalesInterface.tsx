@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
-  Search, Barcode, ShoppingBag, AlertTriangle, Pause, Play, Hash, X, Landmark,
+  Search, Barcode, ShoppingBag, AlertTriangle, Pause, Play, Hash, X, Landmark, Scan,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -32,6 +32,7 @@ import { FastSaleDialog } from "@/components/pos/FastSaleDialog";
 import { HoldOrderDialog } from "@/components/pos/HoldOrderDialog";
 import { RecallOrderDialog } from "@/components/pos/RecallOrderDialog";
 import { CloseSessionDialog } from "@/components/pos/CloseSessionDialog";
+import { BarcodeScannerDialog } from "@/components/pos/BarcodeScannerDialog";
 
 export default function SalesInterface() {
   const { user } = useAuth();
@@ -58,6 +59,8 @@ export default function SalesInterface() {
   const [showFastSaleDialog, setShowFastSaleDialog] = useState(false);
   const [fastSaleName, setFastSaleName] = useState("");
   const [fastSalePrice, setFastSalePrice] = useState("");
+
+  const [showScannerDialog, setShowScannerDialog] = useState(false);
 
   const [showCartMobile, setShowCartMobile] = useState(false);
 
@@ -112,6 +115,17 @@ export default function SalesInterface() {
     const product = products.find((p) => p.barcode === barcode.trim());
     if (product) { addToCart(product); setBarcode(""); }
     else toast({ title: "المنتج غير موجود", description: "لم يتم العثور على منتج بهذا الباركود", variant: "destructive" });
+  };
+
+  const handleCameraScan = (code: string) => {
+    const product = products.find((p) => p.barcode === code);
+    if (product) {
+      addToCart(product);
+      toast({ title: "تم مسح الباركود", description: `تمت إضافة: ${product.name}` });
+      try { new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gIB/f3+Af39/gIB/f39/gIB/f39/gIB/f3+AgH9/f39/gH9/f4B/f3+AgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=").play().catch(() => {}); } catch { /* ignore */ }
+    } else {
+      toast({ title: "المنتج غير موجود", description: `لم يتم العثور على منتج بالباركود: ${code}`, variant: "destructive" });
+    }
   };
 
   // Fast sale
@@ -259,6 +273,14 @@ export default function SalesInterface() {
               </div>
               <Button type="submit" size="sm" className="bg-blue-600 hover:bg-blue-700 px-3">إضافة</Button>
             </form>
+            <Button
+              variant="outline" size="sm"
+              onClick={() => setShowScannerDialog(true)}
+              className="gap-1 border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 transition-colors"
+              title="مسح الباركود بالكاميرا"
+            >
+              <Scan className="w-4 h-4" /> مسح
+            </Button>
             <Button variant="outline" size="sm" onClick={() => setShowFastSaleDialog(true)} title="بيع سريع (F4)" className="gap-1">
               <Hash className="w-3.5 h-3.5" /> سريع
             </Button>
@@ -430,6 +452,12 @@ export default function SalesInterface() {
         onClosingBalanceChange={setClosingBalance}
         onConfirm={() => closeSessionMutation.mutate()}
         isPending={closeSessionMutation.isPending}
+      />
+
+      <BarcodeScannerDialog
+        open={showScannerDialog}
+        onOpenChange={setShowScannerDialog}
+        onScan={handleCameraScan}
       />
     </div>
   );

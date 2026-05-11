@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -140,7 +139,7 @@ export default function ReportsSection() {
     staleTime: 2 * 60_000,
   });
 
-  const isLoading = salesLoading || purchasesLoading || productsLoading;
+  const _isLoading = salesLoading || purchasesLoading || productsLoading;
 
   // Quick date presets
   const datePresets = [

@@ -15,22 +15,25 @@ function getImagePublicUrl(image_url: string | null | undefined): string | undef
 function mapProduct(row: RawRow): Product {
   const cat = (row as RawRow).category as RawRow | undefined;
   return {
-    id: row.id as string,
-    name: row.name as string,
+    id: String(row.id ?? ""),
+    name: String(row.name ?? ""),
     price: toNumber(row.price),
-    stock: (row.stock as number) ?? 0,
-    barcode: row.barcode as string | undefined,
+    wholesale_price: row.wholesale_price != null ? toNumber(row.wholesale_price) : undefined,
+    stock: toNumber(row.stock),
+    barcode: row.barcode ? String(row.barcode) : undefined,
     image_url: getImagePublicUrl(row.image_url as string | null | undefined),
-    category_id: row.category_id as string | undefined,
+    description: row.description ? String(row.description) : undefined,
+    unit: row.unit ? String(row.unit) : undefined,
+    category_id: row.category_id ? String(row.category_id) : undefined,
     category: cat
       ? {
-          id: (cat.id as string) || "",
-          name: cat.name as string | undefined,
-          description: cat.description as string | undefined,
-          color: cat.color as string | undefined,
+          id: String(cat.id ?? ""),
+          name: String(cat.name ?? ""),
+          description: cat.description ? String(cat.description) : undefined,
+          color: String(cat.color ?? "#6B7280"),
         }
       : undefined,
-    created_at: row.created_at as string | undefined,
+    created_at: row.created_at ? String(row.created_at) : undefined,
   };
 }
 
@@ -82,21 +85,33 @@ export async function fetchProductsCount(): Promise<number> {
 export async function createProduct(
   product: Omit<Product, "id" | "created_at" | "category">
 ): Promise<Product> {
-  const payload: Record<string, unknown> = {};
-  if (product.name !== undefined) payload.name = product.name;
-  if (product.price !== undefined) payload.price = product.price;
-  if (product.stock !== undefined) payload.stock = product.stock;
-  if (product.barcode !== undefined) payload.barcode = product.barcode;
-  if (product.image_url !== undefined) payload.image_url = product.image_url;
-  if (product.category_id !== undefined) payload.category_id = product.category_id;
+  const payload: Record<string, unknown> = {
+    name: product.name,
+    price: product.price,
+    stock: product.stock ?? 0,
+  };
+  if (product.barcode) payload.barcode = product.barcode;
+  if (product.image_url) payload.image_url = product.image_url;
+  if (product.category_id) payload.category_id = product.category_id;
+  if (product.wholesale_price != null) payload.wholesale_price = product.wholesale_price;
+  if (product.description) payload.description = product.description;
+  if (product.unit) payload.unit = product.unit;
 
-  const { data, error } = await supabase
+  const { data: inserted, error } = await supabase
     .from(TABLE)
     .insert(payload)
-    .select()
+    .select("id")
     .single();
 
   if (error) throw error;
+
+  const { data, error: fetchError } = await supabase
+    .from(TABLE)
+    .select("*, category:categories(id, name, description, color)")
+    .eq("id", inserted.id)
+    .single();
+
+  if (fetchError) throw fetchError;
   return mapProduct(data);
 }
 
@@ -111,19 +126,68 @@ export async function updateProduct(
   if (updates.barcode !== undefined) payload.barcode = updates.barcode;
   if (updates.image_url !== undefined) payload.image_url = updates.image_url;
   if (updates.category_id !== undefined) payload.category_id = updates.category_id;
+  if (updates.wholesale_price !== undefined) payload.wholesale_price = updates.wholesale_price;
+  if (updates.description !== undefined) payload.description = updates.description;
+  if (updates.unit !== undefined) payload.unit = updates.unit;
 
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from(TABLE)
     .update(payload)
-    .eq("id", id)
-    .select()
-    .single();
+    .eq("id", id);
 
   if (error) throw error;
+
+  const { data, error: fetchError } = await supabase
+    .from(TABLE)
+    .select("*, category:categories(id, name, description, color)")
+    .eq("id", id)
+    .single();
+
+  if (fetchError) throw fetchError;
   return mapProduct(data);
 }
 
 export async function deleteProduct(id: string): Promise<void> {
   const { error } = await supabase.from(TABLE).delete().eq("id", id);
   if (error) throw error;
+}
+
+export async function duplicateProduct(id: string): Promise<Product> {
+  const { data: original, error: fetchError } = await supabase
+    .from(TABLE)
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (fetchError) throw fetchError;
+
+  const insertPayload: Record<string, unknown> = {
+    name: `${(original as RawRow).name} (نسخة)`,
+    price: toNumber((original as RawRow).price),
+    stock: toNumber((original as RawRow).stock),
+    barcode: (original as RawRow).barcode ?? null,
+    image_url: (original as RawRow).image_url ?? null,
+    category_id: (original as RawRow).category_id ?? null,
+  };
+
+  if ((original as RawRow).wholesale_price != null) insertPayload.wholesale_price = (original as RawRow).wholesale_price;
+  if ((original as RawRow).description != null) insertPayload.description = (original as RawRow).description;
+  if ((original as RawRow).unit != null) insertPayload.unit = (original as RawRow).unit;
+
+  const { data: inserted, error: insertError } = await supabase
+    .from(TABLE)
+    .insert(insertPayload)
+    .select("id")
+    .single();
+
+  if (insertError) throw insertError;
+
+  const { data, error } = await supabase
+    .from(TABLE)
+    .select("*, category:categories(id, name, description, color)")
+    .eq("id", inserted.id)
+    .single();
+
+  if (error) throw error;
+  return mapProduct(data);
 }

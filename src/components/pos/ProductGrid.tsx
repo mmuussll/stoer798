@@ -5,13 +5,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Package } from "lucide-react";
 import { CURRENCY } from "@/constants";
 import { cn } from "@/lib/utils";
-import type { Product, Category, CartItem } from "@/types";
+import type { Product, CartItem } from "@/types";
 
 interface ProductGridProps {
   products: Product[];
-  categories: Category[];
   loading: boolean;
-  categoriesLoading: boolean;
   searchTerm: string;
   selectedCategory: string;
   cart: CartItem[];
@@ -39,7 +37,9 @@ export function ProductGrid({
     if (selectedCategory !== "all") result = result.filter((p) => p.category_id === selectedCategory);
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
-      result = result.filter((p) => p.name.toLowerCase().includes(term) || (p.barcode && p.barcode.includes(term)));
+      result = result.filter(
+        (p) => p.name.toLowerCase().includes(term) || (p.barcode && p.barcode.includes(term))
+      );
     }
     return result;
   }, [products, selectedCategory, searchTerm]);
@@ -72,11 +72,15 @@ export function ProductGrid({
         const stockStatus = getStockStatus(product.stock, lowStockAlert);
         const inCart = cart.find((item) => item.id === product.id);
         const isOutOfStock = product.stock === 0;
+        const inCartQty = inCart?.quantity;
+
         return (
           <Card
             key={product.id}
             role="button"
             tabIndex={isOutOfStock ? -1 : 0}
+            aria-label={`${product.name} - ${product.price.toFixed(2)} ${CURRENCY}${isOutOfStock ? " - غير متوفر" : ""}`}
+            aria-disabled={isOutOfStock}
             onKeyDown={(e) => {
               if (!isOutOfStock && (e.key === "Enter" || e.key === " ")) {
                 e.preventDefault();
@@ -87,6 +91,7 @@ export function ProductGrid({
               "relative cursor-pointer overflow-hidden rounded-xl border border-slate-200/80 transition-all duration-200",
               "hover:shadow-lg hover:shadow-slate-200/50 hover:border-indigo-300/60 hover:-translate-y-0.5",
               "active:scale-[0.98] active:shadow-md",
+              "focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 outline-none",
               isOutOfStock
                 ? "opacity-50 cursor-not-allowed hover:shadow-none hover:translate-y-0"
                 : "bg-white",
@@ -94,7 +99,6 @@ export function ProductGrid({
             )}
             onClick={() => !isOutOfStock && onAddToCart(product)}
           >
-            {/* Product Image */}
             {product.image_url ? (
               <div className="h-24 bg-slate-100 overflow-hidden">
                 <img
@@ -111,25 +115,24 @@ export function ProductGrid({
             )}
 
             <CardContent className="p-2.5 space-y-1.5">
-              {/* Cart quantity badge */}
-              {inCart && (
-                <span className="absolute top-2 right-2 min-w-[22px] h-[22px] bg-indigo-600 text-white text-[11px] font-bold rounded-full flex items-center justify-center px-1.5 shadow-md shadow-indigo-500/30">
-                  {inCart.quantity}
+              {inCartQty ? (
+                <span
+                  className="absolute top-2 right-2 min-w-[22px] h-[22px] bg-indigo-600 text-white text-[11px] font-bold rounded-full flex items-center justify-center px-1.5 shadow-md shadow-indigo-500/30"
+                  aria-label={`الكمية في السلة: ${inCartQty}`}
+                >
+                  {inCartQty}
                 </span>
-              )}
+              ) : null}
 
-              {/* Product Name */}
               <h3 className="font-semibold text-[13px] text-slate-800 line-clamp-2 leading-tight pr-5">
                 {product.name}
               </h3>
 
-              {/* Price */}
               <p className="text-base font-bold text-indigo-600 tracking-tight">
                 {product.price.toFixed(2)}{" "}
                 <span className="text-[11px] font-normal text-slate-400">{CURRENCY}</span>
               </p>
 
-              {/* Stock & Category badges */}
               <div className="flex items-center gap-1 flex-wrap">
                 <Badge
                   variant={stockStatus.variant}

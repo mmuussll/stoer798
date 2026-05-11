@@ -99,7 +99,7 @@ export default function SalesInterface() {
   } = ordersHook;
 
   const {
-    activeSession, showSessionDialog, setShowSessionDialog,
+    activeSession, showSessionDialog, setShowSessionDialog: _setShowSessionDialog,
     openingBalance, setOpeningBalance,
     closingBalance, setClosingBalance,
     showCloseSessionDialog, setShowCloseSessionDialog,
@@ -333,10 +333,12 @@ export default function SalesInterface() {
         {/* Products Grid */}
         <div className="flex-1 overflow-y-auto">
           <ProductGrid
-            products={products} categories={categories}
-            loading={productsLoading} categoriesLoading={categoriesLoading}
-            searchTerm={searchTerm} selectedCategory={selectedCategory}
-            cart={cart} lowStockAlert={settings?.low_stock_alert || 5}
+            products={products}
+            loading={productsLoading}
+            searchTerm={searchTerm}
+            selectedCategory={selectedCategory}
+            cart={cart}
+            lowStockAlert={settings?.low_stock_alert || 5}
             onAddToCart={addToCart}
           />
         </div>

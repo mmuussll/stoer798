@@ -89,7 +89,7 @@ export default function Index() {
   };
 
   const activeLabel = NAV_ITEMS.find((i) => `/${i.id}` === location.pathname || location.pathname.startsWith(`/${i.id}`))?.label
-    ?? NAV_ITEMS.find((i) => `/sales` === location.pathname || location.pathname === "/")?.label
+    ?? NAV_ITEMS.find((_i) => `/sales` === location.pathname || location.pathname === "/")?.label
     ?? NAV_ITEMS[0].label;
 
   const isSalesPage = activeSection === "sales";

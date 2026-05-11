@@ -157,5 +157,6 @@ export {
   SidebarTrigger,
   SidebarInset,
   SidebarSeparator,
+  // eslint-disable-next-line react-refresh/only-export-components
   useSidebar,
 };

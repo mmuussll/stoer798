@@ -70,6 +70,7 @@ export function BarcodeScannerDialog({ open, onOpenChange, onScan }: BarcodeScan
     return () => {
       clearTimeout(timer);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   return (

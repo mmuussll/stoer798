@@ -10,9 +10,12 @@ export interface Product {
   id: string;
   name: string;
   price: number;
+  wholesale_price?: number;
   stock: number;
   barcode?: string;
   image_url?: string;
+  description?: string;
+  unit?: string;
   category_id?: string;
   category?: Category;
   created_at?: string;

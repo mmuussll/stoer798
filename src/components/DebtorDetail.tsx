@@ -38,7 +38,7 @@ interface DebtorDetailProps {
 }
 
 export function DebtorDetail({
-  open, onOpenChange, customerId, customerName, customerPhone, totalDebt, debtCount,
+  open, onOpenChange, customerId, customerName, customerPhone: _cp, totalDebt: _td, debtCount: _dc,
 }: DebtorDetailProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -131,7 +131,7 @@ export function DebtorDetail({
     enabled: open && !!customerId,
   });
 
-  const { data: payments = [], isLoading: paymentsLoading } = useQuery({
+  const { data: payments = [], isLoading: _paymentsLoading } = useQuery({
     queryKey: ["customer-payments", customerId],
     queryFn: () => debtsApi.fetchPayments(),
     enabled: open && !!customerId,
@@ -142,7 +142,7 @@ export function DebtorDetail({
 
   // ============ Derived ============
   const activeDebts = debts.filter((d) => d.status !== "paid");
-  const paidDebts = debts.filter((d) => d.status === "paid");
+  const _paidDebts = debts.filter((d) => d.status === "paid");
   const totalRemaining = activeDebts.reduce((s, d) => s + d.remaining_amount, 0);
   const totalPaidAmount = customerPayments.reduce((s, p) => s + p.amount, 0);
   const debtLimit = customer?.debt_limit ?? 0;

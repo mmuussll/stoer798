@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,56 +14,22 @@ import {
   Package, Plus, Search, Edit, Trash2, Barcode, AlertTriangle,
   LayoutGrid, List, Filter, ArrowUpDown, X, Copy,
   Download, ZoomIn, MinusCircle, PlusCircle, CopyCheck,
-  Info, Hash, ImagePlus, Save, RotateCcw,
+  Info, Hash, ImagePlus, Save, RotateCcw, ChevronDown,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import CategoryManagement from "./CategoryManagement";
 import * as productsApi from "@/api/products";
 import * as categoriesApi from "@/api/categories";
 import { CURRENCY } from "@/constants";
-import { formatNumber, formatCurrency, formatNumberDisplay, formatCurrencyDisplay } from "@/lib/format";
+import { formatNumber, formatCurrency, formatNumberDisplay, formatCurrencyDisplay, priceInWords } from "@/lib/format";
+import { cn } from "@/lib/utils";
+import { exportProductsCSV } from "@/lib/export";
+import { useDebounce } from "@/hooks/useDebounce";
 import type { Product, Category } from "@/types";
 
 type ViewMode = "grid" | "list";
 type SortField = "name" | "price" | "stock" | "created_at";
 type SortOrder = "asc" | "desc";
-
-function useDebounce<T>(value: T, delay: number): T {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const timer = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(timer);
-  }, [value, delay]);
-  return debounced;
-}
-
-function exportToCSV(products: Product[], categories: Category[]) {
-  const getCatName = (id?: string) => categories.find((c) => c.id === id)?.name ?? "";
-  const headers = ["الاسم", "السعر", "سعر الجملة", "المخزون", "الباركود", "الوصف", "الوحدة", "الفئة", "تاريخ الإضافة"];
-  const rows = products.map((p) => [
-    p.name, p.price.toString(), p.wholesale_price?.toString() ?? "", p.stock.toString(),
-    p.barcode ?? "", p.description ?? "", p.unit ?? "", getCatName(p.category_id), p.created_at ?? "",
-  ]);
-  const csv = [headers.join(","), ...rows.map((r) => r.map((v) => `"${v}"`).join(","))].join("\n");
-  const bom = "\uFEFF";
-  const blob = new Blob([bom + csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `المنتجات-${new Date().toISOString().slice(0, 10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function priceInWords(price: number): string {
-  if (price <= 0) return "";
-  const whole = Math.floor(price);
-  const frac = Math.round((price - whole) * 1000);
-  const parts: string[] = [];
-  if (whole > 0) parts.push(`${formatNumber(whole)} ${CURRENCY}`);
-  if (frac > 0) parts.push(`${frac} فلساً`);
-  return parts.join(" و ");
-}
 
 export default function ProductManagement() {
   const queryClient = useQueryClient();
@@ -83,6 +49,7 @@ export default function ProductManagement() {
   const [uploading, setUploading] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
   const [saveAndAdd, setSaveAndAdd] = useState(false);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   const [formData, setFormData] = useState({ name: "", price: "", wholesale_price: "", stock: "", barcode: "", description: "", unit: "قطعة", category_id: "" });
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -336,9 +303,11 @@ export default function ProductManagement() {
     return result;
   }, [allProducts, debouncedSearch, categoryFilter, stockFilter, priceRange, sortField, sortOrder]);
 
-  const lowStockCount = allProducts.filter((p) => p.stock > 0 && p.stock <= 5).length;
-  const outOfStockCount = allProducts.filter((p) => p.stock === 0).length;
-  const totalStockValue = allProducts.reduce((sum, p) => sum + p.price * p.stock, 0);
+  const { lowStockCount, outOfStockCount, totalStockValue } = useMemo(() => ({
+    lowStockCount: allProducts.filter((p) => p.stock > 0 && p.stock <= 5).length,
+    outOfStockCount: allProducts.filter((p) => p.stock === 0).length,
+    totalStockValue: allProducts.reduce((sum, p) => sum + p.price * p.stock, 0),
+  }), [allProducts]);
   const getCategoryById = (id?: string) => categories.find((c) => c.id === id);
 
   const getStockBadge = (stock: number) => {
@@ -363,7 +332,7 @@ export default function ProductManagement() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => exportToCSV(allProducts, categories)}
+            onClick={() => exportProductsCSV(allProducts, categories)}
             className="gap-1"
             disabled={allProducts.length === 0}
           >
@@ -377,7 +346,7 @@ export default function ProductManagement() {
             </DialogTrigger>
 
             {/* ===== PRODUCT FORM DIALOG ===== */}
-            <DialogContent className="sm:max-w-xl max-h-[92vh] overflow-y-auto p-0 gap-0" dir="rtl">
+            <DialogContent className="sm:max-w-xl max-h-[92vh] overflow-y-auto p-0 gap-0 max-sm:mx-2 max-sm:w-[calc(100%-16px)]" dir="rtl">
               {/* Dialog Header */}
               <div className="p-6 pb-2">
                 <DialogHeader>
@@ -681,50 +650,61 @@ export default function ProductManagement() {
 
       {/* Filters Card */}
       <Card>
-        <CardContent className="p-4 space-y-3">
-          <div className="flex flex-col sm:flex-row gap-3">
+        <CardContent className="p-3 lg:p-4 space-y-3">
+          {/* Row 1: Search + View Toggle */}
+          <div className="flex gap-2 items-center">
             <div className="relative flex-1">
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="ابحث بالاسم أو الباركود..." className="pr-10" />
+              <Input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="ابحث بالاسم أو الباركود..." className="pr-10 h-9 lg:h-10" />
             </div>
-            <div className="flex gap-2 flex-wrap">
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-36"><Filter className="w-4 h-4 ml-2" /><SelectValue placeholder="الفئة" /></SelectTrigger>
-                <SelectContent><SelectItem value="all">جميع الفئات</SelectItem>{categories.map((cat: Category) => <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>)}</SelectContent>
-              </Select>
+            <div className="flex border rounded-md overflow-hidden shrink-0">
+              <Button variant={viewMode === "grid" ? "default" : "ghost"} size="sm" className="rounded-none px-2.5 h-9" onClick={() => setViewMode("grid")}><LayoutGrid className="w-4 h-4" /></Button>
+              <Button variant={viewMode === "list" ? "default" : "ghost"} size="sm" className="rounded-none px-2.5 h-9" onClick={() => setViewMode("list")}><List className="w-4 h-4" /></Button>
+            </div>
+          </div>
+
+          {/* Row 2: Category chips + toggle advanced */}
+          <div className="flex items-center gap-2">
+            <div className="flex gap-1.5 overflow-x-auto flex-1 scrollbar-thin pb-1">
+              <Button variant={categoryFilter === "all" ? "default" : "outline"} size="sm"
+                onClick={() => setCategoryFilter("all")}
+                className={cn("h-8 text-xs px-3 shrink-0", categoryFilter === "all" ? "bg-blue-600 hover:bg-blue-700" : "")}>الكل</Button>
+              {categories.map((cat: Category) => (
+                <Button key={cat.id} variant={categoryFilter === cat.id ? "default" : "outline"} size="sm"
+                  onClick={() => setCategoryFilter(cat.id)}
+                  className="h-8 text-xs px-3 shrink-0"
+                  style={categoryFilter === cat.id ? { backgroundColor: cat.color, borderColor: cat.color } : undefined}>{cat.name}</Button>
+              ))}
+            </div>
+            <button
+              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+              className="flex items-center gap-1 shrink-0 h-8 px-2.5 rounded-lg text-xs font-medium border border-slate-200 hover:bg-slate-50 text-slate-500 transition-colors"
+            >
+              <Filter className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">فلاتر</span>
+              <ChevronDown className={cn("w-3 h-3 transition-transform", showAdvancedFilters && "rotate-180")} />
+            </button>
+          </div>
+
+          {/* Collapsible: Stock + Price Range */}
+          {showAdvancedFilters && (
+            <div className="flex flex-col sm:flex-row gap-2 pt-1 border-t border-slate-100 animate-scale-in">
               <Select value={stockFilter} onValueChange={(v) => setStockFilter(v as "all" | "low" | "out")}>
-                <SelectTrigger className="w-36"><AlertTriangle className="w-4 h-4 ml-2" /><SelectValue placeholder="المخزون" /></SelectTrigger>
+                <SelectTrigger className="w-full sm:w-40 h-9 text-xs"><AlertTriangle className="w-3.5 h-3.5 ml-1.5" /><SelectValue placeholder="المخزون" /></SelectTrigger>
                 <SelectContent><SelectItem value="all">جميع المنتجات</SelectItem><SelectItem value="low">مخزون منخفض</SelectItem><SelectItem value="out">نفذ المخزون</SelectItem></SelectContent>
               </Select>
-              <div className="flex border rounded-md overflow-hidden">
-                <Button variant={viewMode === "grid" ? "default" : "ghost"} size="sm" className="rounded-none px-3" onClick={() => setViewMode("grid")}><LayoutGrid className="w-4 h-4" /></Button>
-                <Button variant={viewMode === "list" ? "default" : "ghost"} size="sm" className="rounded-none px-3" onClick={() => setViewMode("list")}><List className="w-4 h-4" /></Button>
+              <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                <span className="shrink-0">السعر:</span>
+                <Input type="number" min="0" step="0.001" placeholder="من" value={priceRange.min} onChange={(e) => setPriceRange({ ...priceRange, min: e.target.value })} className="w-20 h-8 text-xs" />
+                <span>-</span>
+                <Input type="number" min="0" step="0.001" placeholder="إلى" value={priceRange.max} onChange={(e) => setPriceRange({ ...priceRange, max: e.target.value })} className="w-20 h-8 text-xs" />
+                {(priceRange.min || priceRange.max) && (
+                  <Button variant="ghost" size="sm" onClick={() => setPriceRange({ min: "", max: "" })} className="h-7 text-[10px] text-red-500 px-1.5"><X className="w-3 h-3 ml-0.5" />مسح</Button>
+                )}
               </div>
+              <span className="text-[11px] text-gray-400 mr-auto self-center shrink-0">{filteredProducts.length} منتج</span>
             </div>
-          </div>
-          {/* Price Range Filter */}
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <span className="shrink-0">نطاق السعر:</span>
-            <Input
-              type="number" min="0" step="0.001" placeholder="من"
-              value={priceRange.min}
-              onChange={(e) => setPriceRange({ ...priceRange, min: e.target.value })}
-              className="w-24 h-8 text-sm"
-            />
-            <span>-</span>
-            <Input
-              type="number" min="0" step="0.001" placeholder="إلى"
-              value={priceRange.max}
-              onChange={(e) => setPriceRange({ ...priceRange, max: e.target.value })}
-              className="w-24 h-8 text-sm"
-            />
-            {(priceRange.min || priceRange.max) && (
-              <Button variant="ghost" size="sm" onClick={() => setPriceRange({ min: "", max: "" })} className="h-8 text-xs text-red-500">
-                <X className="w-3 h-3 ml-1" /> مسح
-              </Button>
-            )}
-            <span className="text-xs text-gray-400 mr-auto">{filteredProducts.length} منتج</span>
-          </div>
+          )}
         </CardContent>
       </Card>
 
@@ -754,9 +734,9 @@ export default function ProductManagement() {
                     className="h-40 bg-gray-100 overflow-hidden cursor-pointer relative"
                     onClick={() => setZoomedImage(product.image_url!)}
                   >
-                    <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                      <ZoomIn className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                    <img src={product.image_url} alt={product.name} className="w-full h-full object-cover lg:group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                    <div className="absolute inset-0 bg-black/0 lg:group-hover:bg-black/10 transition-colors hidden lg:flex items-center justify-center">
+                      <ZoomIn className="w-5 h-5 text-white opacity-0 lg:group-hover:opacity-100 transition-opacity drop-shadow-lg" />
                     </div>
                   </div>
                 )}
@@ -791,15 +771,15 @@ export default function ProductManagement() {
                       </button>
                     </div>
                   )}
-                  <div className="flex items-center gap-1 text-xs text-gray-400">
+                  <div className="flex items-center gap-1.5 text-xs text-gray-400">
                     <span>الكمية:</span>
-                    <button onClick={() => handleStockAdjust(product, -1)} className="hover:text-red-500 transition-colors" title="إنقاص 1"><MinusCircle className="w-3.5 h-3.5" /></button>
+                    <button onClick={() => handleStockAdjust(product, -1)} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 hover:text-red-500 active:bg-red-100 transition-colors" title="إنقاص 1"><MinusCircle className="w-4 h-4" /></button>
                     <span className="font-bold text-gray-600 w-6 text-center">{product.stock}</span>
-                    <button onClick={() => handleStockAdjust(product, 1)} className="hover:text-green-500 transition-colors" title="زيادة 1"><PlusCircle className="w-3.5 h-3.5" /></button>
-                    <button onClick={() => handleStockAdjust(product, 5)} className="hover:text-green-600 transition-colors mr-1" title="زيادة 5">+5</button>
-                    <button onClick={() => handleStockAdjust(product, -5)} className="hover:text-red-600 transition-colors" title="إنقاص 5">-5</button>
+                    <button onClick={() => handleStockAdjust(product, 1)} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-green-50 hover:text-green-500 active:bg-green-100 transition-colors" title="زيادة 1"><PlusCircle className="w-4 h-4" /></button>
+                    <button onClick={() => handleStockAdjust(product, 5)} className="px-1.5 h-6 flex items-center justify-center rounded-md hover:bg-green-50 hover:text-green-600 active:bg-green-100 transition-colors text-[11px] font-bold" title="زيادة 5">+5</button>
+                    <button onClick={() => handleStockAdjust(product, -5)} className="px-1.5 h-6 flex items-center justify-center rounded-md hover:bg-red-50 hover:text-red-600 active:bg-red-100 transition-colors text-[11px] font-bold" title="إنقاص 5">-5</button>
                   </div>
-                  <div className="flex gap-2 pt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex gap-2 pt-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                     <Button size="sm" variant="outline" onClick={() => handleEdit(product)} className="flex-1"><Edit className="w-3.5 h-3.5 ml-1" />تعديل</Button>
                     <Button size="sm" variant="outline" onClick={() => handleDuplicate(product)} disabled={duplicateMutation.isPending} title="نسخ المنتج"><Copy className="w-3.5 h-3.5" /></Button>
                     <Button size="sm" variant="destructive" onClick={() => setDeleteTarget(product)}><Trash2 className="w-3.5 h-3.5" /></Button>
@@ -818,8 +798,8 @@ export default function ProductManagement() {
                 <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort("name")}><div className="flex items-center gap-1">المنتج<ArrowUpDown className="w-3 h-3" /></div></TableHead>
                 <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort("price")}><div className="flex items-center gap-1">السعر<ArrowUpDown className="w-3 h-3" /></div></TableHead>
                 <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort("stock")}><div className="flex items-center gap-1">المخزون<ArrowUpDown className="w-3 h-3" /></div></TableHead>
-                <TableHead className="text-right">الفئة</TableHead>
-                <TableHead className="text-right">الباركود</TableHead>
+                <TableHead className="text-right hidden sm:table-cell">الفئة</TableHead>
+                <TableHead className="text-right hidden sm:table-cell">الباركود</TableHead>
                 <TableHead className="text-right">إجراءات</TableHead>
               </TableRow>
             </TableHeader>
@@ -837,18 +817,18 @@ export default function ProductManagement() {
                     </TableCell>
                     <TableCell className="text-blue-600 font-semibold">{formatCurrency(product.price)}</TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-1">
-                        <button onClick={() => handleStockAdjust(product, -1)} className="hover:text-red-500 transition-colors"><MinusCircle className="w-3.5 h-3.5" /></button>
+                      <div className="flex items-center gap-1.5">
+                        <button onClick={() => handleStockAdjust(product, -1)} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 hover:text-red-500 transition-colors"><MinusCircle className="w-4 h-4" /></button>
                         {getStockBadge(product.stock)}
-                        <button onClick={() => handleStockAdjust(product, 1)} className="hover:text-green-500 transition-colors"><PlusCircle className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => handleStockAdjust(product, 1)} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-green-50 hover:text-green-500 transition-colors"><PlusCircle className="w-4 h-4" /></button>
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell">
                       {category ? (
                         <Badge variant="secondary" className="text-xs text-white border-0" style={{ backgroundColor: category.color }}>{category.name}</Badge>
                       ) : <span className="text-gray-400 text-sm">-</span>}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell">
                       {product.barcode ? (
                         <button onClick={() => copyBarcode(product.barcode!)} className="text-xs font-mono bg-gray-100 px-2 py-1 rounded hover:bg-blue-50 hover:text-blue-600 transition-colors inline-flex items-center gap-1" title="نسخ">
                           {product.barcode} <CopyCheck className="w-3 h-3" />
@@ -856,10 +836,10 @@ export default function ProductManagement() {
                       ) : <span className="text-gray-400 text-sm">-</span>}
                     </TableCell>
                     <TableCell>
-                      <div className="flex gap-1">
-                        <Button size="sm" variant="ghost" onClick={() => handleEdit(product)} title="تعديل"><Edit className="w-3.5 h-3.5" /></Button>
-                        <Button size="sm" variant="ghost" onClick={() => handleDuplicate(product)} disabled={duplicateMutation.isPending} title="نسخ"><Copy className="w-3.5 h-3.5" /></Button>
-                        <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => setDeleteTarget(product)} title="حذف"><Trash2 className="w-3.5 h-3.5" /></Button>
+                      <div className="flex gap-0.5">
+                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => handleEdit(product)} title="تعديل"><Edit className="w-4 h-4" /></Button>
+                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => handleDuplicate(product)} disabled={duplicateMutation.isPending} title="نسخ"><Copy className="w-4 h-4" /></Button>
+                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => setDeleteTarget(product)} title="حذف"><Trash2 className="w-4 h-4" /></Button>
                       </div>
                     </TableCell>
                   </TableRow>

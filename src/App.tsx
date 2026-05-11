@@ -17,7 +17,6 @@ const AdminPanel = lazy(() => import("@/components/AdminPanel"));
 const SalesInterface = lazy(() => import("@/components/SalesInterface"));
 const ProductManagement = lazy(() => import("@/components/ProductManagement"));
 const ReportsSection = lazy(() => import("@/components/ReportsSection"));
-const SalesInvoices = lazy(() => import("@/components/SalesInvoices"));
 const CustomerManagement = lazy(() => import("@/components/CustomerManagement"));
 const SalesReturns = lazy(() => import("@/components/SalesReturns"));
 const CashSessions = lazy(() => import("@/components/CashSessions"));
@@ -141,13 +140,7 @@ const App = () => (
                   />
                   <Route
                     path="sales-invoices"
-                    element={
-                      <Section>
-                        <Suspense fallback={<LoadingSpinner />}>
-                          <SalesInvoices />
-                        </Suspense>
-                      </Section>
-                    }
+                    element={<Navigate to="/reports" replace />}
                   />
                   <Route
                     path="sales-returns"

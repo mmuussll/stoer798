@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,33 +15,47 @@ import {
 } from "@/components/ui/pagination";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   RotateCcw, Search, Eye, Trash2, ArrowRightLeft,
-  FileText, Clock, Package, X,
+  FileText, Clock, Package, X, Minus, Plus, CheckCheck,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import * as returnsApi from "@/api/returns";
 import * as salesApi from "@/api/sales";
 import { CURRENCY } from "@/constants";
 import { formatNumber, formatCurrency, formatNumberDisplay, formatCurrencyDisplay } from "@/lib/format";
 import type { SalesReturn, SaleInvoice } from "@/types";
 
+const RETURN_REASONS = [
+  "منتج تالف",
+  "منتج غير مطابق للوصف",
+  "خطأ في الطلب",
+  "منتج منتهي الصلاحية",
+  "إرجاع من الزبون",
+  "سبب آخر",
+];
+
 export default function SalesReturns() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedReturn, setSelectedReturn] = useState<SalesReturn | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deletingReturn, setDeletingReturn] = useState<SalesReturn | null>(null);
 
-  // Create return state
   const [invoiceSearch, setInvoiceSearch] = useState("");
   const [foundInvoice, setFoundInvoice] = useState<SaleInvoice | null>(null);
   const [selectedItems, setSelectedItems] = useState<Record<string, number>>({});
   const [returnReason, setReturnReason] = useState("");
+  const [returnReasonCustom, setReturnReasonCustom] = useState("");
   const [searchingInvoice, setSearchingInvoice] = useState(false);
 
   const [page, setPage] = useState(1);
@@ -75,6 +89,7 @@ export default function SalesReturns() {
       const total = items.reduce((s, i) => s + i.price * i.quantity, 0);
       const now = new Date();
       const returnNumber = `RET-${now.toISOString().slice(0, 10).replace(/-/g, "")}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+      const reason = returnReason === "سبب آخر" ? returnReasonCustom : returnReason;
 
       return returnsApi.createSalesReturn(
         {
@@ -83,8 +98,8 @@ export default function SalesReturns() {
           date: now.toISOString().slice(0, 10),
           time: now.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" }),
           total,
-          reason: returnReason,
-          cashier: "البائع الرئيسي",
+          reason,
+          cashier: user?.email || "البائع",
         },
         items
       );
@@ -134,30 +149,65 @@ export default function SalesReturns() {
     setInvoiceSearch("");
     setSelectedItems({});
     setReturnReason("");
+    setReturnReasonCustom("");
     setShowCreateDialog(false);
   };
 
-  const toggleItemQuantity = (itemId: string, currentQty: number, maxQty: number) => {
-    const newQty = currentQty + 1 > maxQty ? 0 : currentQty + 1;
-    if (newQty === 0) {
-      const { [itemId]: _, ...rest } = selectedItems;
-      setSelectedItems(rest);
-    } else {
-      setSelectedItems({ ...selectedItems, [itemId]: newQty });
-    }
+  const updateItemQuantity = (itemId: string, delta: number, maxQty: number) => {
+    setSelectedItems((prev) => {
+      const current = prev[itemId] || 0;
+      const next = Math.max(0, Math.min(maxQty, current + delta));
+      if (next === 0) {
+        const { [itemId]: _, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [itemId]: next };
+    });
   };
 
-  const filtered = returns.filter((r) => {
-    if (!searchTerm.trim()) return true;
-    const t = searchTerm.toLowerCase();
-    return r.return_number.toLowerCase().includes(t) || (r.reason && r.reason.toLowerCase().includes(t));
-  });
+  const selectAllItems = () => {
+    if (!foundInvoice) return;
+    const all: Record<string, number> = {};
+    for (const item of foundInvoice.items) {
+      const id = item.product_id || item.id;
+      all[id] = item.quantity;
+    }
+    setSelectedItems(all);
+  };
 
-  const totalPages = Math.ceil(filtered.length / perPage);
-  const paginated = filtered.slice((page - 1) * perPage, page * perPage);
+  const deselectAllItems = () => {
+    setSelectedItems({});
+  };
 
-  const totalReturned = returns.reduce((s, r) => s + r.total, 0);
-  const totalItems = returns.reduce((s, r) => s + r.items.reduce((si, ri) => si + ri.quantity, 0), 0);
+  const { filtered, totalPages, paginated, stats } = useMemo(() => {
+    const f = returns.filter((r) => {
+      if (searchTerm.trim()) {
+        const t = searchTerm.toLowerCase();
+        if (!r.return_number.toLowerCase().includes(t) && !(r.reason && r.reason.toLowerCase().includes(t))) return false;
+      }
+      if (dateFrom && r.date < dateFrom) return false;
+      if (dateTo && r.date > dateTo) return false;
+      return true;
+    });
+    const tp = Math.ceil(f.length / perPage);
+    const p = f.slice((page - 1) * perPage, page * perPage);
+    const s = returns.reduce(
+      (acc, r) => ({
+        count: acc.count + 1,
+        totalAmount: acc.totalAmount + r.total,
+        totalPieces: acc.totalPieces + r.items.reduce((si, ri) => si + ri.quantity, 0),
+      }),
+      { count: 0, totalAmount: 0, totalPieces: 0 }
+    );
+    return { filtered: f, totalPages: tp, paginated: p, stats: s };
+  }, [returns, searchTerm, dateFrom, dateTo, page]);
+
+  const hasSelectedItems = Object.values(selectedItems).some((q) => q > 0);
+  const returnTotal = foundInvoice
+    ? foundInvoice.items
+        .filter((i) => (selectedItems[i.product_id || i.id] || 0) > 0)
+        .reduce((s, i) => s + i.price * (selectedItems[i.product_id || i.id] || 0), 0)
+    : 0;
 
   return (
     <div className="space-y-4 p-4" dir="rtl">
@@ -166,28 +216,37 @@ export default function SalesReturns() {
         <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white">
           <CardContent className="p-4 flex items-center gap-3">
             <RotateCcw className="w-8 h-8 opacity-80" />
-            <div><div className="text-2xl font-bold">{returns.length}</div><div className="text-xs opacity-80">عدد المرتجعات</div></div>
+            <div><div className="text-2xl font-bold">{stats.count}</div><div className="text-xs opacity-80">عدد المرتجعات</div></div>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white">
           <CardContent className="p-4 flex items-center gap-3">
             <ArrowRightLeft className="w-8 h-8 opacity-80" />
-            <div><div className="text-2xl font-bold">{formatNumberDisplay(totalReturned, 2)}</div><div className="text-xs opacity-80">قيمة المرتجعات ({CURRENCY})</div></div>
+            <div><div className="text-2xl font-bold">{formatNumberDisplay(stats.totalAmount, 2)}</div><div className="text-xs opacity-80">قيمة المرتجعات ({CURRENCY})</div></div>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-amber-500 to-amber-600 text-white">
           <CardContent className="p-4 flex items-center gap-3">
             <Package className="w-8 h-8 opacity-80" />
-            <div><div className="text-2xl font-bold">{totalItems}</div><div className="text-xs opacity-80">القطع المرتجعة</div></div>
+            <div><div className="text-2xl font-bold">{stats.totalPieces}</div><div className="text-xs opacity-80">القطع المرتجعة</div></div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Search + Create */}
-      <div className="flex gap-3 items-center flex-wrap">
+      {/* Search + Filters */}
+      <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }} placeholder="ابحث برقم المرتجع..." className="pr-10" />
+        </div>
+        <div className="flex gap-1.5 items-center text-xs">
+          <span className="text-gray-500 shrink-0">من:</span>
+          <Input type="date" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setPage(1); }} className="w-32 h-8 text-xs" />
+          <span className="text-gray-500 shrink-0">إلى:</span>
+          <Input type="date" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setPage(1); }} className="w-32 h-8 text-xs" />
+          {(dateFrom || dateTo) && (
+            <Button variant="ghost" size="sm" onClick={() => { setDateFrom(""); setDateTo(""); }} className="h-7 text-[10px] text-red-500"><X className="w-3 h-3 ml-0.5" />مسح</Button>
+          )}
         </div>
         <Button onClick={() => setShowCreateDialog(true)} className="bg-red-600 hover:bg-red-700 gap-2"><RotateCcw className="w-4 h-4" />مرتجع جديد</Button>
       </div>
@@ -201,7 +260,7 @@ export default function SalesReturns() {
             <div className="flex flex-col items-center justify-center py-16 text-gray-400">
               <RotateCcw className="w-16 h-16 mb-4 opacity-30" />
               <p className="text-lg font-medium">لا توجد مرتجعات</p>
-              <p className="text-sm">{searchTerm ? "جرب تغيير معايير البحث" : "لم يتم تسجيل أي مرتجع بعد"}</p>
+              <p className="text-sm">{searchTerm || dateFrom || dateTo ? "جرب تغيير معايير البحث" : "لم يتم تسجيل أي مرتجع بعد"}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -212,7 +271,7 @@ export default function SalesReturns() {
                   <TableHead className="text-right">التاريخ</TableHead>
                   <TableHead className="text-center">القطع</TableHead>
                   <TableHead className="text-center">المبلغ</TableHead>
-                  <TableHead className="text-right">السبب</TableHead>
+                  <TableHead className="text-right hidden sm:table-cell">السبب</TableHead>
                   <TableHead className="text-center">الإجراءات</TableHead>
                 </TableRow>
               </TableHeader>
@@ -227,14 +286,14 @@ export default function SalesReturns() {
                       <Badge variant="secondary">{r.items.reduce((s, i) => s + i.quantity, 0)}</Badge>
                     </TableCell>
                     <TableCell className="text-center font-semibold text-red-600">{formatCurrency(r.total, 2)}</TableCell>
-                    <TableCell className="text-sm text-gray-600 max-w-[200px] truncate">{r.reason || "-"}</TableCell>
+                    <TableCell className="text-sm text-gray-600 max-w-[200px] truncate hidden sm:table-cell">{r.reason || "-"}</TableCell>
                     <TableCell className="text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-blue-50" onClick={() => { setSelectedReturn(r); setShowDetailDialog(true); }}>
-                          <Eye className="w-3.5 h-3.5" />
+                      <div className="flex items-center justify-center gap-1.5">
+                        <Button variant="ghost" size="icon" className="h-10 w-10 text-blue-600 hover:bg-blue-50 active:bg-blue-100 rounded-xl" onClick={() => { setSelectedReturn(r); setShowDetailDialog(true); }}>
+                          <Eye className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:bg-red-50" onClick={() => { setDeletingReturn(r); setShowDeleteDialog(true); }}>
-                          <Trash2 className="w-3.5 h-3.5" />
+                        <Button variant="ghost" size="icon" className="h-10 w-10 text-red-500 hover:bg-red-50 active:bg-red-100 rounded-xl" onClick={() => { setDeletingReturn(r); setShowDeleteDialog(true); }}>
+                          <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
                     </TableCell>
@@ -268,7 +327,7 @@ export default function SalesReturns() {
 
       {/* Create Return Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={(open) => { if (!open) resetCreateForm(); }}>
-        <DialogContent dir="rtl" className="max-w-xl">
+        <DialogContent dir="rtl" className="max-w-xl max-sm:mx-2 max-sm:w-[calc(100%-16px)] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><RotateCcw className="w-5 h-5 text-red-500" />مرتجع جديد</DialogTitle>
             <DialogDescription>ابحث عن الفاتورة الأصلية وحدد المنتجات المراد إرجاعها</DialogDescription>
@@ -299,29 +358,37 @@ export default function SalesReturns() {
                   <div className="text-xs text-gray-500">{foundInvoice.date} - {foundInvoice.time}</div>
                 </div>
                 <div className="text-sm font-bold text-blue-600">{formatCurrency(foundInvoice.total, 2)}</div>
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={resetCreateForm}><X className="w-3 h-3" /></Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-blue-100" onClick={resetCreateForm}><X className="w-4 h-4" /></Button>
               </div>
 
-              <div className="text-sm font-medium">حدد المنتجات وكميات الإرجاع:</div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">حدد المنتجات وكميات الإرجاع:</span>
+                <div className="flex gap-1">
+                  <Button variant="outline" size="sm" className="h-7 text-[11px]" onClick={selectAllItems}><CheckCheck className="w-3 h-3 ml-1" />الكل</Button>
+                  {hasSelectedItems && (
+                    <Button variant="ghost" size="sm" className="h-7 text-[11px] text-red-500" onClick={deselectAllItems}>إلغاء الكل</Button>
+                  )}
+                </div>
+              </div>
+
               <ScrollArea className="max-h-48">
                 <div className="space-y-2">
                   {foundInvoice.items.map((item) => {
-                    const returnQty = selectedItems[item.product_id || item.id] || 0;
+                    const itemId = item.product_id || item.id;
+                    const returnQty = selectedItems[itemId] || 0;
                     return (
-                      <div key={item.product_id || item.id} className="flex items-center justify-between p-2 rounded-lg border hover:bg-gray-50">
+                      <div key={itemId} className="flex items-center justify-between p-2 rounded-lg border hover:bg-gray-50 gap-2">
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-sm truncate">{item.name}</div>
-                          <div className="text-xs text-gray-500">x{item.quantity} تم شراؤها - السعر: {formatNumber(item.price, 2)}</div>
+                          <div className="text-xs text-gray-500">x{item.quantity} قطعة - السعر: {formatNumber(item.price, 2)}</div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-600">المرتجع:</span>
-                          <Button
-                            variant={returnQty > 0 ? "default" : "outline"}
-                            size="sm"
-                            className={`h-7 text-xs ${returnQty > 0 ? "bg-red-600" : ""}`}
-                            onClick={() => toggleItemQuantity(item.product_id || item.id, returnQty, item.quantity)}
-                          >
-                            {returnQty > 0 ? `${returnQty} قطعة` : "إضافة"}
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" disabled={returnQty <= 0} onClick={() => updateItemQuantity(itemId, -1, item.quantity)}>
+                            <Minus className="w-3.5 h-3.5" />
+                          </Button>
+                          <span className={`w-7 text-center text-sm font-bold tabular-nums ${returnQty > 0 ? "text-red-600" : "text-gray-400"}`}>{returnQty}</span>
+                          <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" disabled={returnQty >= item.quantity} onClick={() => updateItemQuantity(itemId, 1, item.quantity)}>
+                            <Plus className="w-3.5 h-3.5" />
                           </Button>
                         </div>
                       </div>
@@ -332,20 +399,26 @@ export default function SalesReturns() {
 
               <div>
                 <label className="text-sm font-medium mb-1 block">سبب الإرجاع</label>
-                <Input value={returnReason} onChange={(e) => setReturnReason(e.target.value)} placeholder="مثال: منتج تالف، غير مطابق..." />
+                <Select value={returnReason} onValueChange={setReturnReason}>
+                  <SelectTrigger className="w-full"><SelectValue placeholder="اختر سبب الإرجاع..." /></SelectTrigger>
+                  <SelectContent>
+                    {RETURN_REASONS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                {returnReason === "سبب آخر" && (
+                  <Input
+                    value={returnReasonCustom}
+                    onChange={(e) => setReturnReasonCustom(e.target.value)}
+                    placeholder="اكتب سبب الإرجاع..."
+                    className="mt-2"
+                  />
+                )}
               </div>
 
-              {Object.values(selectedItems).some((q) => q > 0) && (
+              {hasSelectedItems && (
                 <div className="bg-red-50 rounded-lg p-3 text-center">
                   <span className="text-sm text-red-700">
-                    إجمالي المرتجع: <strong>
-                      {formatCurrency(
-                        foundInvoice.items
-                          .filter((i) => (selectedItems[i.product_id || i.id] || 0) > 0)
-                          .reduce((s, i) => s + i.price * (selectedItems[i.product_id || i.id] || 0), 0),
-                        2
-                      )}
-                    </strong>
+                    إجمالي المرتجع: <strong>{formatCurrency(returnTotal, 2)}</strong>
                   </span>
                 </div>
               )}
@@ -355,7 +428,7 @@ export default function SalesReturns() {
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={resetCreateForm}>إلغاء</Button>
             {foundInvoice && (
-              <Button onClick={() => createReturnMutation.mutate()} disabled={createReturnMutation.isPending || Object.values(selectedItems).every((q) => q === 0)} className="bg-red-600 hover:bg-red-700">
+              <Button onClick={() => createReturnMutation.mutate()} disabled={createReturnMutation.isPending || !hasSelectedItems} className="bg-red-600 hover:bg-red-700">
                 {createReturnMutation.isPending ? "جاري..." : "تأكيد الإرجاع"}
               </Button>
             )}
@@ -365,7 +438,7 @@ export default function SalesReturns() {
 
       {/* Detail Dialog */}
       <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-        <DialogContent dir="rtl" className="max-w-md">
+        <DialogContent dir="rtl" className="max-w-md max-sm:mx-2 max-sm:w-[calc(100%-16px)] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><FileText className="w-5 h-5 text-blue-600" />تفاصيل المرتجع</DialogTitle>
           </DialogHeader>
@@ -412,10 +485,10 @@ export default function SalesReturns() {
 
       {/* Delete Confirmation */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent dir="rtl" className="max-w-sm">
+        <DialogContent dir="rtl" className="max-w-sm max-sm:mx-2 max-sm:w-[calc(100%-16px)]">
           <DialogHeader>
             <DialogTitle className="text-red-600">حذف المرتجع</DialogTitle>
-            <DialogDescription>هل أنت متأكد من حذف المرتجع "{deletingReturn?.return_number}"؟</DialogDescription>
+            <DialogDescription>هل أنت متأكد من حذف المرتجع "{deletingReturn?.return_number}"؟ لا يمكن التراجع عن هذا الإجراء.</DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>إلغاء</Button>

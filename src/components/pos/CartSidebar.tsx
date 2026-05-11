@@ -28,6 +28,7 @@ interface CartSidebarProps {
   totals: { subtotal: number; discountAmount: number; taxAmount: number; total: number };
   isPending: boolean;
   enableCreditSales: boolean;
+  className?: string;
   onUpdateQuantity: (id: string, qty: number) => void;
   onRemoveItem: (id: string) => void;
   onClearCart: () => void;
@@ -57,6 +58,7 @@ export function CartSidebar({
   totals,
   isPending,
   enableCreditSales,
+  className,
   onUpdateQuantity,
   onRemoveItem,
   onClearCart,
@@ -73,7 +75,7 @@ export function CartSidebar({
   const itemCount = cart.reduce((c, i) => c + i.quantity, 0);
 
   return (
-    <div className="w-full lg:w-[380px] bg-white border-t lg:border-t-0 lg:border-r border-slate-200/70 flex flex-col shadow-lg lg:shadow-xl">
+    <div className={cn("w-full lg:w-[380px] bg-white border-t lg:border-t-0 lg:border-r border-slate-200/70 flex flex-col shadow-lg lg:shadow-xl", className)}>
       {/* Header */}
       <div className="pb-3 border-b border-slate-100 shrink-0 px-4 pt-3">
         <div className="flex items-center justify-between">

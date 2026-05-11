@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -84,14 +84,20 @@ export default function CashSessions() {
     onError: (err: Error) => toast({ title: "خطأ", description: err.message, variant: "destructive" }),
   });
 
-  const totalPages = Math.ceil(sessions.length / perPage);
-  const paginated = sessions.slice((page - 1) * perPage, page * perPage);
-
-  // Summary stats
-  const totalSales = sessions.reduce((s, ss) => s + ss.total_sales, 0);
-  const totalCash = sessions.reduce((s, ss) => s + ss.total_cash, 0);
-  const totalCard = sessions.reduce((s, ss) => s + ss.total_card, 0);
-  const totalReturns = sessions.reduce((s, ss) => s + ss.total_returns, 0);
+  const { totalPages, paginated, stats } = useMemo(() => {
+    const tp = Math.ceil(sessions.length / perPage);
+    const p = sessions.slice((page - 1) * perPage, page * perPage);
+    const s = sessions.reduce(
+      (acc, ss) => ({
+        totalSales: acc.totalSales + ss.total_sales,
+        totalCash: acc.totalCash + ss.total_cash,
+        totalCard: acc.totalCard + ss.total_card,
+        totalReturns: acc.totalReturns + ss.total_returns,
+      }),
+      { totalSales: 0, totalCash: 0, totalCard: 0, totalReturns: 0 }
+    );
+    return { totalPages: tp, paginated: p, stats: s };
+  }, [sessions, page]);
 
   return (
     <div className="space-y-4 p-4" dir="rtl">
@@ -106,25 +112,25 @@ export default function CashSessions() {
         <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
           <CardContent className="p-4 flex items-center gap-3">
             <DollarSign className="w-8 h-8 opacity-80" />
-            <div><div className="text-2xl font-bold">{formatNumberDisplay(totalSales, 0)}</div><div className="text-xs opacity-80">المبيعات ({CURRENCY})</div></div>
+            <div><div className="text-2xl font-bold">{formatNumberDisplay(stats.totalSales, 0)}</div><div className="text-xs opacity-80">المبيعات ({CURRENCY})</div></div>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-green-600 to-green-700 text-white">
           <CardContent className="p-4 flex items-center gap-3">
             <DollarSign className="w-8 h-8 opacity-80" />
-            <div><div className="text-2xl font-bold">{formatNumberDisplay(totalCash, 0)}</div><div className="text-xs opacity-80">نقدي ({CURRENCY})</div></div>
+            <div><div className="text-2xl font-bold">{formatNumberDisplay(stats.totalCash, 0)}</div><div className="text-xs opacity-80">نقدي ({CURRENCY})</div></div>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
           <CardContent className="p-4 flex items-center gap-3">
             <CreditCard className="w-8 h-8 opacity-80" />
-            <div><div className="text-2xl font-bold">{formatNumberDisplay(totalCard, 0)}</div><div className="text-xs opacity-80">بطاقة ({CURRENCY})</div></div>
+            <div><div className="text-2xl font-bold">{formatNumberDisplay(stats.totalCard, 0)}</div><div className="text-xs opacity-80">بطاقة ({CURRENCY})</div></div>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white">
           <CardContent className="p-4 flex items-center gap-3">
             <RotateCcw className="w-8 h-8 opacity-80" />
-            <div><div className="text-2xl font-bold">{formatNumberDisplay(totalReturns, 0)}</div><div className="text-xs opacity-80">مرتجعات ({CURRENCY})</div></div>
+            <div><div className="text-2xl font-bold">{formatNumberDisplay(stats.totalReturns, 0)}</div><div className="text-xs opacity-80">مرتجعات ({CURRENCY})</div></div>
           </CardContent>
         </Card>
       </div>
@@ -141,14 +147,14 @@ export default function CashSessions() {
             <Button
               variant="outline"
               size="sm"
-              className="ml-auto text-red-600 border-red-300 hover:bg-red-50"
+              className="ml-auto text-red-600 border-red-300 hover:bg-red-50 active:bg-red-100 active:scale-95"
               onClick={() => { setClosingSession(activeSession); setClosingBalance(activeSession.total_cash.toFixed(0)); setShowCloseDialog(true); }}
             >
               <X className="w-3.5 h-3.5 ml-1" /> إقفال الجلسة
             </Button>
           </div>
         ) : (
-          <Button onClick={() => setShowOpenDialog(true)} className="bg-blue-600 hover:bg-blue-700 gap-2">
+          <Button onClick={() => setShowOpenDialog(true)} className="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 active:scale-95 gap-2">
             <Play className="w-4 h-4" /> فتح جلسة جديدة
           </Button>
         )}
@@ -211,8 +217,8 @@ export default function CashSessions() {
                       </span>
                     </TableCell>
                     <TableCell className="text-center">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setSelectedSession(session); setShowDetailDialog(true); }}>
-                        <Eye className="w-3.5 h-3.5 text-blue-600" />
+                      <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-blue-50 active:bg-blue-100" onClick={() => { setSelectedSession(session); setShowDetailDialog(true); }}>
+                        <Eye className="w-4 h-4 text-blue-600" />
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -245,7 +251,7 @@ export default function CashSessions() {
 
       {/* Open Session Dialog */}
       <Dialog open={showOpenDialog} onOpenChange={setShowOpenDialog}>
-        <DialogContent dir="rtl" className="max-w-sm">
+        <DialogContent dir="rtl" className="max-w-sm max-sm:mx-2 max-sm:w-[calc(100%-16px)] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><Play className="w-5 h-5 text-blue-600" />فتح جلسة جديدة</DialogTitle>
             <DialogDescription>أدخل المبلغ الافتتاحي الموجود في الصندوق</DialogDescription>
@@ -267,7 +273,7 @@ export default function CashSessions() {
 
       {/* Close Session Dialog */}
       <Dialog open={showCloseDialog} onOpenChange={setShowCloseDialog}>
-        <DialogContent dir="rtl" className="max-w-sm">
+        <DialogContent dir="rtl" className="max-w-sm max-sm:mx-2 max-sm:w-[calc(100%-16px)] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-red-600"><X className="w-5 h-5" />إقفال الجلسة</DialogTitle>
             <DialogDescription>أدخل المبلغ النقدي الفعلي الموجود في الصندوق الآن</DialogDescription>
@@ -310,7 +316,7 @@ export default function CashSessions() {
 
       {/* Detail Dialog */}
       <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-        <DialogContent dir="rtl" className="max-w-md">
+        <DialogContent dir="rtl" className="max-w-md max-sm:mx-2 max-sm:w-[calc(100%-16px)] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><Landmark className="w-5 h-5 text-blue-600" />تفاصيل الجلسة</DialogTitle>
           </DialogHeader>

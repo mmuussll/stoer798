@@ -307,7 +307,7 @@ export default function ReportsSection() {
       .sort((a, b) => b.sold - a.sold);
   }, [filteredSales, products]);
 
-  const totalStockValue = products.reduce((sum, p) => sum + p.price * p.stock, 0);
+  const totalStockValue = useMemo(() => products.reduce((sum, p) => sum + p.price * p.stock, 0), [products]);
 
   // ===================== Categories Report (Tab 5) =====================
   const categoryData = useMemo(() => {
@@ -469,7 +469,7 @@ export default function ReportsSection() {
               </div>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={350}>
+              <ResponsiveContainer width="100%" height={280}>
                 {chartType === "bar" ? (
                   <BarChart data={salesPeriodData}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -543,7 +543,7 @@ export default function ReportsSection() {
       <Card>
         <CardContent className="pt-4">
           <div className="flex items-center gap-4 flex-wrap">
-            <div className="flex-1 min-w-[250px]">
+            <div className="flex-1 min-w-0 w-full sm:w-auto sm:min-w-[250px]">
               <Label className="mb-2 block">اختر منتج لعرض تقريره</Label>
               <Select value={selectedProduct} onValueChange={setSelectedProduct}>
                 <SelectTrigger>
@@ -582,7 +582,7 @@ export default function ReportsSection() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={260}>
                   <LineChart data={selectedProductChartData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="date" tick={(p: XAxisTickProps) => <ArabicXAxisTick {...p} />} height={50} />
@@ -739,7 +739,7 @@ export default function ReportsSection() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={350}>
+              <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={profitPeriodData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" tick={(p: XAxisTickProps) => <ArabicXAxisTick {...p} />} height={50} />
@@ -891,7 +891,7 @@ export default function ReportsSection() {
         </CardHeader>
         <CardContent>
           {categoryData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={320}>
+            <ResponsiveContainer width="100%" height={280}>
               <PieChart>
                 <Pie
                   data={categoryData}
@@ -1024,9 +1024,9 @@ export default function ReportsSection() {
             </CardHeader>
             <CardContent>
               {debts.length === 0 ? (
-                <div className="flex items-center justify-center h-[320px] text-gray-400">لا توجد بيانات</div>
+                <div className="flex items-center justify-center h-[280px] text-gray-400">لا توجد بيانات</div>
               ) : (
-                <ResponsiveContainer width="100%" height={320}>
+                <ResponsiveContainer width="100%" height={280}>
                   <PieChart>
                     <Pie
                       data={[

@@ -58,7 +58,7 @@ function SettingInput({
     <SettingRow label={label}>
       <Input
         type={type} value={value} onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder} className="w-48 sm:w-64" dir={dir}
+        placeholder={placeholder} className="w-full sm:w-64" dir={dir}
       />
     </SettingRow>
   );
@@ -71,7 +71,7 @@ function SettingNumberInput({
     <SettingRow label={label}>
       <Input
         type="number" value={value} onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-        min={min} max={max} className="w-32" dir="ltr"
+        min={min} max={max} className="w-full sm:w-32" dir="ltr"
       />
     </SettingRow>
   );
@@ -83,7 +83,7 @@ function SettingSelect({
   return (
     <SettingRow label={label}>
       <Select value={value} onValueChange={onValueChange}>
-        <SelectTrigger className="w-48 sm:w-64">
+        <SelectTrigger className="w-full sm:w-64">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -289,16 +289,16 @@ export default function SettingsPage() {
         <div className="flex gap-2 flex-wrap">
           {isOwner ? (
             <>
-              <Button variant="outline" size="sm" onClick={handleExportSettings} className="gap-1">
+              <Button variant="outline" size="sm" onClick={handleExportSettings} className="gap-1 active:scale-95">
                 <Download className="w-3.5 h-3.5" /> تصدير
               </Button>
-              <Button variant="outline" size="sm" onClick={handleImportSettings} className="gap-1">
+              <Button variant="outline" size="sm" onClick={handleImportSettings} className="gap-1 active:scale-95">
                 <Upload className="w-3.5 h-3.5" /> استيراد
               </Button>
-              <Button variant="outline" onClick={resetDefaults} className="gap-2">
+              <Button variant="outline" onClick={resetDefaults} className="gap-2 active:scale-95">
                 <RotateCcw className="w-4 h-4" /> إعادة تعيين
               </Button>
-              <Button onClick={() => saveMutation.mutate()} disabled={!hasChanges || saveMutation.isPending} className="gap-2 bg-blue-600 hover:bg-blue-700">
+              <Button onClick={() => saveMutation.mutate()} disabled={!hasChanges || saveMutation.isPending} className="gap-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 active:scale-95">
                 <Save className="w-4 h-4" />
                 {saveMutation.isPending ? "جاري الحفظ..." : "حفظ الإعدادات"}
               </Button>
@@ -320,7 +320,7 @@ export default function SettingsPage() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="w-full justify-start gap-1 flex-wrap h-auto p-1">
           {tabs.map((t) => (
-            <TabsTrigger key={t.id} value={t.id} className="gap-1.5 text-xs sm:text-sm">
+            <TabsTrigger key={t.id} value={t.id} className="gap-1.5 text-xs sm:text-sm min-h-[44px] px-3">
               <t.icon className="w-3.5 h-3.5" />
               {t.label}
             </TabsTrigger>

@@ -557,11 +557,11 @@ export default function DebtManagement() {
                   <TableHeader>
                     <TableRow>
                       <TableHead className="text-right">الزبون</TableHead>
-                      <TableHead className="text-right">الفاتورة</TableHead>
+                      <TableHead className="text-right hidden sm:table-cell">الفاتورة</TableHead>
                       <TableHead className="text-right">المبلغ الكلي</TableHead>
                       <TableHead className="text-right">المتبقي</TableHead>
                       <TableHead className="text-center">الحالة</TableHead>
-                      <TableHead className="text-right">تاريخ الاستحقاق</TableHead>
+                      <TableHead className="text-right hidden sm:table-cell">تاريخ الاستحقاق</TableHead>
                       <TableHead className="text-center">الإجراءات</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -596,7 +596,7 @@ export default function DebtManagement() {
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="hidden sm:table-cell">
                             {debt.invoice_number ? (
                               <Badge variant="outline" className="text-xs font-mono text-blue-600">{debt.invoice_number}</Badge>
                             ) : (
@@ -619,7 +619,7 @@ export default function DebtManagement() {
                               <StatusIcon className="w-3 h-3" />{status.label}
                             </Badge>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="hidden sm:table-cell">
                             <div className="flex items-center gap-1.5">
                               <Calendar className="w-3 h-3 text-gray-400" />
                               <span className={`text-sm ${dueStatus.color}`}>
@@ -629,24 +629,24 @@ export default function DebtManagement() {
                           </TableCell>
                           <TableCell className="text-center">
                             <div className="flex items-center justify-center gap-1">
-                              <Button variant="ghost" size="sm" className="h-8 text-blue-600 hover:bg-blue-50"
+                              <Button variant="ghost" size="icon" className="h-9 w-9 text-blue-600 hover:bg-blue-50 active:bg-blue-100 rounded-xl"
                                 onClick={() => openDetailDialog(debt)} title="التفاصيل والمدفوعات">
-                                <History className="w-3.5 h-3.5" />
+                                <History className="w-4 h-4" />
                               </Button>
                               {debt.status !== "paid" && (
-                                <Button variant="ghost" size="sm" className="h-8 text-emerald-600 hover:bg-emerald-50"
+                                <Button variant="ghost" size="icon" className="h-9 w-9 text-emerald-600 hover:bg-emerald-50 active:bg-emerald-100 rounded-xl"
                                   onClick={() => openPaymentDialog(debt)} title="تسجيل دفعة">
-                                  <Banknote className="w-3.5 h-3.5" />
+                                  <Banknote className="w-4 h-4" />
                                 </Button>
                               )}
-                              <Button variant="ghost" size="sm" className="h-8 text-amber-600 hover:bg-amber-50"
+                              <Button variant="ghost" size="icon" className="h-9 w-9 text-amber-600 hover:bg-amber-50 active:bg-amber-100 rounded-xl"
                                 onClick={() => openEditDialog(debt)} title="تعديل الدين">
-                                <Pencil className="w-3.5 h-3.5" />
+                                <Pencil className="w-4 h-4" />
                               </Button>
-                              <Button variant="ghost" size="sm" className="h-8 text-red-500 hover:bg-red-50"
+                              <Button variant="ghost" size="icon" className="h-9 w-9 text-red-500 hover:bg-red-50 active:bg-red-100 rounded-xl"
                                 onClick={() => { setDeleteTargetId(debt.id); setDeleteTargetName(debt.customer_name); setShowDeleteConfirm(true); }}
                                 title="إلغاء الدين">
-                                <Trash2 className="w-3.5 h-3.5" />
+                                <Trash2 className="w-4 h-4" />
                               </Button>
                             </div>
                           </TableCell>
@@ -687,7 +687,7 @@ export default function DebtManagement() {
 
       {/* ==================== Payment Dialog ==================== */}
       <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
-        <DialogContent dir="rtl" className="max-w-md">
+        <DialogContent dir="rtl" className="max-w-md max-sm:mx-2 max-sm:w-[calc(100%-16px)]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Banknote className="w-5 h-5 text-emerald-600" />تسجيل دفعة دين
@@ -745,7 +745,7 @@ export default function DebtManagement() {
 
       {/* ==================== Detail Dialog ==================== */}
       <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-        <DialogContent dir="rtl" className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent dir="rtl" className="max-w-2xl max-h-[85vh] overflow-y-auto max-sm:mx-2 max-sm:w-[calc(100%-16px)]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <History className="w-5 h-5 text-blue-600" />تفاصيل الدين والمدفوعات
@@ -868,7 +868,7 @@ export default function DebtManagement() {
 
       {/* ==================== Add Debt Dialog ==================== */}
       <Dialog open={showAddDebtDialog} onOpenChange={(open) => { if (!open) setShowAddDebtDialog(false); }}>
-        <DialogContent dir="rtl" className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent dir="rtl" className="max-w-lg max-h-[90vh] overflow-y-auto max-sm:mx-2 max-sm:w-[calc(100%-16px)]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Landmark className="w-5 h-5 text-emerald-600" />إضافة دين جديد
@@ -1070,7 +1070,7 @@ export default function DebtManagement() {
 
       {/* ==================== Edit Debt Dialog ==================== */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent dir="rtl" className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent dir="rtl" className="max-w-lg max-h-[90vh] overflow-y-auto max-sm:mx-2 max-sm:w-[calc(100%-16px)]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Pencil className="w-5 h-5 text-amber-600" />تعديل الدين
@@ -1147,7 +1147,7 @@ export default function DebtManagement() {
 
       {/* ==================== Delete Confirmation Dialog ==================== */}
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <DialogContent dir="rtl" className="max-w-md">
+        <DialogContent dir="rtl" className="max-w-md max-sm:mx-2 max-sm:w-[calc(100%-16px)]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-red-600">
               <AlertTriangle className="w-5 h-5" />تأكيد الإلغاء

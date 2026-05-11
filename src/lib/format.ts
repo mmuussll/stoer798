@@ -43,3 +43,16 @@ export function formatCurrencyDisplay(value: number | undefined | null, maxDecim
   const num = formatNumberDisplay(value, maxDecimals);
   return `${num} ${CURRENCY}`;
 }
+
+/**
+ * تحويل السعر إلى كتابة عربية: "1,000 د.ع و 500 فلساً"
+ */
+export function priceInWords(price: number): string {
+  if (price <= 0) return "";
+  const whole = Math.floor(price);
+  const frac = Math.round((price - whole) * 1000);
+  const parts: string[] = [];
+  if (whole > 0) parts.push(`${formatNumber(whole)} ${CURRENCY}`);
+  if (frac > 0) parts.push(`${frac} فلساً`);
+  return parts.join(" و ");
+}

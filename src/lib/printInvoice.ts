@@ -6,6 +6,7 @@ import {
   disconnectSerialPrinter,
 } from "@/lib/thermalPrinter";
 import { STORE_SETTINGS_DEFAULTS } from "@/api/settings";
+import { formatNumber } from "@/lib/format";
 
 let cachedSettings: StoreSettings | null = null;
 
@@ -216,8 +217,9 @@ function buildInvoiceHTML(invoice: InvoiceData, isPreview = false): string {
   const qrSvg = generateQRSvg(invoice.invoice_number);
 
   const fmtCurrency = (amount: number) => {
-    if (s.currency_position === "before") return `${s.currency} ${(amount || 0).toFixed(2)}`;
-    return `${(amount || 0).toFixed(2)} ${s.currency}`;
+    const num = formatNumber(amount || 0, 2);
+    if (s.currency_position === "before") return `${s.currency} ${num}`;
+    return `${num} ${s.currency}`;
   };
 
   const paperWidth = s.receipt_paper_size === "A4" ? "210mm" : s.receipt_paper_size === "A5" ? "148mm" : s.receipt_paper_size === "58mm" ? "58mm" : "80mm";
@@ -326,8 +328,8 @@ ${showCustomer ? `<div class="meta"><div><span class="label">الزبون:</span
 ${invoice.items.map((item) => `<tr>
 <td class="item-name"><span>${item.name}</span>${item.barcode ? `<span class="barcode">${item.barcode}</span>` : ""}</td>
 <td class="text-center">${item.quantity}</td>
-<td class="text-left">${(+item.price).toFixed(2)}</td>
-<td class="text-left">${(+item.price * item.quantity).toFixed(2)}</td>
+<td class="text-left">${formatNumber(+item.price, 2)}</td>
+<td class="text-left">${formatNumber(+item.price * item.quantity, 2)}</td>
 </tr>`).join("")}
 </tbody>
 </table>
@@ -387,10 +389,10 @@ export function sendWhatsAppInvoice(invoice: InvoiceData) {
   if (!s.whatsapp_enabled || !s.whatsapp_number || !invoice.customer?.phone) return;
 
   const items = invoice.items.map((item) =>
-    `${item.name} x${item.quantity} = ${(item.price * item.quantity).toFixed(2)}`
+    `${item.name} x${item.quantity} = ${formatNumber(item.price * item.quantity, 2)}`
   ).join("%0A");
 
-  const totalStr = invoice.total.toFixed(2);
+  const totalStr = formatNumber(invoice.total, 2);
   const currency = s.currency_position === "before" ? `${s.currency} ${totalStr}` : `${totalStr} ${s.currency}`;
 
   const message = encodeURIComponent(

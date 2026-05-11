@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Landmark } from "lucide-react";
-import { CURRENCY } from "@/constants";
+import { formatCurrency, formatNumber } from "@/lib/format";
 import type { CashSession } from "@/types";
 
 interface CloseSessionDialogProps {
@@ -35,16 +35,16 @@ export function CloseSessionDialog({
         </DialogHeader>
         <div className="space-y-3">
           <div className="bg-gray-50 rounded-lg p-3 space-y-1 text-sm">
-            <div className="flex justify-between"><span>المبلغ الافتتاحي:</span><span>{session.opening_balance.toFixed(2)} {CURRENCY}</span></div>
-            <div className="flex justify-between"><span>إجمالي المبيعات:</span><span>{session.total_sales.toFixed(2)} {CURRENCY}</span></div>
-            <div className="flex justify-between"><span>نقدي:</span><span>{session.total_cash.toFixed(2)} {CURRENCY}</span></div>
-            <div className="flex justify-between"><span>بطاقة:</span><span>{session.total_card.toFixed(2)} {CURRENCY}</span></div>
-            <div className="flex justify-between"><span>مرتجعات:</span><span className="text-red-500">-{session.total_returns.toFixed(2)} {CURRENCY}</span></div>
+            <div className="flex justify-between"><span>المبلغ الافتتاحي:</span><span>{formatCurrency(session.opening_balance, 2)}</span></div>
+            <div className="flex justify-between"><span>إجمالي المبيعات:</span><span>{formatCurrency(session.total_sales, 2)}</span></div>
+            <div className="flex justify-between"><span>نقدي:</span><span>{formatCurrency(session.total_cash, 2)}</span></div>
+            <div className="flex justify-between"><span>بطاقة:</span><span>{formatCurrency(session.total_card, 2)}</span></div>
+            <div className="flex justify-between"><span>مرتجعات:</span><span className="text-red-500">-{formatCurrency(session.total_returns, 2)}</span></div>
             <div className="flex justify-between"><span>عدد الفواتير:</span><span>{session.invoice_count}</span></div>
             <Separator />
             <div className="flex justify-between font-bold">
               <span>النقدي المتوقع:</span>
-              <span>{expectedCash.toFixed(2)} {CURRENCY}</span>
+              <span>{formatCurrency(expectedCash, 2)}</span>
             </div>
           </div>
           <div>
@@ -54,7 +54,7 @@ export function CloseSessionDialog({
           {closingBalance && (
             <div className="text-center">
               <Badge variant="outline" className={diff >= 0 ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}>
-                الفرق: {diff >= 0 ? "+" : ""}{diff.toFixed(2)} {CURRENCY}
+                الفرق: {diff >= 0 ? "+" : "-"}{formatCurrency(Math.abs(diff), 2)}
               </Badge>
             </div>
           )}

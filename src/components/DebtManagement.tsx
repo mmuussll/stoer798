@@ -25,6 +25,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import * as debtsApi from "@/api/debts";
 import * as customersApi from "@/api/customers";
 import { CURRENCY } from "@/constants";
+import { formatNumber, formatCurrency, formatNumberDisplay, formatCurrencyDisplay } from "@/lib/format";
 import {
   STATUS_MAP, PAYMENT_ICONS, PAYMENT_LABELS,
   getDueStatus, todayStr, defaultDueDate,
@@ -437,17 +438,17 @@ export default function DebtManagement() {
       {/* Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <StatCard title="إجمالي الديون المستحقة"
-          value={`${(summary?.total_outstanding || 0).toFixed(2)} ${CURRENCY}`}
+          value={formatCurrencyDisplay(summary?.total_outstanding || 0, 2)}
           icon={Landmark} color="text-blue-600" bg="bg-blue-50 border border-blue-200"
           sub={`${activeStats.totalActive} دين نشط`} />
         <StatCard title="الديون المتأخرة"
-          value={`${activeStats.totalOverdueAmount.toFixed(2)} ${CURRENCY}`}
+          value={formatCurrencyDisplay(activeStats.totalOverdueAmount, 2)}
           icon={AlertTriangle}
           color={activeStats.totalOverdue > 0 ? "text-red-600" : "text-gray-600"}
           bg={activeStats.totalOverdue > 0 ? "bg-red-50 border border-red-200" : "bg-gray-50"}
           sub={`${activeStats.totalOverdue} دين متأخر`} />
         <StatCard title="الديون النشطة"
-          value={`${(summary?.total_active || 0).toFixed(2)} ${CURRENCY}`}
+          value={formatCurrencyDisplay(summary?.total_active || 0, 2)}
           icon={Clock4} color="text-amber-600" bg="bg-amber-50 border border-amber-200"
           sub="غير متأخرة" />
         <StatCard title="زبائن مدينون"
@@ -455,7 +456,7 @@ export default function DebtManagement() {
           icon={User2} color="text-violet-600" bg="bg-violet-50 border border-violet-200"
           sub="لديهم ديون نشطة" />
         <StatCard title="إجمالي الديون المسددة"
-          value={`${debts.filter((d) => d.status === "paid").reduce((s, d) => s + d.total_amount, 0).toFixed(2)} ${CURRENCY}`}
+          value={formatCurrencyDisplay(debts.filter((d) => d.status === "paid").reduce((s, d) => s + d.total_amount, 0), 2)}
           icon={CheckCircle2} color="text-emerald-600" bg="bg-emerald-50 border border-emerald-200"
           sub="تم تسديدها بالكامل" />
       </div>
@@ -487,7 +488,7 @@ export default function DebtManagement() {
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-lg font-bold text-red-600">{c.total_debt.toFixed(2)} {CURRENCY}</p>
+                    <p className="text-lg font-bold text-red-600">{formatCurrency(c.total_debt, 2)}</p>
                     <div className="flex items-center gap-2 text-xs text-gray-500">
                       <span>{c.debt_count} دين</span>
                       {c.debt_limit > 0 && c.total_debt > c.debt_limit && (
@@ -602,10 +603,10 @@ export default function DebtManagement() {
                               <span className="text-gray-300 text-xs">-</span>
                             )}
                           </TableCell>
-                          <TableCell className="font-semibold">{debt.total_amount.toFixed(2)} {CURRENCY}</TableCell>
+                          <TableCell className="font-semibold">{formatCurrency(debt.total_amount, 2)}</TableCell>
                           <TableCell>
                             <div>
-                              <p className="font-bold text-red-600">{debt.remaining_amount.toFixed(2)} {CURRENCY}</p>
+                               <p className="font-bold text-red-600">{formatCurrency(debt.remaining_amount, 2)}</p>
                               {paidPercent > 0 && (
                                 <div className="w-full h-1.5 bg-gray-200 rounded-full mt-1 max-w-[100px]">
                                   <div className="h-1.5 bg-emerald-500 rounded-full" style={{ width: `${paidPercent}%` }} />
@@ -700,11 +701,11 @@ export default function DebtManagement() {
               <div className="grid grid-cols-2 gap-3 bg-gray-50 rounded-lg p-3">
                 <div>
                   <p className="text-xs text-gray-500">المبلغ الكلي للدين</p>
-                  <p className="font-bold text-lg">{selectedDebt.total_amount.toFixed(2)} {CURRENCY}</p>
+                  <p className="font-bold text-lg">{formatCurrency(selectedDebt.total_amount, 2)}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">المبلغ المتبقي</p>
-                  <p className="font-bold text-lg text-red-600">{selectedDebt.remaining_amount.toFixed(2)} {CURRENCY}</p>
+                  <p className="font-bold text-lg text-red-600">{formatCurrency(selectedDebt.remaining_amount, 2)}</p>
                 </div>
               </div>
               <div>
@@ -755,14 +756,14 @@ export default function DebtManagement() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 bg-gray-50 rounded-lg">
                 <div><p className="text-xs text-gray-500">الزبون</p><p className="font-semibold text-sm">{selectedDebt.customer_name || "-"}</p></div>
                 <div><p className="text-xs text-gray-500">الفاتورة</p><p className="font-semibold text-sm font-mono">{selectedDebt.invoice_number || "-"}</p></div>
-                <div><p className="text-xs text-gray-500">المبلغ الكلي</p><p className="font-bold text-blue-600">{selectedDebt.total_amount.toFixed(2)} {CURRENCY}</p></div>
-                <div><p className="text-xs text-gray-500">المتبقي</p><p className="font-bold text-red-600">{selectedDebt.remaining_amount.toFixed(2)} {CURRENCY}</p></div>
+                <div><p className="text-xs text-gray-500">المبلغ الكلي</p><p className="font-bold text-blue-600">{formatCurrency(selectedDebt.total_amount, 2)}</p></div>
+                <div><p className="text-xs text-gray-500">المتبقي</p><p className="font-bold text-red-600">{formatCurrency(selectedDebt.remaining_amount, 2)}</p></div>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                 <div><span className="text-gray-500">الحالة: </span><Badge variant="outline" className={STATUS_MAP[selectedDebt.status]?.color}>{STATUS_MAP[selectedDebt.status]?.label}</Badge></div>
                 <div><span className="text-gray-500">تاريخ الاستحقاق: </span><span className={getDueStatus(selectedDebt.due_date).color}>{selectedDebt.due_date || "غير محدد"}</span></div>
-                <div><span className="text-gray-500">المدفوع: </span><span className="text-emerald-600 font-semibold">{(selectedDebt.total_amount - selectedDebt.remaining_amount).toFixed(2)} {CURRENCY}</span></div>
-                <div><span className="text-gray-500">نسبة السداد: </span><span className="text-emerald-600 font-semibold">{selectedDebt.total_amount > 0 ? ((1 - selectedDebt.remaining_amount / selectedDebt.total_amount) * 100).toFixed(1) : "0"}%</span></div>
+                <div><span className="text-gray-500">المدفوع: </span><span className="text-emerald-600 font-semibold">{formatCurrency(selectedDebt.total_amount - selectedDebt.remaining_amount, 2)}</span></div>
+                <div><span className="text-gray-500">نسبة السداد: </span><span className="text-emerald-600 font-semibold">{formatNumberDisplay(selectedDebt.total_amount > 0 ? (1 - selectedDebt.remaining_amount / selectedDebt.total_amount) * 100 : 0, 1)}%</span></div>
               </div>
               {selectedDebt.notes && (
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
@@ -837,7 +838,7 @@ export default function DebtManagement() {
                           return (
                             <TableRow key={p.id}>
                               <TableCell><div className="flex items-center gap-1 text-sm"><Calendar className="w-3 h-3 text-gray-400" />{p.payment_date}{p.payment_time && <span className="text-gray-400 text-xs">{p.payment_time}</span>}</div></TableCell>
-                              <TableCell className="font-bold text-emerald-600">+{p.amount.toFixed(2)} {CURRENCY}</TableCell>
+                              <TableCell className="font-bold text-emerald-600">+{formatCurrency(p.amount, 2)}</TableCell>
                               <TableCell><Badge variant="outline" className="text-xs flex items-center gap-1 w-fit"><PIcon className="w-3 h-3" />{PAYMENT_LABELS[p.payment_method]}</Badge></TableCell>
                               <TableCell className="text-sm">{p.cashier || "-"}</TableCell>
                               <TableCell className="text-sm text-gray-500">{p.notes || "-"}</TableCell>
@@ -892,7 +893,7 @@ export default function DebtManagement() {
                   </div>
                   <div className="flex items-center gap-2">
                     {addSelectedCustomer.total_debt > 0 && (
-                      <Badge variant="destructive" className="text-xs">عليه {addSelectedCustomer.total_debt.toFixed(2)} {CURRENCY}</Badge>
+                      <Badge variant="destructive" className="text-xs">عليه {formatCurrency(addSelectedCustomer.total_debt, 2)}</Badge>
                     )}
                     <Button variant="ghost" size="sm" className="h-7 text-gray-400 hover:text-red-500"
                       onClick={() => { setAddSelectedCustomer(null); setAddCustomerSearch(""); }}>
@@ -925,7 +926,7 @@ export default function DebtManagement() {
                               </div>
                             </div>
                             {c.total_debt > 0 && (
-                              <Badge variant="outline" className="text-xs text-red-500 border-red-200">عليه {c.total_debt.toFixed(0)} {CURRENCY}</Badge>
+                              <Badge variant="outline" className="text-xs text-red-500 border-red-200">عليه {formatCurrency(c.total_debt, 0)}</Badge>
                             )}
                           </div>
                         ))
@@ -996,7 +997,7 @@ export default function DebtManagement() {
               {addInitPayment && parseFloat(addInitPayment) > 0 && addAmount && (
                 <div className="text-center text-sm">
                   <span className="text-gray-500">المبلغ المتبقي: </span>
-                  <span className="font-bold text-red-600">{Math.max(0, (parseFloat(addAmount) || 0) - (parseFloat(addInitPayment) || 0)).toFixed(2)} {CURRENCY}</span>
+                  <span className="font-bold text-red-600">{formatCurrency(Math.max(0, (parseFloat(addAmount) || 0) - (parseFloat(addInitPayment) || 0)), 2)}</span>
                 </div>
               )}
             </div>
@@ -1127,9 +1128,9 @@ export default function DebtManagement() {
               </div>
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <p className="text-xs text-blue-700">
-                  المدفوع حتى الآن: <strong>{(selectedDebt.total_amount - selectedDebt.remaining_amount).toFixed(2)} {CURRENCY}</strong>
+                  المدفوع حتى الآن: <strong>{formatCurrency(selectedDebt.total_amount - selectedDebt.remaining_amount, 2)}</strong>
                   {" | "}
-                  المتبقي: <strong>{selectedDebt.remaining_amount.toFixed(2)} {CURRENCY}</strong>
+                  المتبقي: <strong>{formatCurrency(selectedDebt.remaining_amount, 2)}</strong>
                 </p>
               </div>
             </div>

@@ -21,6 +21,7 @@ import CategoryManagement from "./CategoryManagement";
 import * as productsApi from "@/api/products";
 import * as categoriesApi from "@/api/categories";
 import { CURRENCY } from "@/constants";
+import { formatNumber, formatCurrency, formatNumberDisplay, formatCurrencyDisplay } from "@/lib/format";
 import type { Product, Category } from "@/types";
 
 type ViewMode = "grid" | "list";
@@ -59,7 +60,7 @@ function priceInWords(price: number): string {
   const whole = Math.floor(price);
   const frac = Math.round((price - whole) * 1000);
   const parts: string[] = [];
-  if (whole > 0) parts.push(`${whole.toLocaleString("ar")} ${CURRENCY}`);
+  if (whole > 0) parts.push(`${formatNumber(whole)} ${CURRENCY}`);
   if (frac > 0) parts.push(`${frac} فلساً`);
   return parts.join(" و ");
 }
@@ -421,7 +422,7 @@ export default function ProductManagement() {
                         min="0"
                         value={formData.price}
                         onChange={(e) => { setFormData({ ...formData, price: e.target.value }); setFormErrors((p) => ({ ...p, price: undefined })); }}
-                        placeholder="0.000"
+                        placeholder="أدخل السعر"
                         className={formErrors.price ? "border-red-400 focus-visible:ring-red-300" : ""}
                       />
                       {formErrors.price && <p className="text-xs text-red-500">{formErrors.price}</p>}
@@ -605,7 +606,7 @@ export default function ProductManagement() {
                           )}
                           <CardContent className="p-3 space-y-1.5">
                             <h4 className="font-semibold text-sm text-gray-800 line-clamp-1">{formData.name || "اسم المنتج"}</h4>
-                            <p className="text-base font-bold text-blue-600">{currentPrice > 0 ? currentPrice.toFixed(3) : "0.000"} {CURRENCY}</p>
+                            <p className="text-base font-bold text-blue-600">{currentPrice > 0 ? formatCurrency(currentPrice) : formatCurrencyDisplay(0)}</p>
                             <div className="flex gap-1 flex-wrap">
                               <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{formData.stock ? `متوفر: ${formData.stock}` : "متوفر: 0"}</Badge>
                               {selectedCategory && (
@@ -670,7 +671,7 @@ export default function ProductManagement() {
         <Card className="bg-emerald-50 border-emerald-200">
           <CardContent className="p-4">
             <p className="text-sm text-emerald-600 font-medium">قيمة المخزون</p>
-            <p className="text-2xl font-bold text-emerald-900 mt-1">{totalStockValue.toFixed(2)} {CURRENCY}</p>
+            <p className="text-2xl font-bold text-emerald-900 mt-1">{formatCurrencyDisplay(totalStockValue)}</p>
           </CardContent>
         </Card>
       </div>
@@ -772,7 +773,7 @@ export default function ProductManagement() {
                 <CardContent className="space-y-2 pt-0">
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-500">السعر</span>
-                    <span className="text-lg font-bold text-blue-600">{product.price.toFixed(3)} {CURRENCY}</span>
+                    <span className="text-lg font-bold text-blue-600">{formatCurrency(product.price)}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-500">المخزون</span>
@@ -834,7 +835,7 @@ export default function ProductManagement() {
                       )}
                       {product.name}
                     </TableCell>
-                    <TableCell className="text-blue-600 font-semibold">{product.price.toFixed(3)} {CURRENCY}</TableCell>
+                    <TableCell className="text-blue-600 font-semibold">{formatCurrency(product.price)}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
                         <button onClick={() => handleStockAdjust(product, -1)} className="hover:text-red-500 transition-colors"><MinusCircle className="w-3.5 h-3.5" /></button>

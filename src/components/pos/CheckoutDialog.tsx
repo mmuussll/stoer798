@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Receipt, User2, AlertTriangle } from "lucide-react";
 import { CURRENCY } from "@/constants";
+import { formatNumber, formatCurrency } from "@/lib/format";
 import type { CartItem, Customer } from "@/types";
 
 interface CheckoutDialogProps {
@@ -52,20 +53,20 @@ export function CheckoutDialog({
             {cart.map((item) => (
               <div key={item.id} className="flex justify-between items-center text-sm">
                 <div><span className="font-medium">{item.name}</span><span className="text-gray-500 mr-2">x{item.quantity}</span></div>
-                <span className="font-semibold">{(item.price * item.quantity).toFixed(2)} {CURRENCY}</span>
+                <span className="font-semibold">{formatNumber(item.price * item.quantity, 2)} {CURRENCY}</span>
               </div>
             ))}
           </div>
           {discountType !== "none" && (
             <div className="flex justify-between text-sm text-red-600 bg-red-50 rounded-lg p-2">
               <span>الخصم:</span>
-              <span>-{discountAmount.toFixed(2)} {CURRENCY}</span>
+              <span>-{formatCurrency(discountAmount, 2)}</span>
             </div>
           )}
           {taxEnabled && taxRate > 0 && (
             <div className="flex justify-between text-sm text-orange-600 bg-orange-50 rounded-lg p-2">
               <span>الضريبة:</span>
-              <span>{taxAmount.toFixed(2)} {CURRENCY}</span>
+              <span>{formatCurrency(taxAmount, 2)}</span>
             </div>
           )}
           <div className="flex justify-between text-sm text-gray-600">
@@ -75,7 +76,7 @@ export function CheckoutDialog({
           {paymentMethod === "cash" && paidAmount > 0 && change >= 0 && (
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">المبلغ المدفوع / الباقي:</span>
-              <span className="font-semibold">{paidAmount.toFixed(2)} / <span className="text-green-600">{change.toFixed(2)}</span> {CURRENCY}</span>
+              <span className="font-semibold">{formatCurrency(paidAmount, 2)} / <span className="text-green-600">{formatCurrency(change, 2)}</span> {CURRENCY}</span>
             </div>
           )}
           {isCredit && (
@@ -84,18 +85,18 @@ export function CheckoutDialog({
                 <AlertTriangle className="w-4 h-4" />
                 <span>تنبيه: بيع بالآجل (دَين)</span>
               </div>
-              <p className="text-xs text-red-600">سيتم إنشاء دين على الزبون بقيمة {total.toFixed(2)} {CURRENCY}</p>
+              <p className="text-xs text-red-600">سيتم إنشاء دين على الزبون بقيمة {formatCurrency(total, 2)}</p>
               {debtDueDate && <p className="text-xs text-red-500">تاريخ الاستحقاق: {debtDueDate}</p>}
               {!debtDueDate && <p className="text-xs text-red-500">تاريخ الاستحقاق: بعد 30 يوم</p>}
               {selectedCustomer && selectedCustomer.total_debt > 0 && (
-                <p className="text-xs text-red-400">الدين الحالي للزبون: {selectedCustomer.total_debt.toFixed(2)} {CURRENCY}</p>
+                <p className="text-xs text-red-400">الدين الحالي للزبون: {formatCurrency(selectedCustomer.total_debt, 2)}</p>
               )}
             </div>
           )}
           <Separator />
           <div className="flex justify-between items-center">
             <span className="text-base font-bold">الإجمالي النهائي:</span>
-            <span className="text-2xl font-bold text-blue-600">{total.toFixed(2)} {CURRENCY}</span>
+            <span className="text-2xl font-bold text-blue-600">{formatCurrency(total, 2)}</span>
           </div>
         </div>
         <DialogFooter className="gap-2">

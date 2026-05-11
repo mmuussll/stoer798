@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import * as sessionsApi from "@/api/sessions";
 import { useAuth } from "@/contexts/AuthContext";
 import { CURRENCY } from "@/constants";
+import { formatNumber, formatCurrency, formatNumberDisplay, formatCurrencyDisplay } from "@/lib/format";
 import type { CashSession } from "@/types";
 
 export default function CashSessions() {
@@ -105,25 +106,25 @@ export default function CashSessions() {
         <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
           <CardContent className="p-4 flex items-center gap-3">
             <DollarSign className="w-8 h-8 opacity-80" />
-            <div><div className="text-2xl font-bold">{totalSales.toFixed(0)}</div><div className="text-xs opacity-80">المبيعات ({CURRENCY})</div></div>
+            <div><div className="text-2xl font-bold">{formatNumberDisplay(totalSales, 0)}</div><div className="text-xs opacity-80">المبيعات ({CURRENCY})</div></div>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-green-600 to-green-700 text-white">
           <CardContent className="p-4 flex items-center gap-3">
             <DollarSign className="w-8 h-8 opacity-80" />
-            <div><div className="text-2xl font-bold">{totalCash.toFixed(0)}</div><div className="text-xs opacity-80">نقدي ({CURRENCY})</div></div>
+            <div><div className="text-2xl font-bold">{formatNumberDisplay(totalCash, 0)}</div><div className="text-xs opacity-80">نقدي ({CURRENCY})</div></div>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
           <CardContent className="p-4 flex items-center gap-3">
             <CreditCard className="w-8 h-8 opacity-80" />
-            <div><div className="text-2xl font-bold">{totalCard.toFixed(0)}</div><div className="text-xs opacity-80">بطاقة ({CURRENCY})</div></div>
+            <div><div className="text-2xl font-bold">{formatNumberDisplay(totalCard, 0)}</div><div className="text-xs opacity-80">بطاقة ({CURRENCY})</div></div>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white">
           <CardContent className="p-4 flex items-center gap-3">
             <RotateCcw className="w-8 h-8 opacity-80" />
-            <div><div className="text-2xl font-bold">{totalReturns.toFixed(0)}</div><div className="text-xs opacity-80">مرتجعات ({CURRENCY})</div></div>
+            <div><div className="text-2xl font-bold">{formatNumberDisplay(totalReturns, 0)}</div><div className="text-xs opacity-80">مرتجعات ({CURRENCY})</div></div>
           </CardContent>
         </Card>
       </div>
@@ -136,7 +137,7 @@ export default function CashSessions() {
               <CheckCircle2 className="w-3.5 h-3.5" /> جلسة مفتوحة
             </Badge>
             <span className="text-sm text-gray-600">{activeSession.cashier_name} | {activeSession.start_date} {activeSession.start_time}</span>
-            <span className="text-sm font-semibold">المبيعات: {activeSession.total_sales.toFixed(2)} {CURRENCY}</span>
+            <span className="text-sm font-semibold">المبيعات: {formatCurrency(activeSession.total_sales, 2)}</span>
             <Button
               variant="outline"
               size="sm"
@@ -200,13 +201,13 @@ export default function CashSessions() {
                         {session.status === "open" ? "مفتوحة" : "مقفلة"}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-center font-medium">{session.opening_balance.toFixed(2)}</TableCell>
-                    <TableCell className="text-center font-semibold text-blue-600">{session.total_sales.toFixed(2)}</TableCell>
-                    <TableCell className="text-center">{session.total_cash.toFixed(2)}</TableCell>
-                    <TableCell className="text-center">{session.total_card.toFixed(2)}</TableCell>
+                    <TableCell className="text-center font-medium">{formatNumber(session.opening_balance, 2)}</TableCell>
+                    <TableCell className="text-center font-semibold text-blue-600">{formatNumber(session.total_sales, 2)}</TableCell>
+                    <TableCell className="text-center">{formatNumber(session.total_cash, 2)}</TableCell>
+                    <TableCell className="text-center">{formatNumber(session.total_card, 2)}</TableCell>
                     <TableCell className="text-center">
                       <span className={session.difference === 0 ? "text-green-600" : session.difference > 0 ? "text-red-600" : "text-amber-600"}>
-                        {session.status === "closed" ? `${session.difference.toFixed(2)}` : "-"}
+                        {session.status === "closed" ? formatNumber(session.difference, 2) : "-"}
                       </span>
                     </TableCell>
                     <TableCell className="text-center">
@@ -274,15 +275,15 @@ export default function CashSessions() {
           {closingSession && (
             <div className="space-y-3">
               <div className="bg-gray-50 rounded-lg p-3 space-y-1 text-sm">
-                <div className="flex justify-between"><span>المبلغ الافتتاحي:</span><span>{closingSession.opening_balance.toFixed(2)} {CURRENCY}</span></div>
-                <div className="flex justify-between"><span>إجمالي المبيعات:</span><span>{closingSession.total_sales.toFixed(2)} {CURRENCY}</span></div>
-                <div className="flex justify-between"><span>نقدي مستلم:</span><span>{closingSession.total_cash.toFixed(2)} {CURRENCY}</span></div>
-                <div className="flex justify-between"><span>بطاقة:</span><span>{closingSession.total_card.toFixed(2)} {CURRENCY}</span></div>
-                <div className="flex justify-between"><span>مرتجعات:</span><span className="text-red-500">-{closingSession.total_returns.toFixed(2)} {CURRENCY}</span></div>
+                <div className="flex justify-between"><span>المبلغ الافتتاحي:</span><span>{formatCurrency(closingSession.opening_balance, 2)}</span></div>
+                <div className="flex justify-between"><span>إجمالي المبيعات:</span><span>{formatCurrency(closingSession.total_sales, 2)}</span></div>
+                <div className="flex justify-between"><span>نقدي مستلم:</span><span>{formatCurrency(closingSession.total_cash, 2)}</span></div>
+                <div className="flex justify-between"><span>بطاقة:</span><span>{formatCurrency(closingSession.total_card, 2)}</span></div>
+                <div className="flex justify-between"><span>مرتجعات:</span><span className="text-red-500">-{formatCurrency(closingSession.total_returns, 2)}</span></div>
                 <Separator />
                 <div className="flex justify-between font-bold">
                   <span>النقدي المتوقع:</span>
-                  <span>{(closingSession.opening_balance + closingSession.total_cash - closingSession.total_returns).toFixed(2)} {CURRENCY}</span>
+                  <span>{formatCurrency(closingSession.opening_balance + closingSession.total_cash - closingSession.total_returns, 2)}</span>
                 </div>
               </div>
               <div>
@@ -292,7 +293,7 @@ export default function CashSessions() {
               {closingBalance && (
                 <div className="text-center">
                   <Badge variant="outline" className={parseFloat(closingBalance) >= (closingSession.opening_balance + closingSession.total_cash - closingSession.total_returns) ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}>
-                    الفرق: {(parseFloat(closingBalance) - (closingSession.opening_balance + closingSession.total_cash - closingSession.total_returns)).toFixed(2)} {CURRENCY}
+                    الفرق: {formatCurrency(parseFloat(closingBalance) - (closingSession.opening_balance + closingSession.total_cash - closingSession.total_returns), 2)}
                   </Badge>
                 </div>
               )}
@@ -328,20 +329,20 @@ export default function CashSessions() {
               </div>
               <Separator />
               <div className="space-y-1.5 text-sm">
-                <div className="flex justify-between"><span>مبلغ افتتاحي:</span><span className="font-bold">{selectedSession.opening_balance.toFixed(2)} {CURRENCY}</span></div>
-                <div className="flex justify-between"><span>إجمالي المبيعات:</span><span className="font-bold text-blue-600">{selectedSession.total_sales.toFixed(2)} {CURRENCY}</span></div>
-                <div className="flex justify-between"><span className="text-emerald-600">نقدي:</span><span className="font-semibold">{selectedSession.total_cash.toFixed(2)} {CURRENCY}</span></div>
-                <div className="flex justify-between"><span className="text-purple-600">بطاقة:</span><span className="font-semibold">{selectedSession.total_card.toFixed(2)} {CURRENCY}</span></div>
-                <div className="flex justify-between"><span className="text-red-600">مرتجعات:</span><span className="font-semibold">-{selectedSession.total_returns.toFixed(2)} {CURRENCY}</span></div>
+                <div className="flex justify-between"><span>مبلغ افتتاحي:</span><span className="font-bold">{formatCurrency(selectedSession.opening_balance, 2)}</span></div>
+                <div className="flex justify-between"><span>إجمالي المبيعات:</span><span className="font-bold text-blue-600">{formatCurrency(selectedSession.total_sales, 2)}</span></div>
+                <div className="flex justify-between"><span className="text-emerald-600">نقدي:</span><span className="font-semibold">{formatCurrency(selectedSession.total_cash, 2)}</span></div>
+                <div className="flex justify-between"><span className="text-purple-600">بطاقة:</span><span className="font-semibold">{formatCurrency(selectedSession.total_card, 2)}</span></div>
+                <div className="flex justify-between"><span className="text-red-600">مرتجعات:</span><span className="font-semibold">-{formatCurrency(selectedSession.total_returns, 2)}</span></div>
                 <Separator />
-                <div className="flex justify-between"><span>النقدي المتوقع:</span><span className="font-semibold">{selectedSession.expected_cash.toFixed(2)} {CURRENCY}</span></div>
+                <div className="flex justify-between"><span>النقدي المتوقع:</span><span className="font-semibold">{formatCurrency(selectedSession.expected_cash, 2)}</span></div>
                 {selectedSession.status === "closed" && (
                   <>
-                    <div className="flex justify-between"><span>النقدي الفعلي:</span><span className="font-semibold">{selectedSession.closing_balance.toFixed(2)} {CURRENCY}</span></div>
+                    <div className="flex justify-between"><span>النقدي الفعلي:</span><span className="font-semibold">{formatCurrency(selectedSession.closing_balance, 2)}</span></div>
                     <div className="flex justify-between">
                       <span>الفرق:</span>
                       <span className={`font-bold text-lg ${selectedSession.difference === 0 ? "text-green-600" : selectedSession.difference > 0 ? "text-red-600" : "text-amber-600"}`}>
-                        {selectedSession.difference >= 0 ? "+" : ""}{selectedSession.difference.toFixed(2)} {CURRENCY}
+                        {selectedSession.difference >= 0 ? "+" : ""}{formatCurrency(selectedSession.difference, 2)}
                       </span>
                     </div>
                   </>

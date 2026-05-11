@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Percent } from "lucide-react";
-import { CURRENCY } from "@/constants";
+import { formatCurrency } from "@/lib/format";
 
 interface DiscountDialogProps {
   open: boolean;
@@ -69,8 +69,8 @@ export function DiscountDialog({
           {discountType !== "none" && discountValue > 0 && (
             <div className="bg-amber-50 rounded-lg p-2 text-center">
               <span className="text-sm text-amber-700">
-                الخصم: <strong>{discountType === "percentage" ? `${discountValue}%` : `${discountValue.toFixed(2)} ${CURRENCY}`}</strong> =
-                <strong className="mx-1">{discountAmount.toFixed(2)} {CURRENCY}</strong>
+                الخصم: <strong>{discountType === "percentage" ? `${discountValue}%` : formatCurrency(discountValue, 2)}</strong> =
+                <strong className="mx-1">{formatCurrency(discountAmount, 2)}</strong>
               </span>
             </div>
           )}

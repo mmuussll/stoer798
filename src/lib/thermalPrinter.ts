@@ -3,6 +3,8 @@
  * Supports: Browser Print, Web Serial (USB), Network (TCP)
  */
 
+import { formatNumber } from "@/lib/format";
+
 export type PrinterConnectionType = "browser" | "serial" | "network";
 
 export interface PrinterConfig {
@@ -92,9 +94,9 @@ export function generateEscPosReceipt(
   const fmtCurr = (amount: number) =>
     config.encoding === "utf8"
       ? store.currency_position === "before"
-        ? `${store.currency} ${amount.toFixed(2)}`
-        : `${amount.toFixed(2)} ${store.currency}`
-      : amount.toFixed(2);
+        ? `${store.currency} ${formatNumber(amount, 2)}`
+        : `${formatNumber(amount, 2)} ${store.currency}`
+      : formatNumber(amount, 2);
 
   // Divider
   const divider = "─".repeat(cpL);
@@ -147,7 +149,7 @@ export function generateEscPosReceipt(
   for (const item of invoice.items) {
     const lineTotal = item.price * item.quantity;
     const name = item.name.length > cpL - 18 ? item.name.slice(0, cpL - 21) + ".." : item.name;
-    const info = `${item.quantity} x ${item.price.toFixed(2)} = ${lineTotal.toFixed(2)}`;
+    const info = `${item.quantity} x ${formatNumber(item.price, 2)} = ${formatNumber(lineTotal, 2)}`;
     w(pad(name, info, cpL) + CMD.LINE_FEED);
   }
 

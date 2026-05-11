@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Package } from "lucide-react";
 import { CURRENCY } from "@/constants";
+import { formatNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Product, CartItem } from "@/types";
 
@@ -79,7 +80,7 @@ export function ProductGrid({
             key={product.id}
             role="button"
             tabIndex={isOutOfStock ? -1 : 0}
-            aria-label={`${product.name} - ${product.price.toFixed(2)} ${CURRENCY}${isOutOfStock ? " - غير متوفر" : ""}`}
+            aria-label={`${product.name} - ${formatNumber(product.price, 3)} ${CURRENCY}${isOutOfStock ? " - غير متوفر" : ""}`}
             aria-disabled={isOutOfStock}
             onKeyDown={(e) => {
               if (!isOutOfStock && (e.key === "Enter" || e.key === " ")) {
@@ -129,7 +130,7 @@ export function ProductGrid({
               </h3>
 
               <p className="text-base font-bold text-indigo-600 tracking-tight">
-                {product.price.toFixed(2)}{" "}
+                {formatNumber(product.price, 3)}{" "}
                 <span className="text-[11px] font-normal text-slate-400">{CURRENCY}</span>
               </p>
 

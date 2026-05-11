@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { CURRENCY } from "@/constants";
+import { formatCurrency } from "@/lib/format";
 import { printSaleInvoice } from "@/lib/printInvoice";
 import * as salesApi from "@/api/sales";
 import * as debtsApi from "@/api/debts";
@@ -125,7 +126,7 @@ export function usePOSCheckout() {
       }
       queryClient.invalidateQueries({ queryKey: ["sales-invoices"], refetchType: "none" });
 
-      toast({ title: isCredit ? "تم البيع بالآجل" : "تمت عملية البيع بنجاح", description: `المبلغ: ${invoice.total.toFixed(2)} ${CURRENCY}` });
+      toast({ title: isCredit ? "تم البيع بالآجل" : "تمت عملية البيع بنجاح", description: `المبلغ: ${formatCurrency(invoice.total, 2)}` });
 
       if (params.settings?.receipt_auto_print !== false) {
         setTimeout(() => { if (invoice) printSaleInvoice(invoice); }, 300);

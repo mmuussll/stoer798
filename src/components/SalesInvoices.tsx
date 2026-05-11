@@ -16,6 +16,7 @@ import {
 import * as salesApi from "@/api/sales";
 import { CURRENCY } from "@/constants";
 import { printSaleInvoice } from "@/lib/printInvoice";
+import { formatNumber, formatCurrency, formatNumberDisplay, formatCurrencyDisplay } from "@/lib/format";
 import type { SaleInvoice } from "@/types";
 
 const ITEMS_PER_PAGE = 10;
@@ -120,7 +121,7 @@ export default function SalesInvoices() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-emerald-600 font-medium">إجمالي المبيعات</p>
-                <p className="text-2xl font-bold text-emerald-900 mt-1">{totalRevenue.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-emerald-900 mt-1">{formatNumberDisplay(totalRevenue, 2)}</p>
               </div>
               <DollarSign className="w-8 h-8 text-emerald-400" />
             </div>
@@ -142,7 +143,7 @@ export default function SalesInvoices() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-orange-600 font-medium">الخصومات</p>
-                <p className="text-2xl font-bold text-orange-900 mt-1">{totalDiscount.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-orange-900 mt-1">{formatNumberDisplay(totalDiscount, 2)}</p>
               </div>
               <Percent className="w-8 h-8 text-orange-400" />
             </div>
@@ -154,9 +155,7 @@ export default function SalesInvoices() {
               <div>
                 <p className="text-sm text-amber-600 font-medium">متوسط الفاتورة</p>
                 <p className="text-2xl font-bold text-amber-900 mt-1">
-                  {filteredInvoices.length > 0
-                    ? (totalRevenue / filteredInvoices.length).toFixed(2)
-                    : "0.00"}
+                  {formatNumberDisplay(totalRevenue / filteredInvoices.length, 2)}
                 </p>
               </div>
               <Hash className="w-8 h-8 text-amber-400" />
@@ -264,7 +263,7 @@ export default function SalesInvoices() {
                           </Badge>
                         </TableCell>
                         <TableCell className="font-bold text-blue-600">
-                          {invoice.total.toFixed(2)} {CURRENCY}
+                          {formatCurrency(invoice.total, 2)}
                         </TableCell>
                         <TableCell className="text-center">
                           <Button
@@ -387,12 +386,12 @@ export default function SalesInvoices() {
                         <TableRow key={item.id || index}>
                           <TableCell className="text-gray-500 text-sm">{index + 1}</TableCell>
                           <TableCell className="font-medium">{item.name}</TableCell>
-                          <TableCell>{item.price.toFixed(2)} {CURRENCY}</TableCell>
+                          <TableCell>{formatCurrency(item.price, 2)}</TableCell>
                           <TableCell>
                             <Badge variant="secondary">{item.quantity}</Badge>
                           </TableCell>
                           <TableCell className="font-semibold">
-                            {(item.price * item.quantity).toFixed(2)} {CURRENCY}
+                            {formatCurrency(item.price * item.quantity, 2)}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -407,8 +406,8 @@ export default function SalesInvoices() {
                   <span className="text-gray-600">المجموع الفرعي:</span>
                   <span className="font-medium">
                     {selectedInvoice.subtotal > 0
-                      ? `${selectedInvoice.subtotal.toFixed(2)} ${CURRENCY}`
-                      : `${selectedInvoice.total.toFixed(2)} ${CURRENCY}`}
+                      ? formatCurrency(selectedInvoice.subtotal, 2)
+                      : formatCurrency(selectedInvoice.total, 2)}
                   </span>
                 </div>
 
@@ -421,7 +420,7 @@ export default function SalesInvoices() {
                         : ""}:
                     </span>
                     <span className="font-medium">
-                      -{selectedInvoice.discount_total.toFixed(2)} {CURRENCY}
+                      -{formatCurrency(selectedInvoice.discount_total, 2)}
                     </span>
                   </div>
                 )}
@@ -430,7 +429,7 @@ export default function SalesInvoices() {
                   <div className="flex justify-between text-sm text-orange-600">
                     <span>الضريبة ({selectedInvoice.tax_rate}%):</span>
                     <span className="font-medium">
-                      {selectedInvoice.tax_total.toFixed(2)} {CURRENCY}
+                      {formatCurrency(selectedInvoice.tax_total, 2)}
                     </span>
                   </div>
                 )}
@@ -447,7 +446,7 @@ export default function SalesInvoices() {
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>المبلغ المدفوع:</span>
                     <span className="font-medium">
-                      {selectedInvoice.paid_amount.toFixed(2)} {CURRENCY}
+                      {formatCurrency(selectedInvoice.paid_amount, 2)}
                     </span>
                   </div>
                 )}
@@ -456,7 +455,7 @@ export default function SalesInvoices() {
                   <div className="flex justify-between text-sm text-green-600">
                     <span>الباقي:</span>
                     <span className="font-medium">
-                      {selectedInvoice.change_amount.toFixed(2)} {CURRENCY}
+                      {formatCurrency(selectedInvoice.change_amount, 2)}
                     </span>
                   </div>
                 )}
@@ -477,7 +476,7 @@ export default function SalesInvoices() {
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-bold">المبلغ الإجمالي:</span>
                   <span className="text-2xl font-bold text-blue-600">
-                    {selectedInvoice.total.toFixed(2)} {CURRENCY}
+                    {formatCurrency(selectedInvoice.total, 2)}
                   </span>
                 </div>
               </div>

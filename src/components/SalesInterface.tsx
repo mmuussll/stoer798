@@ -15,6 +15,7 @@ import * as productsApi from "@/api/products";
 import * as categoriesApi from "@/api/categories";
 import * as customersApi from "@/api/customers";
 import { CURRENCY } from "@/constants";
+import { formatCurrency } from "@/lib/format";
 import { printSaleInvoice } from "@/lib/printInvoice";
 import { usePOSCart } from "@/hooks/pos/usePOSCart";
 import { usePOSOrders } from "@/hooks/pos/usePOSOrders";
@@ -357,7 +358,7 @@ export default function SalesInterface() {
           )}
           <Button onClick={() => setShowCartMobile(!showCartMobile)} className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 shadow-lg shadow-indigo-500/25 rounded-xl h-12 text-sm font-semibold tracking-wide active:scale-[0.98] transition-transform">
             <ShoppingBag className="w-5 h-5 ml-2" />
-            {cart.length > 0 ? `السلة (${calculateItemsCount()} قطعة - ${totals.total.toFixed(2)} ${CURRENCY})` : "عرض السلة"}
+            {cart.length > 0 ? `السلة (${calculateItemsCount()} قطعة - ${formatCurrency(totals.total, 2)})` : "عرض السلة"}
           </Button>
         </div>
       </div>

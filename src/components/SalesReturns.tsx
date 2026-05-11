@@ -23,6 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import * as returnsApi from "@/api/returns";
 import * as salesApi from "@/api/sales";
 import { CURRENCY } from "@/constants";
+import { formatNumber, formatCurrency, formatNumberDisplay, formatCurrencyDisplay } from "@/lib/format";
 import type { SalesReturn, SaleInvoice } from "@/types";
 
 export default function SalesReturns() {
@@ -171,7 +172,7 @@ export default function SalesReturns() {
         <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white">
           <CardContent className="p-4 flex items-center gap-3">
             <ArrowRightLeft className="w-8 h-8 opacity-80" />
-            <div><div className="text-2xl font-bold">{totalReturned.toFixed(2)}</div><div className="text-xs opacity-80">قيمة المرتجعات ({CURRENCY})</div></div>
+            <div><div className="text-2xl font-bold">{formatNumberDisplay(totalReturned, 2)}</div><div className="text-xs opacity-80">قيمة المرتجعات ({CURRENCY})</div></div>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-amber-500 to-amber-600 text-white">
@@ -225,7 +226,7 @@ export default function SalesReturns() {
                     <TableCell className="text-center">
                       <Badge variant="secondary">{r.items.reduce((s, i) => s + i.quantity, 0)}</Badge>
                     </TableCell>
-                    <TableCell className="text-center font-semibold text-red-600">{r.total.toFixed(2)} {CURRENCY}</TableCell>
+                    <TableCell className="text-center font-semibold text-red-600">{formatCurrency(r.total, 2)}</TableCell>
                     <TableCell className="text-sm text-gray-600 max-w-[200px] truncate">{r.reason || "-"}</TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-1">
@@ -297,7 +298,7 @@ export default function SalesReturns() {
                   <div className="font-semibold text-sm">{foundInvoice.invoice_number}</div>
                   <div className="text-xs text-gray-500">{foundInvoice.date} - {foundInvoice.time}</div>
                 </div>
-                <div className="text-sm font-bold text-blue-600">{foundInvoice.total.toFixed(2)} {CURRENCY}</div>
+                <div className="text-sm font-bold text-blue-600">{formatCurrency(foundInvoice.total, 2)}</div>
                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={resetCreateForm}><X className="w-3 h-3" /></Button>
               </div>
 
@@ -310,7 +311,7 @@ export default function SalesReturns() {
                       <div key={item.product_id || item.id} className="flex items-center justify-between p-2 rounded-lg border hover:bg-gray-50">
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-sm truncate">{item.name}</div>
-                          <div className="text-xs text-gray-500">x{item.quantity} تم شراؤها - السعر: {item.price.toFixed(2)}</div>
+                          <div className="text-xs text-gray-500">x{item.quantity} تم شراؤها - السعر: {formatNumber(item.price, 2)}</div>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-gray-600">المرتجع:</span>
@@ -338,10 +339,12 @@ export default function SalesReturns() {
                 <div className="bg-red-50 rounded-lg p-3 text-center">
                   <span className="text-sm text-red-700">
                     إجمالي المرتجع: <strong>
-                      {foundInvoice.items
-                        .filter((i) => (selectedItems[i.product_id || i.id] || 0) > 0)
-                        .reduce((s, i) => s + i.price * (selectedItems[i.product_id || i.id] || 0), 0)
-                        .toFixed(2)} {CURRENCY}
+                      {formatCurrency(
+                        foundInvoice.items
+                          .filter((i) => (selectedItems[i.product_id || i.id] || 0) > 0)
+                          .reduce((s, i) => s + i.price * (selectedItems[i.product_id || i.id] || 0), 0),
+                        2
+                      )}
                     </strong>
                   </span>
                 </div>
@@ -387,9 +390,9 @@ export default function SalesReturns() {
                   {selectedReturn.items.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell className="text-sm font-medium">{item.name}</TableCell>
-                      <TableCell className="text-center text-sm">{item.price.toFixed(2)}</TableCell>
+                      <TableCell className="text-center text-sm">{formatNumber(item.price, 2)}</TableCell>
                       <TableCell className="text-center"><Badge variant="secondary">{item.quantity}</Badge></TableCell>
-                      <TableCell className="text-center font-semibold">{(item.price * item.quantity).toFixed(2)}</TableCell>
+                      <TableCell className="text-center font-semibold">{formatNumber(item.price * item.quantity, 2)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -397,7 +400,7 @@ export default function SalesReturns() {
               <Separator />
               <div className="flex justify-between font-bold text-lg">
                 <span>الإجمالي:</span>
-                <span className="text-red-600">{selectedReturn.total.toFixed(2)} {CURRENCY}</span>
+                <span className="text-red-600">{formatCurrency(selectedReturn.total, 2)}</span>
               </div>
             </div>
           )}

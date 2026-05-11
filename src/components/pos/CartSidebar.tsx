@@ -9,6 +9,7 @@ import {
   Printer, CheckCircle2, Landmark,
 } from "lucide-react";
 import { CURRENCY } from "@/constants";
+import { formatNumber, formatCurrency } from "@/lib/format";
 import type { CartItem, Customer } from "@/types";
 
 interface CartSidebarProps {
@@ -117,7 +118,7 @@ export function CartSidebar({
           >
             <Percent className="w-3 h-3" />
             {discountType !== "none"
-              ? `${discountType === "percentage" ? `${discountValue}%` : `${discountValue.toFixed(2)} ${CURRENCY}`}`
+              ? `خصم ${discountType === "percentage" ? `${discountValue}%` : formatCurrency(discountValue)}`
               : "خصم"}
           </button>
           {taxEnabled && taxRate > 0 && (
@@ -145,7 +146,7 @@ export function CartSidebar({
                 <div className="flex items-start justify-between gap-1 mb-1.5">
                   <div className="flex-1 min-w-0">
                     <h4 className="font-semibold text-[13px] text-slate-800 truncate leading-tight">{item.name}</h4>
-                    <p className="text-[11px] text-slate-400 mt-0.5">{item.price.toFixed(2)} {CURRENCY} / قطعة</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">{formatCurrency(item.price, 2)} / قطعة</p>
                   </div>
                   <button
                     onClick={() => onRemoveItem(item.id)}
@@ -171,7 +172,7 @@ export function CartSidebar({
                     </button>
                   </div>
                   <p className="text-sm font-bold text-indigo-600 tabular-nums">
-                    {(item.price * item.quantity).toFixed(2)}
+                    {formatNumber(item.price * item.quantity, 2)}
                   </p>
                 </div>
               </div>
@@ -187,25 +188,25 @@ export function CartSidebar({
           <div className="space-y-1 text-[13px]">
             <div className="flex justify-between text-slate-500">
               <span>المجموع الفرعي</span>
-              <span className="tabular-nums">{subtotal.toFixed(2)} {CURRENCY}</span>
+              <span className="tabular-nums">{formatCurrency(subtotal, 2)}</span>
             </div>
             {discountType !== "none" && (
               <div className="flex justify-between text-rose-500 font-medium">
                 <span>الخصم ({discountType === "percentage" ? `${discountValue}%` : "ثابت"})</span>
-                <span className="tabular-nums">-{totals.discountAmount.toFixed(2)} {CURRENCY}</span>
+                <span className="tabular-nums">-{formatCurrency(totals.discountAmount, 2)}</span>
               </div>
             )}
             {taxEnabled && taxRate > 0 && (
               <div className="flex justify-between text-amber-600">
                 <span>الضريبة ({taxRate}%)</span>
-                <span className="tabular-nums">{totals.taxAmount.toFixed(2)} {CURRENCY}</span>
+                <span className="tabular-nums">{formatCurrency(totals.taxAmount, 2)}</span>
               </div>
             )}
             <Separator className="my-1.5" />
             <div className="flex justify-between items-center">
               <span className="text-sm font-bold text-slate-800">الإجمالي</span>
               <span className="text-lg font-bold text-indigo-600 tabular-nums tracking-tight">
-                {totals.total.toFixed(2)} {CURRENCY}
+                {formatCurrency(totals.total, 2)}
               </span>
             </div>
           </div>
@@ -257,7 +258,7 @@ export function CartSidebar({
               {paidAmount > 0 && change >= 0 && (
                 <div className="mt-2 text-center">
                   <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-bold">
-                    الباقي: {change.toFixed(2)} {CURRENCY}
+                    الباقي: {formatCurrency(change, 2)}
                   </span>
                 </div>
               )}
@@ -292,7 +293,7 @@ export function CartSidebar({
               {(splitCash + splitCard) - totals.total > 0.001 && (
                 <div className="text-center">
                   <span className="text-[11px] text-amber-600 font-medium">
-                    المتبقي: {((splitCash + splitCard) - totals.total).toFixed(2)} {CURRENCY}
+                    المتبقي: {formatCurrency((splitCash + splitCard) - totals.total, 2)}
                   </span>
                 </div>
               )}

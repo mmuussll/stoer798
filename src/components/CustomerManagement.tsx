@@ -19,8 +19,9 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import * as customersApi from "@/api/customers";
-import type { Customer } from "@/types";
 import { CURRENCY } from "@/constants";
+import { formatNumber, formatCurrency, formatNumberDisplay, formatCurrencyDisplay } from "@/lib/format";
+import type { Customer } from "@/types";
 
 export default function CustomerManagement() {
   const queryClient = useQueryClient();
@@ -129,7 +130,7 @@ export default function CustomerManagement() {
         <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
           <CardContent className="p-4 flex items-center gap-3">
             <ShoppingBag className="w-8 h-8 opacity-80" />
-            <div><div className="text-2xl font-bold">{totalPurchases.toFixed(0)}</div><div className="text-xs opacity-80">إجمالي المشتريات ({CURRENCY})</div></div>
+            <div><div className="text-2xl font-bold">{formatNumberDisplay(totalPurchases, 0)}</div><div className="text-xs opacity-80">إجمالي المشتريات ({CURRENCY})</div></div>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
@@ -200,7 +201,7 @@ export default function CustomerManagement() {
                       ) : <span className="text-gray-300">-</span>}
                     </TableCell>
                     <TableCell className="text-center"><Badge variant="secondary">{c.total_visits}</Badge></TableCell>
-                    <TableCell className="text-center font-medium">{c.total_purchases.toFixed(2)} {CURRENCY}</TableCell>
+                    <TableCell className="text-center font-medium">{formatCurrency(c.total_purchases, 2)}</TableCell>
                     <TableCell className="text-center">
                       <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
                         <Star className="w-3 h-3 ml-0.5 fill-amber-400" /> {c.points}

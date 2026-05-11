@@ -21,6 +21,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import * as debtsApi from "@/api/debts";
 import * as customersApi from "@/api/customers";
 import { CURRENCY } from "@/constants";
+import { formatNumber, formatCurrency, formatNumberDisplay, formatCurrencyDisplay } from "@/lib/format";
 import {
   STATUS_MAP, PAYMENT_ICONS, PAYMENT_LABELS,
   getDueStatus, todayStr,
@@ -303,7 +304,7 @@ export function DebtorDetail({
                             )}
                             {debtLimit > 0 && (
                               <span className="flex items-center gap-1">
-                                <Shield className="w-3 h-3" />حد الدين: {debtLimit.toFixed(0)} {CURRENCY}
+                                <Shield className="w-3 h-3" />حد الدين: {formatCurrency(debtLimit, 0)}
                               </span>
                             )}
                           </div>
@@ -337,7 +338,7 @@ export function DebtorDetail({
                 <div className="grid grid-cols-4 gap-4 mt-5">
                   <div className="bg-white/10 rounded-lg p-3">
                     <p className="text-white/50 text-xs">إجمالي الديون</p>
-                    <p className="text-xl font-bold">{totalRemaining.toFixed(0)} {CURRENCY}</p>
+                    <p className="text-xl font-bold">{formatCurrency(totalRemaining, 0)}</p>
                   </div>
                   <div className="bg-white/10 rounded-lg p-3">
                     <p className="text-white/50 text-xs">عدد الديون النشطة</p>
@@ -345,11 +346,11 @@ export function DebtorDetail({
                   </div>
                   <div className="bg-white/10 rounded-lg p-3">
                     <p className="text-white/50 text-xs">إجمالي المسدد</p>
-                    <p className="text-xl font-bold text-emerald-300">{totalPaidAmount.toFixed(0)} {CURRENCY}</p>
+                    <p className="text-xl font-bold text-emerald-300">{formatCurrency(totalPaidAmount, 0)}</p>
                   </div>
                   <div className={`rounded-lg p-3 ${isOverLimit ? "bg-red-500/30" : "bg-white/10"}`}>
                     <p className="text-white/50 text-xs">حد الدين</p>
-                    <p className="text-xl font-bold">{debtLimit > 0 ? `${debtLimit.toFixed(0)} ${CURRENCY}` : "غير محدد"}</p>
+                    <p className="text-xl font-bold">{debtLimit > 0 ? formatCurrency(debtLimit, 0) : "غير محدد"}</p>
                     {isOverLimit && <p className="text-xs text-red-200 mt-0.5">تم تجاوز الحد!</p>}
                   </div>
                 </div>
@@ -524,18 +525,18 @@ export function DebtorDetail({
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                                   <div>
                                     <span className="text-gray-400 text-xs">المبلغ الكلي</span>
-                                    <p className="font-bold">{debt.total_amount.toFixed(2)} {CURRENCY}</p>
+                                    <p className="font-bold">{formatCurrency(debt.total_amount, 2)}</p>
                                   </div>
                                   <div>
                                     <span className="text-gray-400 text-xs">المتبقي</span>
                                     <p className={`font-bold ${debt.remaining_amount > 0 ? "text-red-600" : "text-emerald-600"}`}>
-                                      {debt.remaining_amount.toFixed(2)} {CURRENCY}
+                                      {formatCurrency(debt.remaining_amount, 2)}
                                     </p>
                                   </div>
                                   <div>
                                     <span className="text-gray-400 text-xs">المدفوع</span>
                                     <p className="font-bold text-emerald-600">
-                                      {(debt.total_amount - debt.remaining_amount).toFixed(2)} {CURRENCY}
+                                      {formatCurrency(debt.total_amount - debt.remaining_amount, 2)}
                                     </p>
                                   </div>
                                   <div>
@@ -552,7 +553,7 @@ export function DebtorDetail({
                                   <div className="mt-3">
                                     <div className="flex justify-between text-xs text-gray-400 mb-1">
                                       <span>نسبة السداد</span>
-                                      <span>{paidPercent.toFixed(0)}%</span>
+                                      <span>{formatNumberDisplay(paidPercent, 0)}%</span>
                                     </div>
                                     <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
                                       <div
@@ -614,7 +615,7 @@ export function DebtorDetail({
                                 </TableCell>
                                 <TableCell>{/* debt info could be linked here */}-</TableCell>
                                 <TableCell className="font-bold text-emerald-600">
-                                  +{p.amount.toFixed(2)} {CURRENCY}
+                                  +{formatCurrency(p.amount, 2)}
                                 </TableCell>
                                 <TableCell>
                                   <Badge variant="outline" className="text-xs flex items-center gap-1 w-fit">
@@ -655,11 +656,11 @@ export function DebtorDetail({
               <div className="grid grid-cols-2 gap-3 bg-gray-50 rounded-lg p-3">
                 <div>
                   <p className="text-xs text-gray-500">المبلغ الكلي</p>
-                  <p className="font-bold text-lg">{selectedDebt.total_amount.toFixed(2)} {CURRENCY}</p>
+                  <p className="font-bold text-lg">{formatCurrency(selectedDebt.total_amount, 2)}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">المتبقي</p>
-                  <p className="font-bold text-lg text-red-600">{selectedDebt.remaining_amount.toFixed(2)} {CURRENCY}</p>
+                  <p className="font-bold text-lg text-red-600">{formatCurrency(selectedDebt.remaining_amount, 2)}</p>
                 </div>
               </div>
               <div>

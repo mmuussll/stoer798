@@ -21,8 +21,8 @@ import * as salesApi from "@/api/sales";
 import * as purchasesApi from "@/api/purchases";
 import * as productsApi from "@/api/products";
 import * as debtsApi from "@/api/debts";
-import { CURRENCY } from "@/constants";
 import { STATUS_MAP } from "@/lib/debt-utils";
+import { formatNumber, formatCurrency, formatNumberDisplay, formatCurrencyDisplay } from "@/lib/format";
 
 const COLORS = ["#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#06B6D4", "#EC4899", "#14B8A6", "#F97316", "#6366F1"];
 
@@ -477,7 +477,7 @@ export default function ReportsSection() {
                     <YAxis />
                     <Tooltip
                       formatter={(value: number, name: string) => {
-                        if (name === "total") return [`${CURRENCY} ${value}`, "المبيعات"];
+                        if (name === "total") return [formatCurrency(value), "المبيعات"];
                         if (name === "invoices") return [value, "الفواتير"];
                         return [value, "القطع"];
                       }}
@@ -490,7 +490,7 @@ export default function ReportsSection() {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="date" tick={(p: XAxisTickProps) => <ArabicXAxisTick {...p} />} height={50} />
                     <YAxis />
-                    <Tooltip formatter={(value: number) => [`${CURRENCY} ${value}`, "المبيعات"]} />
+                    <Tooltip formatter={(value: number) => [formatCurrency(value), "المبيعات"]} />
                     <Legend formatter={() => "المبيعات"} />
                     <Line type="monotone" dataKey="total" stroke="#3B82F6" strokeWidth={2} dot={{ r: 4 }} name="total" />
                   </LineChart>
@@ -524,7 +524,7 @@ export default function ReportsSection() {
                       <TableCell>{item.invoices}</TableCell>
                       <TableCell>{item.items}</TableCell>
                       <TableCell className="font-semibold text-blue-600">
-                        {CURRENCY} {item.total.toFixed(2)}
+                        {formatCurrency(item.total, 2)}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -568,9 +568,9 @@ export default function ReportsSection() {
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard title="الكمية المباعة" value={String(selectedProductStats.quantity)} icon={ShoppingCart} color="text-blue-600" bg="bg-blue-50" />
-            <StatCard title="الإيرادات" value={`${CURRENCY} ${selectedProductStats.revenue.toFixed(2)}`} icon={DollarSign} color="text-emerald-600" bg="bg-emerald-50" />
+            <StatCard title="الإيرادات" value={formatCurrency(selectedProductStats.revenue, 2)} icon={DollarSign} color="text-emerald-600" bg="bg-emerald-50" />
             <StatCard title="المخزون الحالي" value={String(selectedProductStats.stock)} icon={Package} color="text-violet-600" bg="bg-violet-50" />
-            <StatCard title="متوسط السعر" value={`${CURRENCY} ${(selectedProductStats.quantity > 0 ? selectedProductStats.revenue / selectedProductStats.quantity : 0).toFixed(2)}`} icon={TrendingUp} color="text-orange-600" bg="bg-orange-50" />
+            <StatCard title="متوسط السعر" value={formatCurrency(selectedProductStats.quantity > 0 ? selectedProductStats.revenue / selectedProductStats.quantity : 0, 2)} icon={TrendingUp} color="text-orange-600" bg="bg-orange-50" />
           </div>
 
           {selectedProductChartData.length > 0 && (
@@ -587,7 +587,7 @@ export default function ReportsSection() {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="date" tick={(p: XAxisTickProps) => <ArabicXAxisTick {...p} />} height={50} />
                     <YAxis />
-                    <Tooltip formatter={(value: number, name: string) => [name === "revenue" ? `${CURRENCY} ${value}` : value, name === "revenue" ? "الإيرادات" : "الكمية"]} />
+                    <Tooltip formatter={(value: number, name: string) => [name === "revenue" ? formatCurrency(value) : value, name === "revenue" ? "الإيرادات" : "الكمية"]} />
                     <Legend formatter={(v) => (v === "revenue" ? "الإيرادات" : "الكمية")} />
                     <Line type="monotone" dataKey="revenue" stroke="#3B82F6" strokeWidth={2} dot={{ r: 4 }} name="revenue" />
                     <Line type="monotone" dataKey="quantity" stroke="#10B981" strokeWidth={2} dot={{ r: 4 }} name="quantity" />
@@ -628,7 +628,7 @@ export default function ReportsSection() {
                             <Badge variant="secondary">{item.quantity}</Badge>
                           </TableCell>
                           <TableCell className="font-semibold text-blue-600">
-                            {CURRENCY} {(item.price * item.quantity).toFixed(2)}
+                            {formatCurrency(item.price * item.quantity, 2)}
                           </TableCell>
                         </TableRow>
                       );
@@ -669,7 +669,7 @@ export default function ReportsSection() {
                       <TableRow key={i}>
                         <TableCell className="font-medium">{item.name}</TableCell>
                         <TableCell><Badge variant="secondary">{item.quantity}</Badge></TableCell>
-                        <TableCell className="font-semibold text-emerald-600">{CURRENCY} {item.revenue.toFixed(2)}</TableCell>
+                        <TableCell className="font-semibold text-emerald-600">{formatCurrency(item.revenue, 2)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -706,7 +706,7 @@ export default function ReportsSection() {
                       <TableRow key={i}>
                         <TableCell className="font-medium">{item.name}</TableCell>
                         <TableCell><Badge variant="secondary">{item.quantity}</Badge></TableCell>
-                        <TableCell className="font-semibold text-red-500">{CURRENCY} {item.revenue.toFixed(2)}</TableCell>
+                        <TableCell className="font-semibold text-red-500">{formatCurrency(item.revenue, 2)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -744,7 +744,7 @@ export default function ReportsSection() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" tick={(p: XAxisTickProps) => <ArabicXAxisTick {...p} />} height={50} />
                   <YAxis />
-                  <Tooltip formatter={(value: number) => [`${CURRENCY} ${value}`, ""]} />
+                  <Tooltip formatter={(value: number) => [formatCurrency(value), ""]} />
                   <Legend formatter={(v) => (v === "sales" ? "المبيعات" : v === "purchases" ? "المشتريات" : "الربح")} />
                   <Bar dataKey="sales" fill="#3B82F6" radius={[4, 4, 0, 0]} name="sales" />
                   <Bar dataKey="purchases" fill="#F59E0B" radius={[4, 4, 0, 0]} name="purchases" />
@@ -775,10 +775,10 @@ export default function ReportsSection() {
                   {profitPeriodData.map((item, i) => (
                     <TableRow key={i}>
                       <TableCell className="font-medium">{item.date}</TableCell>
-                      <TableCell className="text-blue-600">{CURRENCY} {item.sales.toFixed(2)}</TableCell>
-                      <TableCell className="text-amber-600">{CURRENCY} {item.purchases.toFixed(2)}</TableCell>
+                      <TableCell className="text-blue-600">{formatCurrency(item.sales, 2)}</TableCell>
+                      <TableCell className="text-amber-600">{formatCurrency(item.purchases, 2)}</TableCell>
                       <TableCell className={`font-semibold ${item.profit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
-                        {CURRENCY} {item.profit.toFixed(2)}
+                        {formatCurrency(item.profit, 2)}
                       </TableCell>
                       <TableCell>
                         <Badge variant={item.sales > 0 ? (item.profit / item.sales) * 100 >= 0 ? "default" : "destructive" : "secondary"}>
@@ -898,7 +898,7 @@ export default function ReportsSection() {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => `${name} ${formatNumber(percent * 100, 0)}%`}
                   outerRadius={110}
                   fill="#8884d8"
                   dataKey="revenue"
@@ -907,7 +907,7 @@ export default function ReportsSection() {
                     <Cell key={`cell-${i}`} fill={COLORS[i % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value: number) => [`${CURRENCY} ${value}`, "المبيعات"]} />
+                <Tooltip formatter={(value: number) => [formatCurrency(value), "المبيعات"]} />
               </PieChart>
             </ResponsiveContainer>
           ) : (
@@ -949,8 +949,8 @@ export default function ReportsSection() {
                       </div>
                     </TableCell>
                     <TableCell><Badge variant="secondary">{cat.items}</Badge></TableCell>
-                    <TableCell className="font-semibold text-indigo-600">{CURRENCY} {cat.revenue.toFixed(2)}</TableCell>
-                    <TableCell>{cat.percent.toFixed(1)}%</TableCell>
+                    <TableCell className="font-semibold text-indigo-600">{formatCurrency(cat.revenue, 2)}</TableCell>
+                    <TableCell>{formatNumber(cat.percent, 1)}%</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -967,11 +967,11 @@ export default function ReportsSection() {
     return (
       <div className="space-y-6">
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-          <StatCard title="الديون المستحقة" value={`${CURRENCY} ${ds.totalOutstanding.toFixed(2)}`} icon={Landmark} color="text-red-600" bg="bg-red-50 border border-red-200" />
-          <StatCard title="الديون المسددة" value={`${CURRENCY} ${ds.totalPaid.toFixed(2)}`} icon={CheckCircle2} color="text-emerald-600" bg="bg-emerald-50" />
-          <StatCard title="إجمالي الديون" value={`${CURRENCY} ${ds.totalDebtValue.toFixed(2)}`} icon={Wallet} color="text-blue-600" bg="bg-blue-50" />
+          <StatCard title="الديون المستحقة" value={formatCurrency(ds.totalOutstanding, 2)} icon={Landmark} color="text-red-600" bg="bg-red-50 border border-red-200" />
+          <StatCard title="الديون المسددة" value={formatCurrency(ds.totalPaid, 2)} icon={CheckCircle2} color="text-emerald-600" bg="bg-emerald-50" />
+          <StatCard title="إجمالي الديون" value={formatCurrency(ds.totalDebtValue, 2)} icon={Wallet} color="text-blue-600" bg="bg-blue-50" />
           <StatCard title="عدد الديون النشطة" value={String(ds.activeCount)} icon={AlertTriangle} color="text-amber-600" bg="bg-amber-50" />
-          <StatCard title="عدد الديون المتأخرة" value={`${ds.overdueCount} (${CURRENCY} ${ds.overdueAmount.toFixed(0)})`} icon={AlertTriangle} color={ds.overdueCount > 0 ? "text-red-600" : "text-green-600"} bg={ds.overdueCount > 0 ? "bg-red-50" : "bg-green-50"} />
+          <StatCard title="عدد الديون المتأخرة" value={`${ds.overdueCount} (${formatCurrencyDisplay(ds.overdueAmount, 0)})`} icon={AlertTriangle} color={ds.overdueCount > 0 ? "text-red-600" : "text-green-600"} bg={ds.overdueCount > 0 ? "bg-red-50" : "bg-green-50"} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -1004,9 +1004,9 @@ export default function ReportsSection() {
                       <TableRow key={i}>
                         <TableCell className="font-medium">{c.name}</TableCell>
                         <TableCell><Badge variant="secondary">{c.count}</Badge></TableCell>
-                        <TableCell className="font-semibold">{c.total.toFixed(2)} {CURRENCY}</TableCell>
-                        <TableCell className="text-emerald-600">{c.paid.toFixed(2)} {CURRENCY}</TableCell>
-                        <TableCell className="font-bold text-red-600">{(c.total - c.paid).toFixed(2)} {CURRENCY}</TableCell>
+                        <TableCell className="font-semibold">{formatCurrency(c.total, 2)}</TableCell>
+                        <TableCell className="text-emerald-600">{formatCurrency(c.paid, 2)}</TableCell>
+                        <TableCell className="font-bold text-red-600">{formatCurrency(c.total - c.paid, 2)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -1034,14 +1034,14 @@ export default function ReportsSection() {
                         { name: "مسدد", value: ds.totalPaid, color: "#10B981" },
                       ]}
                       cx="50%" cy="50%" labelLine={false}
-                      label={({ name, value }) => `${name}: ${CURRENCY} ${value.toFixed(0)}`}
+                      label={({ name, value }) => `${name}: ${formatCurrencyDisplay(value, 0)}`}
                       outerRadius={110}
                       dataKey="value"
                     >
                       <Cell fill="#EF4444" />
                       <Cell fill="#10B981" />
                     </Pie>
-                  <Tooltip formatter={(value: number) => [`${CURRENCY} ${value}`, ""]} />
+                  <Tooltip formatter={(value: number) => [formatCurrency(value), ""]} />
                   </PieChart>
                 </ResponsiveContainer>
               )}
@@ -1080,9 +1080,9 @@ export default function ReportsSection() {
                     return (
                       <TableRow key={d.id}>
                         <TableCell className="font-medium">{d.customer_name || "-"}</TableCell>
-                        <TableCell>{d.total_amount.toFixed(2)} {CURRENCY}</TableCell>
-                        <TableCell className="text-emerald-600">{(d.total_amount - d.remaining_amount).toFixed(2)} {CURRENCY}</TableCell>
-                        <TableCell className="font-bold text-red-600">{d.remaining_amount.toFixed(2)} {CURRENCY}</TableCell>
+                        <TableCell>{formatCurrency(d.total_amount, 2)}</TableCell>
+                        <TableCell className="text-emerald-600">{formatCurrency(d.total_amount - d.remaining_amount, 2)}</TableCell>
+                        <TableCell className="font-bold text-red-600">{formatCurrency(d.remaining_amount, 2)}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className={statusInfo.color}>{statusInfo.label}</Badge>
                         </TableCell>
@@ -1115,17 +1115,17 @@ export default function ReportsSection() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="إجمالي المبيعات" value={`${CURRENCY} ${stats.totalRevenue.toFixed(2)}`} icon={DollarSign} color="text-blue-600" bg="bg-blue-50" />
+        <StatCard title="إجمالي المبيعات" value={formatCurrency(stats.totalRevenue, 2)} icon={DollarSign} color="text-blue-600" bg="bg-blue-50" />
         <StatCard title="عدد الفواتير" value={String(stats.totalInvoices)} icon={Receipt} color="text-violet-600" bg="bg-violet-50" />
         <StatCard title="القطع المباعة" value={String(stats.totalItemsSold)} icon={Package} color="text-emerald-600" bg="bg-emerald-50" />
-        <StatCard title="صافي الربح" value={`${CURRENCY} ${stats.profit.toFixed(2)}`} icon={TrendingUp} color={stats.profit >= 0 ? "text-green-600" : "text-red-600"} bg={stats.profit >= 0 ? "bg-green-50" : "bg-red-50"} />
+        <StatCard title="صافي الربح" value={formatCurrency(stats.profit, 2)} icon={TrendingUp} color={stats.profit >= 0 ? "text-green-600" : "text-red-600"} bg={stats.profit >= 0 ? "bg-green-50" : "bg-red-50"} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        <StatCard title="متوسط الفاتورة" value={`${CURRENCY} ${stats.avgInvoice.toFixed(2)}`} icon={Target} color="text-orange-600" bg="bg-orange-50" />
-        <StatCard title="إجمالي المشتريات" value={`${CURRENCY} ${stats.totalPurchaseCost.toFixed(2)}`} icon={ShoppingCart} color="text-amber-600" bg="bg-amber-50" />
-        <StatCard title="نسبة الربح" value={`${stats.profitMargin.toFixed(1)}%`} icon={Zap} color={stats.profitMargin >= 0 ? "text-teal-600" : "text-red-600"} bg={stats.profitMargin >= 0 ? "bg-teal-50" : "bg-red-50"} />
-        <StatCard title="قيمة المخزون" value={`${CURRENCY} ${totalStockValue.toFixed(2)}`} icon={Layers} color="text-indigo-600" bg="bg-indigo-50" />
+        <StatCard title="متوسط الفاتورة" value={formatCurrency(stats.avgInvoice, 2)} icon={Target} color="text-orange-600" bg="bg-orange-50" />
+        <StatCard title="إجمالي المشتريات" value={formatCurrency(stats.totalPurchaseCost, 2)} icon={ShoppingCart} color="text-amber-600" bg="bg-amber-50" />
+        <StatCard title="نسبة الربح" value={`${formatNumber(stats.profitMargin, 1)}%`} icon={Zap} color={stats.profitMargin >= 0 ? "text-teal-600" : "text-red-600"} bg={stats.profitMargin >= 0 ? "bg-teal-50" : "bg-red-50"} />
+        <StatCard title="قيمة المخزون" value={formatCurrency(totalStockValue, 2)} icon={Layers} color="text-indigo-600" bg="bg-indigo-50" />
       </div>
 
       {/* Date Filter */}

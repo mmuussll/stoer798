@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Pause } from "lucide-react";
-import { CURRENCY } from "@/constants";
+import { formatCurrency } from "@/lib/format";
 import type { CartItem } from "@/types";
 
 interface HoldOrderDialogProps {
@@ -36,7 +36,7 @@ export function HoldOrderDialog({
           <div className="bg-gray-50 rounded-lg p-2 text-sm">
             <div className="flex justify-between"><span>عدد الأصناف:</span><span>{cart.length}</span></div>
             <div className="flex justify-between"><span>عدد القطع:</span><span>{itemCount}</span></div>
-            <div className="flex justify-between font-bold"><span>الإجمالي:</span><span>{total.toFixed(2)} {CURRENCY}</span></div>
+            <div className="flex justify-between font-bold"><span>الإجمالي:</span><span>{formatCurrency(total, 2)}</span></div>
           </div>
         </div>
         <DialogFooter>

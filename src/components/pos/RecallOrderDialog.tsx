@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Play, X } from "lucide-react";
-import { CURRENCY } from "@/constants";
+import { formatCurrency } from "@/lib/format";
 import type { HeldOrder } from "@/types";
 
 interface RecallOrderDialogProps {
@@ -45,7 +45,7 @@ export function RecallOrderDialog({
                     <div className="flex gap-3 text-xs text-gray-600">
                       <span>{order.cart.length} صنف</span>
                       <span>{orderCount} قطعة</span>
-                      <span className="font-bold text-blue-600">{orderTotal.toFixed(2)} {CURRENCY}</span>
+                      <span className="font-bold text-blue-600">{formatCurrency(orderTotal, 2)}</span>
                     </div>
                   </div>
                 );

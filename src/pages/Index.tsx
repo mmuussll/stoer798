@@ -226,7 +226,7 @@ export default function Index() {
 
         {/* Page Content */}
         <main className={cn(
-          "flex-1 overflow-hidden",
+          "flex-1 overflow-y-auto",
           isSalesPage ? "p-0" : "p-4 md:p-6",
           "pb-20 lg:pb-4"
         )}>

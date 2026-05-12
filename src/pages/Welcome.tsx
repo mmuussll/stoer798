@@ -6,40 +6,48 @@ import {
   ShoppingCart,
   Package,
   Users,
-  Receipt,
-  RotateCcw,
   Wallet,
   Landmark,
   BarChart3,
   Settings,
   ArrowLeft,
-  Store,
   Shield,
   Zap,
+  Cloud,
+  Smartphone,
+  CreditCard,
+  Headphones,
+  RotateCcw,
+  Printer,
+  Check,
+  Clock,
+  Store,
+  TrendingUp,
 } from "lucide-react";
 import WhatsAppSupport from "@/components/WhatsAppSupport";
 
 const FEATURES = [
-  { icon: ShoppingCart, title: "نقطة البيع", desc: "واجهة بيع سريعة وسهلة مع دعم الباركود والبحث الفوري" },
-  { icon: Package, title: "إدارة المنتجات", desc: "إدارة كاملة للمنتجات مع تتبع المخزون والتنبيهات" },
-  { icon: Users, title: "إدارة الزبائن", desc: "سجل كامل للزبائن مع تتبع المبيعات والديون" },
-  { icon: Receipt, title: "فواتير المبيعات", desc: "طباعة فواتير احترافية وإرسالها عبر واتساب" },
-  { icon: RotateCcw, title: "المرتجعات", desc: "إدارة مرتجعات المبيعات بسهولة وشفافية" },
-  { icon: Wallet, title: "الديون", desc: "متابعة ديون الزبائن وتحصيل المدفوعات" },
-  { icon: Landmark, title: "جلسات الصندوق", desc: "إدارة الجلسات النقدية ومراقبة التدفق المالي" },
-  { icon: BarChart3, title: "التقارير", desc: "تقارير شاملة للمبيعات والأرباح مع إمكانية التصدير" },
-  { icon: Settings, title: "الإعدادات", desc: "تخصيص كامل للنظام وإعدادات التكامل مع واتساب" },
+  { icon: ShoppingCart, title: "نقطة البيع السريعة", desc: "واجهة كاشير احترافية تدعم مسح الباركود، البحث الفوري، الخصومات، المبيعات الآجلة، وتعليق الفواتير." },
+  { icon: Package, title: "المخزون والمنتجات", desc: "إدارة كاملة مع صور، باركود، أسعار جملة وتجزئة، تنبيهات نفاد المخزون، وتصدير CSV." },
+  { icon: Wallet, title: "سجل الديون", desc: "متابعة ديون الزبائن مع دفعات، تواريخ استحقاق، الضامن، وتنبيهات الديون المتأخرة." },
+  { icon: Users, title: "الزبائن", desc: "سجل متكامل مع تتبع المشتريات، النقاط، الزيارات، حد الدين، ومكافآت ولاء تلقائية." },
+  { icon: Landmark, title: "جلسات الصندوق", desc: "فتح وإغلاق جلسات نقدية مع تتبع التدفق المالي والفروقات." },
+  { icon: RotateCcw, title: "مرتجعات المبيعات", desc: "إدارة مرتجعات مع استعادة تلقائية للمخزون وربط بالفاتورة الأصلية." },
+  { icon: BarChart3, title: "التقارير والتحليلات", desc: "تقارير مبيعات شاملة مع تصفية بالفترة وإمكانية التصدير." },
+  { icon: Printer, title: "طباعة الفواتير", desc: "دعم طباعة حرارية ESC/POS عبر USB وشبكة TCP مع تخصيص الفاتورة." },
+  { icon: Settings, title: "إعدادات متقدمة", desc: "أكثر من 60 إعداد لتخصيص المتجر، الضرائب، الولاء، الطابعة، والأمان." },
 ];
 
 const ADVANTAGES = [
-  { icon: Zap, title: "سريع وفعال", desc: "أداء فائق السرعة مع واجهة مستخدم سلسة" },
-  { icon: Shield, title: "آمن وموثوق", desc: "حماية كاملة للبيانات مع نسخ احتياطي سحابي" },
-  { icon: Store, title: "متكامل", desc: "نظام شامل يغطي جميع جوانب إدارة متجرك" },
+  { icon: Cloud, title: "سحابي بالكامل", desc: "بياناتك مخزنة بأمان على سيرفرات Supabase - تصل لها من أي جهاز وفي أي وقت." },
+  { icon: Smartphone, title: "يعمل على كل الأجهزة", desc: "تطبيق PWA يُثبّت على الهاتف والحاسوب والتابلت بدون تحميل برامج." },
+  { icon: Shield, title: "آمن ومشفر", desc: "تشفير TLS/SSL مع حماية Supabase الحاصلة على شهادات SOC 2 وISO 27001." },
 ];
 
 export default function Welcome() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50" dir="rtl">
+      {/* Header */}
       <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -62,30 +70,57 @@ export default function Welcome() {
       </header>
 
       <main>
-        <section className="py-16 px-4 text-center">
+        {/* Hero */}
+        <section className="py-20 px-4 text-center">
           <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-xl mx-auto mb-6">
             <Calculator className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-4xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-3">
+          <h1 className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
             الكوثر للحسابات
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
-            نظام إدارة متكامل لنقاط البيع مصمم خصيصاً لتلبية احتياجات المتاجر والمحلات التجارية. يوفر النظام حلاً شاملاً لإدارة المبيعات والمخزون والزبائن بكل سهولة واحترافية.
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed mb-3">
+            نظام نقاط بيع سحابي متكامل مصمم خصيصاً لأصحاب المتاجر والمحلات التجارية.
+            أدر مبيعاتك، مخزونك، زبائنك، وديونك من أي جهاز وفي أي مكان.
           </p>
-          <div className="mt-8">
+          <p className="text-sm text-gray-400 max-w-xl mx-auto mb-10">
+            يعمل على الهاتف، الحاسوب، والتابلت - كل ما تحتاجه متصفح وإنترنت. بدون تنصيب أي برامج.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link to="/auth">
-              <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 text-lg">
+              <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-10 py-6 text-lg">
                 ابدأ الآن مجاناً
               </Button>
             </Link>
+            <div className="flex items-center gap-1.5 text-sm text-emerald-600 font-medium">
+              <Clock className="w-4 h-4" />
+              14 يوم تجريبي - كل الميزات مفتوحة
+            </div>
+          </div>
+
+          <div className="mt-14 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto">
+            {[
+              { value: "25,000 د.ع", label: "الاشتراك الشهري", icon: CreditCard },
+              { value: "14 يوم", label: "مجاناً بدون التزام", icon: Zap },
+              { value: "60+", label: "إعداد للتخصيص", icon: Settings },
+            ].map((stat) => (
+              <div key={stat.label} className="bg-white/80 rounded-xl py-4 px-5 border border-slate-100 shadow-sm">
+                <stat.icon className="w-5 h-5 text-blue-600 mx-auto mb-2" />
+                <p className="font-bold text-slate-800">{stat.value}</p>
+                <p className="text-xs text-gray-500">{stat.label}</p>
+              </div>
+            ))}
           </div>
         </section>
 
-        <section className="py-12 px-4 bg-white/50">
+        {/* Features */}
+        <section className="py-14 px-4 bg-white/50">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-2xl font-bold text-center mb-10 text-gray-800">
-              مميزات النظام
+            <h2 className="text-2xl font-bold text-center mb-3 text-gray-800">
+              كل ما تحتاجه لإدارة متجرك
             </h2>
+            <p className="text-center text-gray-500 mb-10 max-w-xl mx-auto">
+              نظام شامل يغطي جميع جوانب إدارة المبيعات - من الكاشير إلى التقارير
+            </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {FEATURES.map(({ icon: Icon, title, desc }) => (
                 <Card key={title} className="hover:shadow-md transition-shadow">
@@ -106,11 +141,15 @@ export default function Welcome() {
           </div>
         </section>
 
-        <section className="py-12 px-4">
+        {/* Why Us */}
+        <section className="py-14 px-4">
           <div className="max-w-4xl mx-auto">
-            <h2 className="text-2xl font-bold text-center mb-10 text-gray-800">
-              لماذا الكوثر للحسابات؟
+            <h2 className="text-2xl font-bold text-center mb-3 text-gray-800">
+              صُمم ليكون رفيق متجرك اليومي
             </h2>
+            <p className="text-center text-gray-500 mb-10 max-w-xl mx-auto">
+              لسنا مجرد نظام - نحن شريك تقني يضمن إدارة سلسة وآمنة لمتجرك
+            </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {ADVANTAGES.map(({ icon: Icon, title, desc }) => (
                 <div key={title} className="text-center p-6 rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow">
@@ -125,11 +164,92 @@ export default function Welcome() {
           </div>
         </section>
 
-        <section className="py-12 px-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-center">
+        {/* Pricing */}
+        <section className="py-14 px-4 bg-white/50">
+          <div className="max-w-md mx-auto text-center">
+            <h2 className="text-2xl font-bold text-gray-800 mb-3">
+              ابدأ مجاناً - وادفع فقط عند الاستمرار
+            </h2>
+            <p className="text-gray-500 mb-8">
+              لا رسوم خفية ولا عقود - ادفع شهرياً وألغِ في أي وقت
+            </p>
+
+            <Card className="overflow-hidden shadow-lg">
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 text-sm font-bold">
+                الباقة الوحيدة - كل الميزات مفتوحة
+              </div>
+              <CardContent className="p-8">
+                <div className="flex items-baseline justify-center gap-1 mb-1">
+                  <span className="text-5xl font-extrabold text-slate-800">25,000</span>
+                  <span className="text-lg text-gray-500">د.ع</span>
+                </div>
+                <p className="text-gray-500 mb-6 text-sm">شهرياً</p>
+
+                <div className="space-y-3 mb-8 text-right">
+                  {[
+                    "كل الميزات بدون استثناء",
+                    "عدد غير محدود من المنتجات والزبائن",
+                    "دعم فني عبر واتساب",
+                    "تخزين سحابي آمن",
+                    "تحديثات مستمرة مجانية",
+                  ].map((item) => (
+                    <div key={item} className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span className="text-sm text-slate-700">{item}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-6">
+                  <p className="text-sm font-bold text-amber-800">
+                    14 يوم تجريبي مجاني - بدون إدخال بيانات دفع
+                  </p>
+                </div>
+
+                <Link to="/auth">
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-5 text-base font-bold">
+                    ابدأ الفترة التجريبية المجانية
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+
+        {/* For Who */}
+        <section className="py-14 px-4">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-2xl font-bold text-center mb-3 text-gray-800">
+              مناسب لجميع أنواع المتاجر
+            </h2>
+            <p className="text-center text-gray-500 mb-10">
+              أي نشاط تجاري يحتاج نظام مبيعات - الكوثر للحسابات هو الحل
+            </p>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {[
+                { icon: Store, title: "السوبر ماركت", desc: "والمواد الغذائية" },
+                { icon: ShoppingCart, title: "محلات الملابس", desc: "والأزياء والإكسسوارات" },
+                { icon: Package, title: "مخازن الجملة", desc: "وتجارة المواد" },
+                { icon: TrendingUp, title: "جميع المتاجر", desc: "أي نشاط تجاري" },
+              ].map(({ icon: Icon, title, desc }) => (
+                <div key={title} className="text-center p-4 rounded-xl bg-white shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                    <Icon className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <h3 className="font-bold text-gray-800 text-sm">{title}</h3>
+                  <p className="text-xs text-gray-500">{desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* CTA */}
+        <section className="py-16 px-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-center">
           <div className="max-w-2xl mx-auto">
             <h2 className="text-2xl font-bold mb-4">هل تحتاج مساعدة؟</h2>
             <p className="mb-6 text-white/80">
-              فريق الدعم جاهز للإجابة على استفساراتك عبر واتساب على مدار الساعة
+              فريق الدعم جاهز للإجابة على استفساراتك عبر واتساب
             </p>
             <a
               href={`https://wa.me/9647850572326?text=${encodeURIComponent("السلام عليكم، لدي استفسار عن نظام الكوثر للحسابات")}`}
@@ -144,6 +264,7 @@ export default function Welcome() {
         </section>
       </main>
 
+      {/* Footer */}
       <footer className="border-t py-6 px-4 text-center text-sm text-gray-500 bg-white/80">
         <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mb-2">
           <Link to="/terms" className="text-blue-600 hover:underline">

@@ -145,6 +145,27 @@ export default function Welcome() {
       </main>
 
       <footer className="border-t py-6 px-4 text-center text-sm text-gray-500 bg-white/80">
+        <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mb-2">
+          <Link to="/terms" className="text-blue-600 hover:underline">
+            شروط الاستخدام
+          </Link>
+          <span>|</span>
+          <Link to="/privacy" className="text-blue-600 hover:underline">
+            سياسة الخصوصية
+          </Link>
+          <span>|</span>
+          <Link to="/disclaimer" className="text-blue-600 hover:underline">
+            إخلاء المسؤولية
+          </Link>
+          <span>|</span>
+          <Link to="/cookies" className="text-blue-600 hover:underline">
+            ملفات تعريف الارتباط
+          </Link>
+          <span>|</span>
+          <Link to="/acceptable-use" className="text-blue-600 hover:underline">
+            الاستخدام المقبول
+          </Link>
+        </div>
         جميع الحقوق محفوظة &copy; {new Date().getFullYear()} الكوثر للحسابات
       </footer>
 

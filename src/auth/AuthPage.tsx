@@ -9,6 +9,15 @@ import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import WhatsAppSupport from "@/components/WhatsAppSupport";
 
+// Legal document links used in the mandatory acceptance checkbox
+const LEGAL_DOCS = [
+  { path: "/terms", label: "شروط الاستخدام" },
+  { path: "/privacy", label: "سياسة الخصوصية" },
+  { path: "/disclaimer", label: "إخلاء المسؤولية" },
+  { path: "/cookies", label: "سياسة ملفات تعريف الارتباط" },
+  { path: "/acceptable-use", label: "سياسة الاستخدام المقبول" },
+] as const;
+
 export default function AuthPage() {
   const { signIn, signUp } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
@@ -18,11 +27,18 @@ export default function AuthPage() {
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
+
+    if (!acceptedTerms) {
+      setError("يجب عليك الموافقة على الشروط والأحكام وسياسة الخصوصية وكافة السياسات القانونية قبل المتابعة.");
+      setLoading(false);
+      return;
+    }
 
     try {
       if (isLogin) {
@@ -140,6 +156,29 @@ export default function AuthPage() {
                 />
               </div>
 
+              {/* Legal Acceptance */}
+              <div className="pt-3 border-t">
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={acceptedTerms}
+                    onChange={(e) => setAcceptedTerms(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600"
+                  />
+                  <span className="text-xs text-slate-500 leading-relaxed">
+                    أوافق على{" "}
+                    {LEGAL_DOCS.map((doc, i) => (
+                      <span key={doc.path}>
+                        <Link to={doc.path} target="_blank" className="text-blue-600 underline hover:text-blue-800">
+                          {doc.label}
+                        </Link>
+                        {i < LEGAL_DOCS.length - 2 ? "، " : i === LEGAL_DOCS.length - 2 ? "، و" : ""}
+                      </span>
+                    ))}
+                  </span>
+                </label>
+              </div>
+
               {error && (
                 <div className="text-sm text-red-600 bg-red-50 p-2 rounded-md">
                   {error}
@@ -160,11 +199,22 @@ export default function AuthPage() {
             <div className="mt-4 text-center">
               <button
                 type="button"
-                onClick={() => { setIsLogin(!isLogin); setError(""); }}
+                onClick={() => { setIsLogin(!isLogin); setError(""); setAcceptedTerms(false); }}
                 className="text-sm text-blue-600 hover:underline"
               >
                 {isLogin ? "ليس لديك حساب؟ سجل الآن" : "لديك حساب؟ سجل الدخول"}
               </button>
+            </div>
+
+            {/* Legal Links Footer */}
+            <div className="mt-4 pt-3 border-t border-slate-100 text-center">
+              <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-[11px] text-slate-400">
+                {LEGAL_DOCS.map((doc) => (
+                  <Link key={doc.path} to={doc.path} target="_blank" className="hover:text-blue-600 transition-colors">
+                    {doc.label}
+                  </Link>
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>

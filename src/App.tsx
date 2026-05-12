@@ -11,6 +11,11 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Welcome from "./pages/Welcome";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import Disclaimer from "./pages/Disclaimer";
+import CookiePolicy from "./pages/CookiePolicy";
+import AcceptableUsePolicy from "./pages/AcceptableUsePolicy";
 import AuthPage from "./auth/AuthPage";
 
 const AdminPanel = lazy(() => import("@/components/AdminPanel"));
@@ -88,6 +93,11 @@ const App = () => (
             <AuthProvider>
               <Routes>
                 <Route path="/welcome" element={<Welcome />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/terms" element={<TermsOfService />} />
+                <Route path="/disclaimer" element={<Disclaimer />} />
+                <Route path="/cookies" element={<CookiePolicy />} />
+                <Route path="/acceptable-use" element={<AcceptableUsePolicy />} />
                 <Route
                   path="/auth"
                   element={

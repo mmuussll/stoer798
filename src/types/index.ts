@@ -289,6 +289,7 @@ export interface StoreSettings {
   last_backup_date: string;
   enable_desktop_notifications: boolean;
   session_timeout_minutes: number;
+  require_cash_session: boolean;
   password_min_length: number;
   enable_2fa: boolean;
   whatsapp_enabled: boolean;
@@ -319,6 +320,7 @@ export interface Notification {
   message: string;
   type: 'system' | 'subscription' | 'debt' | 'alert' | 'info';
   is_read: boolean;
+  expires_at?: string;
   created_at?: string;
 }
 
@@ -326,6 +328,7 @@ export interface UserSubscription {
   id: string;
   user_id: string;
   status: 'trial' | 'active' | 'suspended' | 'expired';
+  plan?: 'free' | 'basic' | 'pro';
   trial_start_date: string;
   trial_end_date: string;
   is_trial_used: boolean;

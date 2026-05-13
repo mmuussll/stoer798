@@ -58,7 +58,7 @@ export function MobileBottomNav({ items, activeSection, onSelect, sidebarOpen, o
       {/* Backdrop */}
       {moreOpen && (
         <div
-          className="lg:hidden fixed inset-0 z-[60] bg-black/50 backdrop-blur-[2px] animate-fade-in"
+          className="lg:hidden fixed inset-0 z-[60] bg-black/55 backdrop-blur-[3px] animate-fade-in"
           onClick={() => setMoreOpen(false)}
         />
       )}
@@ -72,7 +72,7 @@ export function MobileBottomNav({ items, activeSection, onSelect, sidebarOpen, o
         )}
         style={{ paddingBottom: "max(env(safe-area-inset-bottom, 0px), 8px)" }}
       >
-        <div className="bg-white/95 backdrop-blur-2xl rounded-t-2xl border-t border-slate-200/70 shadow-[0_-8px_30px_rgba(0,0,0,0.1)]">
+        <div className="bg-white/95 backdrop-blur-2xl rounded-t-2xl border-t border-slate-200/70 shadow-[0_-8px_30px_rgba(0,0,0,0.12)]">
           <div className="flex justify-center pt-3 pb-1">
             <div className="w-10 h-1.5 bg-slate-300 rounded-full" />
           </div>
@@ -89,15 +89,15 @@ export function MobileBottomNav({ items, activeSection, onSelect, sidebarOpen, o
                   key={item.id}
                   onClick={() => handleItemSelect(item.id)}
                   className={cn(
-                    "relative flex flex-col items-center justify-center gap-1.5 p-2.5 rounded-xl transition-all duration-200",
-                    "active:scale-95",
+                    "relative flex flex-col items-center justify-center gap-1.5 p-2.5 rounded-xl transition-all duration-150",
+                    "active:scale-90",
                     isActive
                       ? "bg-indigo-50/80 text-indigo-600"
                       : "text-slate-500 hover:bg-slate-50 active:bg-slate-100"
                   )}
                 >
                   <div className={cn(
-                    "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200",
+                    "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-150",
                     isActive
                       ? "bg-indigo-100 text-indigo-600 shadow-[0_0_10px_rgba(79,70,229,0.2)]"
                       : "bg-slate-100 text-slate-500"
@@ -117,7 +117,7 @@ export function MobileBottomNav({ items, activeSection, onSelect, sidebarOpen, o
 
       {/* Bottom Navigation Bar */}
       <nav
-        className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white/90 backdrop-blur-xl border-t border-slate-200/70 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white/90 backdrop-blur-xl border-t border-slate-200/70 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]"
         style={{ paddingBottom: "max(env(safe-area-inset-bottom, 0px), 4px)" }}
       >
         <div className="flex items-center justify-around max-w-lg mx-auto px-1 pt-1.5">
@@ -125,7 +125,7 @@ export function MobileBottomNav({ items, activeSection, onSelect, sidebarOpen, o
           <button
             onClick={handleMoreToggle}
             className={cn(
-              "relative flex flex-col items-center justify-center min-w-[56px] h-[58px] text-[10px] font-medium transition-all duration-200",
+              "relative flex flex-col items-center justify-center min-w-[56px] h-[58px] text-[10px] font-medium transition-all duration-150",
               "active:scale-90",
               moreOpen
                 ? "text-indigo-600"
@@ -133,7 +133,7 @@ export function MobileBottomNav({ items, activeSection, onSelect, sidebarOpen, o
             )}
           >
             <div className={cn(
-              "w-9 h-9 rounded-xl flex items-center justify-center mb-0.5 transition-all duration-200",
+              "w-9 h-9 rounded-xl flex items-center justify-center mb-0.5 transition-all duration-150",
               moreOpen ? "bg-indigo-50 text-indigo-600" : ""
             )}>
               {moreOpen ? <X className="w-[19px] h-[19px]" /> : <Menu className="w-[19px] h-[19px]" />}
@@ -149,7 +149,7 @@ export function MobileBottomNav({ items, activeSection, onSelect, sidebarOpen, o
                 key={item.id}
                 onClick={() => handleItemSelect(item.id)}
                 className={cn(
-                  "relative flex flex-col items-center justify-center flex-1 h-[58px] text-[10px] font-medium transition-all duration-200",
+                  "relative flex flex-col items-center justify-center flex-1 h-[58px] text-[10px] font-medium transition-all duration-150",
                   "active:scale-90",
                   isActive
                     ? "text-indigo-600"
@@ -157,7 +157,7 @@ export function MobileBottomNav({ items, activeSection, onSelect, sidebarOpen, o
                 )}
               >
                 <div className={cn(
-                  "w-9 h-9 rounded-xl flex items-center justify-center mb-0.5 transition-all duration-200",
+                  "w-9 h-9 rounded-xl flex items-center justify-center mb-0.5 transition-all duration-150",
                   isActive ? "bg-indigo-50 text-indigo-600 shadow-[0_0_10px_rgba(79,70,229,0.2)]" : ""
                 )}>
                   <item.icon className="w-[19px] h-[19px]" />

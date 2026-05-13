@@ -20,11 +20,18 @@ import {
   RotateCcw,
   Printer,
   Check,
+  X,
   Clock,
   Store,
   TrendingUp,
+  Star,
+  Crown,
+  Percent,
+  Tag,
 } from "lucide-react";
 import WhatsAppSupport from "@/components/WhatsAppSupport";
+import { PLANS, DISCOUNT_TIERS, getDiscountPrice, getTotalPrice } from "@/constants";
+import type { PlanType } from "@/constants";
 
 const FEATURES = [
   { icon: ShoppingCart, title: "نقطة البيع السريعة", desc: "واجهة كاشير احترافية تدعم مسح الباركود، البحث الفوري، الخصومات، المبيعات الآجلة، وتعليق الفواتير." },
@@ -59,6 +66,10 @@ export default function Welcome() {
             </span>
           </div>
           <div className="flex items-center gap-3">
+            <Link to="/pricing" className="flex items-center gap-1 text-sm text-gray-600 hover:text-purple-600 transition-colors font-medium">
+              <Tag className="w-4 h-4" />
+              الباقات والأسعار
+            </Link>
             <Link to="/auth">
               <Button variant="outline" size="sm" className="gap-1">
                 <ArrowLeft className="w-4 h-4" />
@@ -99,12 +110,12 @@ export default function Welcome() {
 
           <div className="mt-14 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto">
             {[
-              { value: "25,000 د.ع", label: "الاشتراك الشهري", icon: CreditCard },
-              { value: "14 يوم", label: "مجاناً بدون التزام", icon: Zap },
-              { value: "60+", label: "إعداد للتخصيص", icon: Settings },
+              { value: "مجاني", label: "باقة محدودة للأبد", icon: Star, color: "text-gray-500" },
+              { value: "10,000 د.ع", label: "باقة أساسي شهرياً", icon: Zap, color: "text-blue-600" },
+              { value: "25,000 د.ع", label: "باقة برو شهرياً", icon: Crown, color: "text-amber-500" },
             ].map((stat) => (
               <div key={stat.label} className="bg-white/80 rounded-xl py-4 px-5 border border-slate-100 shadow-sm">
-                <stat.icon className="w-5 h-5 text-blue-600 mx-auto mb-2" />
+                <stat.icon className={`w-5 h-5 ${stat.color} mx-auto mb-2`} />
                 <p className="font-bold text-slate-800">{stat.value}</p>
                 <p className="text-xs text-gray-500">{stat.label}</p>
               </div>
@@ -166,53 +177,118 @@ export default function Welcome() {
 
         {/* Pricing */}
         <section className="py-14 px-4 bg-white/50">
-          <div className="max-w-md mx-auto text-center">
+          <div className="max-w-5xl mx-auto text-center">
             <h2 className="text-2xl font-bold text-gray-800 mb-3">
-              ابدأ مجاناً - وادفع فقط عند الاستمرار
+              ابدأ مجاناً - وترقى حسب نمو متجرك
             </h2>
-            <p className="text-gray-500 mb-8">
-              لا رسوم خفية ولا عقود - ادفع شهرياً وألغِ في أي وقت
+            <p className="text-gray-500 mb-4">
+              ثلاث باقات تناسب كل حجم من المتاجر. لا رسوم خفية ولا عقود.
             </p>
+            <div className="flex justify-center items-center gap-2 text-sm text-green-700 mb-8">
+              <Percent className="w-4 h-4" />
+              <span>خصم 10% على 3 أشهر | 20% على 6 أشهر | 30% على سنة كاملة</span>
+            </div>
 
-            <Card className="overflow-hidden shadow-lg">
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 text-sm font-bold">
-                الباقة الوحيدة - كل الميزات مفتوحة
-              </div>
-              <CardContent className="p-8">
-                <div className="flex items-baseline justify-center gap-1 mb-1">
-                  <span className="text-5xl font-extrabold text-slate-800">25,000</span>
-                  <span className="text-lg text-gray-500">د.ع</span>
-                </div>
-                <p className="text-gray-500 mb-6 text-sm">شهرياً</p>
-
-                <div className="space-y-3 mb-8 text-right">
-                  {[
-                    "كل الميزات بدون استثناء",
-                    "عدد غير محدود من المنتجات والزبائن",
-                    "دعم فني عبر واتساب",
-                    "تخزين سحابي آمن",
-                    "تحديثات مستمرة مجانية",
-                  ].map((item) => (
-                    <div key={item} className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-500 shrink-0" />
-                      <span className="text-sm text-slate-700">{item}</span>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {(["free", "basic", "pro"] as PlanType[]).map((planKey) => {
+                const plan = PLANS[planKey];
+                const isPro = planKey === "pro";
+                const isBasic = planKey === "basic";
+                return (
+                  <Card
+                    key={planKey}
+                    className={`overflow-hidden shadow-lg relative ${isPro ? "ring-2 ring-purple-400 scale-[1.02]" : ""}`}
+                  >
+                    {isPro && (
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-400 to-amber-500 text-white text-xs font-bold px-4 py-1 rounded-full shadow-md z-10">
+                        الأكثر طلباً
+                      </div>
+                    )}
+                    <div className={`bg-gradient-to-r ${plan.gradient} text-white py-3 px-4 text-sm font-bold`}>
+                      باقة {plan.nameAr}
                     </div>
-                  ))}
-                </div>
+                    <CardContent className="p-6">
+                      <div className="flex items-baseline justify-center gap-1 mb-1">
+                        <span className={`text-4xl font-extrabold ${planKey === "free" ? "text-gray-600" : "text-slate-800"}`}>
+                          {plan.monthlyPrice.toLocaleString()}
+                        </span>
+                        <span className="text-base text-gray-500">د.ع</span>
+                      </div>
+                      <p className="text-gray-500 mb-5 text-sm">
+                        {planKey === "free" ? "مجاني مدى الحياة" : "شهرياً"}
+                      </p>
 
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-6">
-                  <p className="text-sm font-bold text-amber-800">
-                    14 يوم تجريبي مجاني - بدون إدخال بيانات دفع
-                  </p>
-                </div>
+                      <div className="space-y-2.5 mb-6 text-right">
+                        {plan.features.map((item) => (
+                          <div key={item} className="flex items-center gap-2">
+                            <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                            <span className="text-sm text-slate-700">{item}</span>
+                          </div>
+                        ))}
+                        {plan.missingFeatures.map((item) => (
+                          <div key={item} className="flex items-center gap-2 opacity-50">
+                            <X className="w-4 h-4 text-gray-400 shrink-0" />
+                            <span className="text-sm text-gray-400">{item}</span>
+                          </div>
+                        ))}
+                      </div>
 
-                <Link to="/auth">
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-5 text-base font-bold">
-                    ابدأ الفترة التجريبية المجانية
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
+                      {planKey !== "free" && (
+                        <div className="bg-gray-50 rounded-lg p-3 mb-4 border border-gray-100">
+                          <p className="text-xs font-semibold text-gray-700 mb-2">خصومات الالتزام طويل المدى:</p>
+                          <div className="space-y-1.5">
+                            {DISCOUNT_TIERS.filter((t) => t.discountPercent > 0).map((tier) => (
+                              <div key={tier.months} className="flex items-center justify-between text-xs">
+                                <span className="text-gray-500">{tier.label}</span>
+                                <span className="text-green-600 font-bold">
+                                  {getDiscountPrice(plan.monthlyPrice, tier.discountPercent).toLocaleString()} د.ع/شهري
+                                  <span className="text-[10px] text-gray-400 mr-1">(خصم {tier.discountPercent}%)</span>
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {planKey !== "free" && (
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 mb-4">
+                          {DISCOUNT_TIERS.filter((t) => t.discountPercent > 0).slice(0, 3).map((tier) => (
+                            <p key={tier.months} className="text-[10px] text-amber-700 leading-relaxed">
+                              {tier.label}: {getTotalPrice(plan.monthlyPrice, tier.months, tier.discountPercent).toLocaleString()} د.ع كامل
+                              <span className="text-amber-400"> (بدلاً من {(plan.monthlyPrice * tier.months).toLocaleString()})</span>
+                            </p>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-5">
+                        <p className="text-xs font-bold text-blue-800">
+                          14 يوم تجريبي مجاني - كل الميزات مفتوحة
+                        </p>
+                        <p className="text-[10px] text-blue-600 mt-0.5">
+                          بدون إدخال بيانات دفع
+                        </p>
+                      </div>
+
+                      <Link to="/auth">
+                        <Button
+                          className={`w-full py-5 text-base font-bold ${
+                            isPro
+                              ? "bg-purple-600 hover:bg-purple-700 text-white"
+                              : isBasic
+                              ? "bg-blue-600 hover:bg-blue-700 text-white"
+                              : "bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300"
+                          }`}
+                          variant={planKey === "free" ? "outline" : "default"}
+                        >
+                          ابدأ الفترة التجريبية المجانية
+                        </Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
           </div>
         </section>
 

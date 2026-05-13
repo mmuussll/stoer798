@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabase, getCurrentUserId, isCurrentUserAdmin } from "@/lib/supabase";
 import { toNumber } from "@/lib/db";
 import type { Debt, DebtPayment, DebtSummary } from "@/types";
 
@@ -48,56 +48,70 @@ function mapPayment(row: RawRow): DebtPayment {
 // ==================== DEBTS ====================
 
 export async function fetchDebts(): Promise<Debt[]> {
-  const { data, error } = await supabase
+  const [userId, isAdmin] = await Promise.all([getCurrentUserId(), isCurrentUserAdmin()]);
+  let query = supabase
     .from(DEBTS_TABLE)
     .select("*")
     .order("created_at", { ascending: false });
+  if (!isAdmin) query = query.eq("user_id", userId);
+  const { data, error } = await query;
 
   if (error) throw error;
   return (data || []).map(mapDebt);
 }
 
 export async function getDebt(id: string): Promise<Debt | null> {
-  const { data, error } = await supabase
+  const [userId, isAdmin] = await Promise.all([getCurrentUserId(), isCurrentUserAdmin()]);
+  let query = supabase
     .from(DEBTS_TABLE)
     .select("*")
-    .eq("id", id)
-    .single();
+    .eq("id", id);
+  if (!isAdmin) query = query.eq("user_id", userId);
+  const { data, error } = await query.single();
 
   if (error) return null;
   return mapDebt(data as unknown as RawRow);
 }
 
 export async function fetchCustomerDebts(customerId: string): Promise<Debt[]> {
-  const { data, error } = await supabase
+  const [userId, isAdmin] = await Promise.all([getCurrentUserId(), isCurrentUserAdmin()]);
+  let query = supabase
     .from(DEBTS_TABLE)
     .select("*")
     .eq("customer_id", customerId)
     .order("created_at", { ascending: false });
+  if (!isAdmin) query = query.eq("user_id", userId);
+  const { data, error } = await query;
 
   if (error) throw error;
   return (data || []).map(mapDebt);
 }
 
 export async function fetchActiveDebts(): Promise<Debt[]> {
-  const { data, error } = await supabase
+  const [userId, isAdmin] = await Promise.all([getCurrentUserId(), isCurrentUserAdmin()]);
+  let query = supabase
     .from(DEBTS_TABLE)
     .select("*")
     .in("status", ["active", "partially_paid", "overdue"])
     .order("created_at", { ascending: false });
+  if (!isAdmin) query = query.eq("user_id", userId);
+  const { data, error } = await query;
 
   if (error) throw error;
   return (data || []).map(mapDebt);
 }
 
 export async function fetchOverdueDebts(): Promise<Debt[]> {
+  const [userId, isAdmin] = await Promise.all([getCurrentUserId(), isCurrentUserAdmin()]);
   const today = new Date().toISOString().slice(0, 10);
-  const { data, error } = await supabase
+  let query = supabase
     .from(DEBTS_TABLE)
     .select("*")
     .lt("due_date", today)
     .in("status", ["active", "partially_paid", "overdue"])
     .order("due_date", { ascending: true });
+  if (!isAdmin) query = query.eq("user_id", userId);
+  const { data, error } = await query;
 
   if (error) throw error;
   return (data || []).map(mapDebt);
@@ -119,6 +133,7 @@ export async function createDebt(debt: {
   debt_items?: Debt["debt_items"];
   notes?: string;
 }): Promise<Debt> {
+  const userId = await getCurrentUserId();
   const { data, error } = await supabase
     .from(DEBTS_TABLE)
     .insert({
@@ -136,6 +151,7 @@ export async function createDebt(debt: {
       debtor_phone: debt.debtor_phone || null,
       debt_items: debt.debt_items || [],
       notes: debt.notes || null,
+      user_id: userId,
     })
     .select("*")
     .single();
@@ -176,34 +192,39 @@ export async function updateDebt(
   if (updates.debtor_phone !== undefined) payload.debtor_phone = updates.debtor_phone;
   payload.updated_at = new Date().toISOString();
 
-  const { data, error } = await supabase
+  const [userId, isAdmin] = await Promise.all([getCurrentUserId(), isCurrentUserAdmin()]);
+  let query = supabase
     .from(DEBTS_TABLE)
     .update(payload)
-    .eq("id", id)
-    .select("*")
-    .single();
+    .eq("id", id);
+  if (!isAdmin) query = query.eq("user_id", userId);
+  const { data, error } = await query.select("*").single();
 
   if (error) throw error;
   return mapDebt(data as unknown as RawRow);
 }
 
 export async function cancelDebt(id: string): Promise<void> {
-  // Fetch debt first to get remaining_amount and customer_id
-  const { data: debtRow } = await supabase
+  const [userId, isAdmin] = await Promise.all([getCurrentUserId(), isCurrentUserAdmin()]);
+
+  let selectQuery = supabase
     .from(DEBTS_TABLE)
     .select("remaining_amount, customer_id")
-    .eq("id", id)
-    .single();
+    .eq("id", id);
+  if (!isAdmin) selectQuery = selectQuery.eq("user_id", userId);
+  const { data: debtRow } = await selectQuery.single();
 
   const debt = debtRow as Record<string, unknown> | null;
   const remaining = toNumber(debt?.remaining_amount);
   const customerId = debt?.customer_id as string | undefined;
 
   // Mark debt as cancelled with zero remaining
-  const { error } = await supabase
+  let updateQuery = supabase
     .from(DEBTS_TABLE)
     .update({ status: "cancelled", remaining_amount: 0, updated_at: new Date().toISOString() })
     .eq("id", id);
+  if (!isAdmin) updateQuery = updateQuery.eq("user_id", userId);
+  const { error } = await updateQuery;
   if (error) throw error;
 
   // Restore customer's total_debt by subtracting the cancelled remaining
@@ -228,10 +249,12 @@ export async function cancelDebt(id: string): Promise<void> {
 // ==================== DEBT PAYMENTS ====================
 
 export async function fetchPayments(debtId?: string): Promise<DebtPayment[]> {
+  const [userId, isAdmin] = await Promise.all([getCurrentUserId(), isCurrentUserAdmin()]);
   let query = supabase
     .from(PAYMENTS_TABLE)
     .select("*")
     .order("created_at", { ascending: false });
+  if (!isAdmin) query = query.eq("user_id", userId);
 
   if (debtId) query = query.eq("debt_id", debtId);
 
@@ -392,7 +415,9 @@ export async function cancelDebtPayment(id: string): Promise<void> {
 // ==================== SUMMARY ====================
 
 export async function getDebtSummary(): Promise<DebtSummary> {
-  const { data, error } = await supabase.rpc("get_debt_summary");
+  const isAdmin = await isCurrentUserAdmin();
+  const userId = isAdmin ? null : await getCurrentUserId();
+  const { data, error } = await supabase.rpc("get_debt_summary", { p_user_id: userId });
 
   if (error) throw error;
 
@@ -418,13 +443,16 @@ export async function getDebtSummary(): Promise<DebtSummary> {
 }
 
 export async function searchDebts(term: string): Promise<Debt[]> {
-  const { data, error } = await supabase
+  const [userId, isAdmin] = await Promise.all([getCurrentUserId(), isCurrentUserAdmin()]);
+  let query = supabase
     .from(DEBTS_TABLE)
     .select("*")
     .or(`customer_name.ilike.%${term}%,customer_phone.ilike.%${term}%,invoice_number.ilike.%${term}%`)
     .in("status", ["active", "partially_paid", "overdue"])
     .order("created_at", { ascending: false })
     .limit(50);
+  if (!isAdmin) query = query.eq("user_id", userId);
+  const { data, error } = await query;
 
   if (error) throw error;
   return (data || []).map(mapDebt);

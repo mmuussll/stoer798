@@ -16,6 +16,7 @@ import TermsOfService from "./pages/TermsOfService";
 import Disclaimer from "./pages/Disclaimer";
 import CookiePolicy from "./pages/CookiePolicy";
 import AcceptableUsePolicy from "./pages/AcceptableUsePolicy";
+import Pricing from "./pages/Pricing";
 import AuthPage from "./auth/AuthPage";
 
 const AdminPanel = lazy(() => import("@/components/AdminPanel"));
@@ -23,7 +24,7 @@ const SalesInterface = lazy(() => import("@/components/SalesInterface"));
 const ProductManagement = lazy(() => import("@/components/ProductManagement"));
 const ReportsSection = lazy(() => import("@/components/ReportsSection"));
 const CustomerManagement = lazy(() => import("@/components/CustomerManagement"));
-const SalesReturns = lazy(() => import("@/components/SalesReturns"));
+const SalesInvoices = lazy(() => import("@/components/SalesInvoices"));
 const CashSessions = lazy(() => import("@/components/CashSessions"));
 const DebtManagement = lazy(() => import("@/components/DebtManagement"));
 const SettingsPage = lazy(() => import("@/components/SettingsPage"));
@@ -44,10 +45,13 @@ const queryClient = new QueryClient({
 
 function LoadingSpinner({ text = "جاري التحميل..." }) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20">
       <div className="text-center">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-gray-600">{text}</p>
+        <div className="relative mx-auto mb-5 w-12 h-12">
+          <div className="absolute inset-0 rounded-full border-3 border-blue-200/60" />
+          <div className="absolute inset-0 rounded-full border-3 border-transparent border-t-blue-600 animate-spin" />
+        </div>
+        <p className="text-sm text-slate-500 font-medium tracking-wide">{text}</p>
       </div>
     </div>
   );
@@ -60,18 +64,18 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function PublicRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  if (loading) return <LoadingSpinner />;
+  if (user) return <Navigate to="/" replace />;
+  return <>{children}</>;
+}
+
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const { user, loading, isAdmin } = useAuth();
   if (loading) return <LoadingSpinner />;
   if (!user) return <Navigate to="/auth" replace />;
   if (!isAdmin) return <Navigate to="/" replace />;
-  return <>{children}</>;
-}
-
-function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
-  if (loading) return <LoadingSpinner />;
-  if (user) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
@@ -98,6 +102,7 @@ const App = () => (
                 <Route path="/disclaimer" element={<Disclaimer />} />
                 <Route path="/cookies" element={<CookiePolicy />} />
                 <Route path="/acceptable-use" element={<AcceptableUsePolicy />} />
+                <Route path="/pricing" element={<Pricing />} />
                 <Route
                   path="/auth"
                   element={
@@ -150,14 +155,10 @@ const App = () => (
                   />
                   <Route
                     path="sales-invoices"
-                    element={<Navigate to="/reports" replace />}
-                  />
-                  <Route
-                    path="sales-returns"
                     element={
                       <Section>
                         <Suspense fallback={<LoadingSpinner />}>
-                          <SalesReturns />
+                          <SalesInvoices />
                         </Suspense>
                       </Section>
                     }

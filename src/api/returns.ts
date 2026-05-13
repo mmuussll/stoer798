@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabase, getCurrentUserId, isCurrentUserAdmin } from "@/lib/supabase";
 import { toNumber, type RawRow } from "@/lib/db";
 import type { SalesReturn, SalesReturnItem } from "@/types";
 
@@ -32,10 +32,12 @@ function mapReturn(row: RawRow): SalesReturn {
 }
 
 export async function fetchSalesReturns(page?: number, limit?: number): Promise<SalesReturn[]> {
+  const [userId, isAdmin] = await Promise.all([getCurrentUserId(), isCurrentUserAdmin()]);
   let query = supabase
     .from(RETURNS_TABLE)
     .select("*, items:sales_return_items(*)")
     .order("created_at", { ascending: false });
+  if (!isAdmin) query = query.eq("user_id", userId);
 
   if (limit && page !== undefined) {
     const from = (page - 1) * limit;
@@ -49,9 +51,12 @@ export async function fetchSalesReturns(page?: number, limit?: number): Promise<
 }
 
 export async function fetchSalesReturnsCount(): Promise<number> {
-  const { count, error } = await supabase
+  const [userId, isAdmin] = await Promise.all([getCurrentUserId(), isCurrentUserAdmin()]);
+  let countQuery = supabase
     .from(RETURNS_TABLE)
     .select("*", { count: "exact", head: true });
+  if (!isAdmin) countQuery = countQuery.eq("user_id", userId);
+  const { count, error } = await countQuery;
 
   if (error) throw error;
   return count || 0;

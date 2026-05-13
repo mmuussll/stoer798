@@ -7,3 +7,20 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || SUPABASE_ANON_KEY;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+export async function getCurrentUserId(): Promise<string> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error("User not authenticated");
+  return session.user.id;
+}
+
+let _cachedAdmin: { id: string; isAdmin: boolean } | null = null;
+
+export async function isCurrentUserAdmin(): Promise<boolean> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return false;
+  if (_cachedAdmin?.id === session.user.id) return _cachedAdmin.isAdmin;
+  const { data } = await supabase.from("profiles").select("role").eq("id", session.user.id).maybeSingle();
+  _cachedAdmin = { id: session.user.id, isAdmin: data?.role === "admin" };
+  return _cachedAdmin.isAdmin;
+}

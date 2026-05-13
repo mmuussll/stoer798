@@ -1,6 +1,7 @@
-import { supabase } from "@/lib/supabase";
+import { supabase, getCurrentUserId, isCurrentUserAdmin } from "@/lib/supabase";
 import { toNumber, type RawRow } from "@/lib/db";
 import type { SaleInvoice, SaleInvoiceItem } from "@/types";
+import { checkDailyInvoiceLimit } from "@/lib/planLimits";
 
 const INVOICE_TABLE = "sales_invoices";
 const ITEMS_TABLE = "sales_invoice_items";
@@ -79,10 +80,13 @@ function mapInvoice(row: RawRow): SaleInvoice {
 }
 
 export async function fetchSalesInvoices(page?: number, limit?: number): Promise<SaleInvoice[]> {
+  const [userId, isAdmin] = await Promise.all([getCurrentUserId(), isCurrentUserAdmin()]);
   let query = supabase
     .from(INVOICE_TABLE)
     .select("*, items:sales_invoice_items(*), customer:customers(*)")
     .order("created_at", { ascending: false });
+
+  if (!isAdmin) query = query.eq("user_id", userId);
 
   if (limit && page !== undefined) {
     const from = (page - 1) * limit;
@@ -96,9 +100,12 @@ export async function fetchSalesInvoices(page?: number, limit?: number): Promise
 }
 
 export async function fetchSalesInvoicesCount(): Promise<number> {
-  const { count, error } = await supabase
+  const [userId, isAdmin] = await Promise.all([getCurrentUserId(), isCurrentUserAdmin()]);
+  let query = supabase
     .from(INVOICE_TABLE)
     .select("*", { count: "exact", head: true });
+  if (!isAdmin) query = query.eq("user_id", userId);
+  const { count, error } = await query;
 
   if (error) throw error;
   return count || 0;
@@ -108,6 +115,10 @@ export async function createSaleInvoice(
   invoice: Omit<SaleInvoice, "id" | "created_at" | "items" | "customer"> & { customer_id?: string | null },
   items: Omit<SaleInvoiceItem, "id" | "invoice_id">[]
 ): Promise<SaleInvoice> {
+  const userId = invoice.user_id || await getCurrentUserId();
+
+  await checkDailyInvoiceLimit(userId);
+
   // 1. Create invoice first
   const { data: invData, error: invError } = await supabase
     .from(INVOICE_TABLE)

@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetchMyProfile } from "@/api/users";
 import { Badge } from "@/components/ui/badge";
-import { Clock, ShieldCheck, AlertTriangle, CreditCard, MessageCircle } from "lucide-react";
+import { Clock, ShieldCheck, AlertTriangle, CreditCard, MessageCircle, Crown, Zap, Star, Tag } from "lucide-react";
+import { PLANS, getPlan, DISCOUNT_TIERS, getDiscountPrice, getTotalPrice, type PlanType } from "@/constants";
 import type { UserSubscription } from "@/types";
-
-const SUBSCRIPTION_PRICE = "25,000";
-const CURRENCY = "د.ع";
 
 function getDaysRemaining(sub: UserSubscription): number {
   const now = new Date();
@@ -21,8 +20,15 @@ function getDaysRemaining(sub: UserSubscription): number {
   return 0;
 }
 
+function PlanIcon({ plan }: { plan: PlanType }) {
+  if (plan === "pro") return <Crown className="w-3.5 h-3.5 text-amber-500" />;
+  if (plan === "basic") return <Zap className="w-3.5 h-3.5 text-blue-500" />;
+  return <Star className="w-3.5 h-3.5 text-gray-500" />;
+}
+
 export default function SubscriptionStatusBar() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [subscription, setSubscription] = useState<UserSubscription | null>(null);
   const [showDetails, setShowDetails] = useState(false);
 
@@ -40,6 +46,8 @@ export default function SubscriptionStatusBar() {
   const days = getDaysRemaining(subscription);
   const isExpiring = days <= 3 && days > 0;
   const isExpired = days === 0 && (subscription.status === "trial" || subscription.status === "active");
+  const plan = subscription.status === "active" ? getPlan(subscription.plan) : null;
+  const isFree = plan?.key === "free";
 
   return (
     <>
@@ -54,6 +62,8 @@ export default function SubscriptionStatusBar() {
               ? "linear-gradient(135deg, #fee2e2, #fef3c7)"
               : isExpired
               ? "linear-gradient(135deg, #fee2e2, #fce7f3)"
+              : isFree
+              ? "linear-gradient(135deg, #f3f4f6, #e5e7eb)"
               : "linear-gradient(135deg, #dcfce7, #dbeafe)",
           border:
             subscription.status === "trial"
@@ -72,7 +82,7 @@ export default function SubscriptionStatusBar() {
         ) : isExpired ? (
           <AlertTriangle className="w-3.5 h-3.5 text-red-600" />
         ) : (
-          <ShieldCheck className="w-3.5 h-3.5 text-green-600" />
+          <PlanIcon plan={(subscription.plan || "free") as PlanType} />
         )}
         <span
           className={
@@ -82,6 +92,8 @@ export default function SubscriptionStatusBar() {
               ? "text-orange-700"
               : isExpired
               ? "text-red-700"
+              : isFree
+              ? "text-gray-700"
               : "text-green-700"
           }
         >
@@ -89,12 +101,14 @@ export default function SubscriptionStatusBar() {
             ? `تجريبي - متبقي ${days} يوم`
             : isExpired
             ? "انتهى الاشتراك"
+            : isFree
+            ? `مجاني`
             : `نشط - متبقي ${days} يوم`}
         </span>
       </button>
 
       {showDetails && (
-        <div className="fixed top-16 left-4 z-50 w-72 bg-white rounded-xl shadow-xl border border-gray-200 p-4 animate-in slide-in-from-top-2" dir="rtl">
+        <div className="fixed top-16 left-4 z-50 w-80 bg-white rounded-xl shadow-xl border border-gray-200 p-4 animate-in slide-in-from-top-2" dir="rtl">
           <div className="flex items-center justify-between mb-3">
             <h4 className="font-bold text-gray-900 text-sm">حالة الاشتراك</h4>
             <button
@@ -106,17 +120,21 @@ export default function SubscriptionStatusBar() {
           </div>
 
           <div className="space-y-3">
-            <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg">
-              <CreditCard className="w-4 h-4 text-blue-600 shrink-0" />
-              <div>
-                <p className="text-xs font-semibold text-blue-900">
-                  {SUBSCRIPTION_PRICE} {CURRENCY} / شهرياً
-                </p>
-                <p className="text-[10px] text-blue-600">رسوم الاشتراك الشهري</p>
+            {plan && (
+              <div className={`p-3 rounded-lg bg-gradient-to-r ${plan.gradient} text-white`}>
+                <div className="flex items-center gap-2">
+                  <PlanIcon plan={plan.key} />
+                  <div>
+                    <p className="text-sm font-bold">باقة {plan.nameAr}</p>
+                    <p className="text-xs opacity-90">
+                      {plan.key === "free" ? "مجاني مدى الحياة" : `${plan.monthlyPrice.toLocaleString()} د.ع / شهرياً`}
+                    </p>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
 
-            <div className="p-2 bg-gray-50 rounded-lg">
+            <div className={`p-2 rounded-lg ${isExpiring ? "bg-red-50" : "bg-gray-50"}`}>
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs text-gray-500">الحالة</span>
                 <Badge
@@ -131,25 +149,87 @@ export default function SubscriptionStatusBar() {
                   {subscription.status === "trial" ? "تجريبي" : subscription.status === "active" ? "نشط" : "منتهي"}
                 </Badge>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500">المتبقي</span>
-                <span className={`text-xs font-bold ${isExpiring || isExpired ? "text-red-600" : "text-green-600"}`}>
-                  {days} يوم
-                </span>
-              </div>
+              {!isFree && subscription.status === "active" && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">المتبقي</span>
+                  <span className={`text-xs font-bold ${isExpiring || isExpired ? "text-red-600" : "text-green-600"}`}>
+                    {days} يوم
+                  </span>
+                </div>
+              )}
             </div>
 
-            <div className="p-2 bg-purple-50 rounded-lg border border-purple-100">
-              <div className="flex items-start gap-2">
-                <MessageCircle className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-xs font-semibold text-purple-900">للتجديد أو التفعيل</p>
-                  <p className="text-[10px] text-purple-700 mt-0.5">
-                    يرجى مراسلة الدعم الفني عبر واتساب لتجديد الاشتراك أو تفعيل حسابك
-                  </p>
+            {plan && plan.key !== "free" && (
+              <>
+                <div className="border-t border-gray-100 pt-2">
+                  <p className="text-xs font-semibold text-gray-700 mb-2">خصومات الاشتراك طويل المدى:</p>
+                  <div className="space-y-1">
+                    {DISCOUNT_TIERS.filter((t) => t.discountPercent > 0).map((tier) => (
+                      <div key={tier.months} className="flex items-center justify-between text-xs">
+                        <span className="text-gray-600">{tier.label} (خصم {tier.discountPercent}%)</span>
+                        <span className="font-bold text-green-700">
+                          {getDiscountPrice(plan.monthlyPrice, tier.discountPercent).toLocaleString()} د.ع / شهرياً
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="bg-amber-50 rounded-lg p-2 border border-amber-100">
+                  <div className="flex items-start gap-2">
+                    <CreditCard className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs font-semibold text-amber-900">الأسعار مع الخصم:</p>
+                      <div className="mt-1 space-y-0.5">
+                        {DISCOUNT_TIERS.filter((t) => t.discountPercent > 0).map((tier) => (
+                          <p key={tier.months} className="text-[10px] text-amber-700">
+                            {tier.label}: {getTotalPrice(plan.monthlyPrice, tier.months, tier.discountPercent).toLocaleString()} د.ع (بدلاً من {(plan.monthlyPrice * tier.months).toLocaleString()})
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {plan && plan.key === "free" && (
+              <div className="bg-amber-50 rounded-lg p-3 border border-amber-100">
+                <p className="text-xs text-amber-800 font-medium mb-2">للحصول على الميزات الكاملة:</p>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="bg-white rounded p-2 text-center border border-blue-100">
+                    <p className="font-bold text-blue-700">أساسي</p>
+                    <p className="text-blue-600">10,000 د.ع</p>
+                  </div>
+                  <div className="bg-white rounded p-2 text-center border border-purple-100">
+                    <p className="font-bold text-purple-700">برو</p>
+                    <p className="text-purple-600">25,000 د.ع</p>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
+
+            {!plan && (
+              <div className="p-2 bg-purple-50 rounded-lg border border-purple-100">
+                <div className="flex items-start gap-2">
+                  <MessageCircle className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-semibold text-purple-900">للتجديد أو التفعيل</p>
+                    <p className="text-[10px] text-purple-700 mt-0.5">
+                      يرجى مراسلة الدعم الفني عبر واتساب لتجديد الاشتراك أو تفعيل حسابك
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <a
+              onClick={(e) => { e.preventDefault(); navigate("/pricing"); setShowDetails(false); }}
+              href="/pricing"
+              className="flex items-center justify-center gap-1.5 w-full p-2 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-100 text-xs font-bold text-blue-700 hover:from-blue-100 hover:to-purple-100 transition-all cursor-pointer"
+            >
+              <Tag className="w-3.5 h-3.5" />
+              عرض كل الباقات والأسعار
+            </a>
           </div>
         </div>
       )}

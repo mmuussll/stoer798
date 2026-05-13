@@ -45,7 +45,7 @@ function Sidebar({ className, children, side = "right", ...props }: React.HTMLAt
       {isMobile && (
         <div
           className={cn(
-            "fixed inset-0 z-40 bg-black/60 backdrop-blur-[2px] transition-all duration-300 ease-out",
+            "fixed inset-0 z-40 bg-black/60 backdrop-blur-[3px] transition-all duration-300 ease-out",
             open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
           )}
           onClick={() => setOpen(false)}
@@ -54,7 +54,7 @@ function Sidebar({ className, children, side = "right", ...props }: React.HTMLAt
       )}
       <div
         className={cn(
-          "fixed inset-y-0 z-50 flex w-72 flex-col bg-sidebar border-sidebar-border transition-all duration-300 ease-out",
+          "fixed inset-y-0 z-50 flex w-72 flex-col bg-sidebar border-sidebar-border transition-transform duration-300 ease-out",
           side === "right" ? "right-0 border-l" : "left-0 border-r",
           !open && side === "right" ? "translate-x-full" : !open && side === "left" ? "-translate-x-full" : "",
           isMobile ? "shadow-2xl rounded-l-2xl" : "shadow-xl",
@@ -132,7 +132,7 @@ function SidebarInset({ className, ...props }: React.HTMLAttributes<HTMLDivEleme
   return (
     <div
       className={cn(
-        "flex min-h-svh flex-1 flex-col transition-all duration-300 ease-out",
+        "flex min-h-svh flex-1 flex-col transition-[margin] duration-300 ease-out",
         !isMobile && open ? "lg:mr-72" : "lg:mr-0",
         className
       )}

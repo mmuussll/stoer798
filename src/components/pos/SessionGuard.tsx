@@ -21,6 +21,7 @@ export function SessionGuard({ openingBalance, setOpeningBalance, onOpenSession,
           </div>
           <CardTitle className="text-xl">فتح جلسة صندوق</CardTitle>
           <p className="text-sm text-muted-foreground">يجب فتح جلسة صندوق قبل البدء بعمليات البيع</p>
+          <p className="text-xs text-gray-400 mt-1">يمكن تعطيل هذه الميزة من الإعدادات</p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>

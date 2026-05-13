@@ -1,13 +1,16 @@
-import { supabase } from "@/lib/supabase";
+import { supabase, getCurrentUserId, isCurrentUserAdmin } from "@/lib/supabase";
 import type { Category } from "@/types";
 
 const TABLE = "categories";
 
 export async function fetchCategories(): Promise<Category[]> {
-  const { data, error } = await supabase
+  const [userId, isAdmin] = await Promise.all([getCurrentUserId(), isCurrentUserAdmin()]);
+  let query = supabase
     .from(TABLE)
     .select("*")
     .order("name");
+  if (!isAdmin) query = query.eq("user_id", userId);
+  const { data, error } = await query;
 
   if (error) throw error;
   return (data || []).map((row) => ({
@@ -22,12 +25,14 @@ export async function fetchCategories(): Promise<Category[]> {
 export async function createCategory(
   category: Omit<Category, "id" | "created_at">
 ): Promise<Category> {
+  const userId = await getCurrentUserId();
   const { data, error } = await supabase
     .from(TABLE)
     .insert({
       name: category.name,
       description: category.description,
       color: category.color,
+      user_id: userId,
     })
     .select()
     .single();
@@ -69,6 +74,9 @@ export async function updateCategory(
 }
 
 export async function deleteCategory(id: string): Promise<void> {
-  const { error } = await supabase.from(TABLE).delete().eq("id", id);
+  const [userId, isAdmin] = await Promise.all([getCurrentUserId(), isCurrentUserAdmin()]);
+  let query = supabase.from(TABLE).delete().eq("id", id);
+  if (!isAdmin) query = query.eq("user_id", userId);
+  const { error } = await query;
   if (error) throw error;
 }

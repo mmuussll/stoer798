@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabase, getCurrentUserId, isCurrentUserAdmin } from "@/lib/supabase";
 import { toNumber } from "@/lib/db";
 import type { CashSession } from "@/types";
 
@@ -29,10 +29,12 @@ function mapSession(row: Record<string, unknown>): CashSession {
 }
 
 export async function fetchCashSessions(page?: number, limit?: number): Promise<CashSession[]> {
+  const [userId, isAdmin] = await Promise.all([getCurrentUserId(), isCurrentUserAdmin()]);
   let query = supabase
     .from(TABLE)
     .select("*")
     .order("created_at", { ascending: false });
+  if (!isAdmin) query = query.eq("user_id", userId);
 
   if (limit && page !== undefined) {
     const from = (page - 1) * limit;
@@ -46,9 +48,12 @@ export async function fetchCashSessions(page?: number, limit?: number): Promise<
 }
 
 export async function fetchCashSessionsCount(): Promise<number> {
-  const { count, error } = await supabase
+  const [userId, isAdmin] = await Promise.all([getCurrentUserId(), isCurrentUserAdmin()]);
+  let countQuery = supabase
     .from(TABLE)
     .select("*", { count: "exact", head: true });
+  if (!isAdmin) countQuery = countQuery.eq("user_id", userId);
+  const { count, error } = await countQuery;
 
   if (error) throw error;
   return count || 0;

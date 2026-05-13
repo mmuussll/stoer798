@@ -600,6 +600,7 @@ export default function SettingsPage() {
               <SettingNumberInput label="الحد الأدنى لطول كلمة المرور" value={settings.password_min_length} onChange={(v) => update("password_min_length", v)} min={4} max={32} />
               <SettingSwitch label="تفعيل المصادقة الثنائية (2FA)" description="خطوة تحقق إضافية عند تسجيل الدخول" checked={settings.enable_2fa} onCheckedChange={(v) => update("enable_2fa", v)} />
               <SettingSwitch label="إشعارات سطح المكتب" description="تنبيهات تظهر على سطح المكتب" checked={settings.enable_desktop_notifications} onCheckedChange={(v) => update("enable_desktop_notifications", v)} />
+              <SettingSwitch label="إجبارية جلسات الصندوق" description="يجب فتح جلسة صندوق قبل البيع - يمكن تعطيلها" checked={settings.require_cash_session} onCheckedChange={(v) => update("require_cash_session", v)} />
               <Separator className="my-3" />
               <div className="bg-gray-50 rounded-lg p-3">
                 <p className="text-xs text-gray-600 flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> مهلة الجلسة: سيتم تسجيل الخروج تلقائياً بعد فترة عدم النشاط المحددة.</p>

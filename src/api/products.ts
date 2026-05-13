@@ -1,6 +1,7 @@
-import { supabase } from "@/lib/supabase";
+import { supabase, getCurrentUserId, isCurrentUserAdmin } from "@/lib/supabase";
 import { toNumber, type RawRow } from "@/lib/db";
 import type { Product } from "@/types";
+import { checkProductLimit } from "@/lib/planLimits";
 
 const TABLE = "products";
 const BUCKET = "product-images";
@@ -57,10 +58,12 @@ export async function deleteProductImage(image_url: string): Promise<void> {
 }
 
 export async function fetchProducts(page?: number, limit?: number): Promise<Product[]> {
+  const [userId, isAdmin] = await Promise.all([getCurrentUserId(), isCurrentUserAdmin()]);
   let query = supabase
     .from(TABLE)
     .select("*, category:categories(id, name, description, color)")
     .order("name");
+  if (!isAdmin) query = query.eq("user_id", userId);
 
   if (limit && page !== undefined) {
     const from = (page - 1) * limit;
@@ -74,9 +77,12 @@ export async function fetchProducts(page?: number, limit?: number): Promise<Prod
 }
 
 export async function fetchProductsCount(): Promise<number> {
-  const { count, error } = await supabase
+  const [userId, isAdmin] = await Promise.all([getCurrentUserId(), isCurrentUserAdmin()]);
+  let countQuery = supabase
     .from(TABLE)
     .select("*", { count: "exact", head: true });
+  if (!isAdmin) countQuery = countQuery.eq("user_id", userId);
+  const { count, error } = await countQuery;
 
   if (error) throw error;
   return count || 0;
@@ -85,10 +91,15 @@ export async function fetchProductsCount(): Promise<number> {
 export async function createProduct(
   product: Omit<Product, "id" | "created_at" | "category">
 ): Promise<Product> {
+  const userId = await getCurrentUserId();
+
+  await checkProductLimit(userId);
+
   const payload: Record<string, unknown> = {
     name: product.name,
     price: product.price,
     stock: product.stock ?? 0,
+    user_id: userId,
   };
   if (product.barcode) payload.barcode = product.barcode;
   if (product.image_url) payload.image_url = product.image_url;
@@ -148,7 +159,10 @@ export async function updateProduct(
 }
 
 export async function deleteProduct(id: string): Promise<void> {
-  const { error } = await supabase.from(TABLE).delete().eq("id", id);
+  const [userId, isAdmin] = await Promise.all([getCurrentUserId(), isCurrentUserAdmin()]);
+  let query = supabase.from(TABLE).delete().eq("id", id);
+  if (!isAdmin) query = query.eq("user_id", userId);
+  const { error } = await query;
   if (error) throw error;
 }
 
@@ -160,6 +174,9 @@ export async function duplicateProduct(id: string): Promise<Product> {
     .single();
 
   if (fetchError) throw fetchError;
+
+  const userId = await getCurrentUserId();
+  await checkProductLimit(userId);
 
   const insertPayload: Record<string, unknown> = {
     name: `${(original as RawRow).name} (نسخة)`,

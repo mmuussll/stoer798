@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabase, getCurrentUserId, isCurrentUserAdmin } from "@/lib/supabase";
 import { toNumber, type RawRow } from "@/lib/db";
 import type { PurchaseInvoice, PurchaseInvoiceItem } from "@/types";
 
@@ -30,10 +30,12 @@ function mapInvoice(row: RawRow): PurchaseInvoice {
 }
 
 export async function fetchPurchaseInvoices(page?: number, limit?: number): Promise<PurchaseInvoice[]> {
+  const [userId, isAdmin] = await Promise.all([getCurrentUserId(), isCurrentUserAdmin()]);
   let query = supabase
     .from(INVOICE_TABLE)
     .select("*, items:purchase_invoice_items(*)")
     .order("created_at", { ascending: false });
+  if (!isAdmin) query = query.eq("user_id", userId);
 
   if (limit && page !== undefined) {
     const from = (page - 1) * limit;

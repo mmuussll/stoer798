@@ -1,6 +1,7 @@
-import { supabase } from "@/lib/supabase";
+import { supabase, getCurrentUserId, isCurrentUserAdmin } from "@/lib/supabase";
 import { toNumber } from "@/lib/db";
 import type { Customer } from "@/types";
+import { checkCustomerLimit } from "@/lib/planLimits";
 
 const TABLE = "customers";
 
@@ -23,10 +24,12 @@ function mapCustomer(row: Record<string, unknown>): Customer {
 }
 
 export async function fetchCustomers(page?: number, limit?: number): Promise<Customer[]> {
+  const [userId, isAdmin] = await Promise.all([getCurrentUserId(), isCurrentUserAdmin()]);
   let query = supabase
     .from(TABLE)
     .select("*")
     .order("name", { ascending: true });
+  if (!isAdmin) query = query.eq("user_id", userId);
 
   if (limit && page !== undefined) {
     const from = (page - 1) * limit;
@@ -40,16 +43,22 @@ export async function fetchCustomers(page?: number, limit?: number): Promise<Cus
 }
 
 export async function fetchCustomersCount(): Promise<number> {
-  const { count, error } = await supabase
+  const [userId, isAdmin] = await Promise.all([getCurrentUserId(), isCurrentUserAdmin()]);
+  let countQuery = supabase
     .from(TABLE)
     .select("*", { count: "exact", head: true });
+  if (!isAdmin) countQuery = countQuery.eq("user_id", userId);
+  const { count, error } = await countQuery;
 
   if (error) throw error;
   return count || 0;
 }
 
 export async function getCustomer(id: string): Promise<Customer | null> {
-  const { data, error } = await supabase.from(TABLE).select("*").eq("id", id).single();
+  const [userId, isAdmin] = await Promise.all([getCurrentUserId(), isCurrentUserAdmin()]);
+  let query = supabase.from(TABLE).select("*").eq("id", id);
+  if (!isAdmin) query = query.eq("user_id", userId);
+  const { data, error } = await query.single();
   if (error) return null;
   return mapCustomer(data);
 }
@@ -57,6 +66,10 @@ export async function getCustomer(id: string): Promise<Customer | null> {
 export async function createCustomer(
   customer: Omit<Customer, "id" | "total_purchases" | "total_visits" | "points" | "created_at" | "updated_at">
 ): Promise<Customer> {
+  const userId = await getCurrentUserId();
+
+  await checkCustomerLimit(userId);
+
   const { data, error } = await supabase
     .from(TABLE)
     .insert({
@@ -67,6 +80,7 @@ export async function createCustomer(
       note: customer.note || null,
       total_debt: customer.total_debt ?? 0,
       debt_limit: customer.debt_limit ?? 0,
+      user_id: userId,
     })
     .select()
     .single();
@@ -79,6 +93,7 @@ export async function updateCustomer(
   id: string,
   updates: Partial<Omit<Customer, "id" | "created_at">>
 ): Promise<Customer> {
+  const [userId, isAdmin] = await Promise.all([getCurrentUserId(), isCurrentUserAdmin()]);
   const payload: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (updates.name !== undefined) payload.name = updates.name;
   if (updates.phone !== undefined) payload.phone = updates.phone;
@@ -87,12 +102,12 @@ export async function updateCustomer(
   if (updates.note !== undefined) payload.note = updates.note;
   if (updates.debt_limit !== undefined) payload.debt_limit = updates.debt_limit;
 
-  const { data, error } = await supabase
+  let query = supabase
     .from(TABLE)
     .update(payload)
-    .eq("id", id)
-    .select()
-    .single();
+    .eq("id", id);
+  if (!isAdmin) query = query.eq("user_id", userId);
+  const { data, error } = await query.select().single();
 
   if (error) throw error;
 
@@ -111,17 +126,24 @@ export async function updateCustomer(
 }
 
 export async function deleteCustomer(id: string): Promise<void> {
-  const { error } = await supabase.from(TABLE).delete().eq("id", id);
+  const [userId, isAdmin] = await Promise.all([getCurrentUserId(), isCurrentUserAdmin()]);
+  let query = supabase.from(TABLE).delete().eq("id", id);
+  if (!isAdmin) query = query.eq("user_id", userId);
+  const { error } = await query;
   if (error) throw error;
 }
 
 export async function searchCustomers(term: string): Promise<Customer[]> {
-  const { data, error } = await supabase
+  const [userId, isAdmin] = await Promise.all([getCurrentUserId(), isCurrentUserAdmin()]);
+  let query = supabase
     .from(TABLE)
     .select("*")
     .or(`name.ilike.%${term}%,phone.ilike.%${term}%`)
     .order("name")
     .limit(20);
+  if (!isAdmin) query = query.eq("user_id", userId);
+
+  const { data, error } = await query;
 
   if (error) throw error;
   return (data || []).map(mapCustomer);

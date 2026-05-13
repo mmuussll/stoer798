@@ -1,4 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import type { ComponentType } from "react";
 
 interface StatCardProps {
@@ -12,7 +13,7 @@ interface StatCardProps {
 
 export function StatCard({ title, value, icon: Icon, color, bg, sub }: StatCardProps) {
   return (
-    <Card className={bg}>
+    <Card className={cn("transition-all duration-200 hover:shadow-md hover:-translate-y-0.5", bg)}>
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div>

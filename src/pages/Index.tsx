@@ -23,13 +23,14 @@ import {
   LogOut,
   ChevronLeft,
   Users,
-  RotateCcw,
   Landmark,
   Settings,
   Wallet,
   Shield,
   Wrench,
   ChevronRight,
+  Receipt,
+  Tag,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
@@ -57,9 +58,9 @@ function SectionSkeleton() {
 
 const NAV_ITEMS = [
   { id: "sales", path: "/sales", label: "نقطة البيع", icon: ShoppingCart },
+  { id: "sales-invoices", path: "/sales-invoices", label: "سجل الفواتير", icon: Receipt },
   { id: "products", path: "/products", label: "المنتجات", icon: Package },
   { id: "customers", path: "/customers", label: "الزبائن", icon: Users },
-  { id: "sales-returns", path: "/sales-returns", label: "المرتجعات", icon: RotateCcw },
   { id: "debts", path: "/debts", label: "الديون", icon: Wallet },
   { id: "cash-sessions", path: "/cash-sessions", label: "جلسات الصندوق", icon: Landmark },
   { id: "reports", path: "/reports", label: "التقارير", icon: BarChart3 },
@@ -138,19 +139,19 @@ export default function Index() {
                     tooltip={item.label}
                     size="lg"
                     className={cn(
-                      "group relative transition-all duration-200",
+                      "group relative transition-all duration-150",
                       isActive
                         ? "bg-sidebar-accent text-white shadow-sm"
                         : "text-sidebar-accent-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60"
                     )}
                   >
                     <item.icon className={cn(
-                      "w-[18px] h-[18px] transition-transform duration-200",
+                      "w-[18px] h-[18px] transition-transform duration-150",
                       isActive && "text-sidebar-primary"
                     )} />
                     <span className="font-medium tracking-wide">{item.label}</span>
                     {isActive && (
-                      <span className="absolute right-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-sidebar-primary rounded-full" />
+                      <span className="absolute right-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-sidebar-primary rounded-full transition-all duration-150" />
                     )}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -173,6 +174,14 @@ export default function Index() {
               <ChevronLeft className="w-3.5 h-3.5 mr-auto opacity-50" />
             </button>
           )}
+          <button
+            onClick={() => navigate("/pricing")}
+            className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-sidebar-accent-foreground/80 hover:text-white hover:bg-sidebar-accent transition-all duration-200 text-sm font-medium"
+          >
+            <Tag className="w-4 h-4 text-amber-400" />
+            <span>الباقات والأسعار</span>
+            <ChevronLeft className="w-3.5 h-3.5 mr-auto opacity-50" />
+          </button>
           <div className="flex items-center gap-2.5 px-3 py-1.5">
             <div className="relative">
               <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]" />
@@ -196,10 +205,10 @@ export default function Index() {
       {/* Main Content Area */}
       <SidebarInset className="bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20" dir="rtl">
         {/* Top Header Bar */}
-        <header className="flex h-14 items-center gap-2 border-b border-slate-200/70 bg-white/90 backdrop-blur-md px-4 sticky top-0 z-30">
+        <header className="flex h-14 items-center gap-2 border-b border-slate-200/70 bg-white/90 backdrop-blur-xl px-4 sticky top-0 z-30 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
           <div className="flex items-center gap-2">
-            <SidebarTrigger className="hover:bg-slate-100 rounded-lg -mr-1" />
-            <ChevronRight className="w-4 h-4 text-muted-foreground/50" />
+            <SidebarTrigger className="hover:bg-slate-100 rounded-lg -mr-1 transition-all duration-150" />
+            <ChevronRight className="w-4 h-4 text-muted-foreground/50 transition-transform duration-200" />
             <span className="text-sm font-semibold text-slate-700 tracking-tight">
               {activeLabel}
             </span>
@@ -208,7 +217,7 @@ export default function Index() {
           <div className="flex items-center gap-2.5">
             <NotificationsBell />
             <SubscriptionStatusBar />
-            <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-200/60 text-[11px] px-2 py-0.5 font-medium">
+            <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-200/60 text-[11px] px-2 py-0.5 font-medium animate-in fade-in duration-300">
               متصل
             </Badge>
           </div>
@@ -218,7 +227,7 @@ export default function Index() {
         {isAdmin && settings?.maintenance_mode && (
           <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-4 py-2 text-center text-sm font-semibold flex items-center justify-center gap-2 sticky top-14 z-20 shadow-md">
             <Wrench className="w-4 h-4" />
-            <span>وضع الصيانة مفعل - الموقع غير متاح للمستخدمين العاديين</span>
+            <span>وضع الصيانة مفعل</span>
           </div>
         )}
 
@@ -228,9 +237,11 @@ export default function Index() {
           isSalesPage ? "p-0" : "p-4 md:p-6",
           "pb-20 lg:pb-4"
         )}>
-          <Suspense fallback={<SectionSkeleton />}>
-            <Outlet />
-          </Suspense>
+          <div key={location.pathname} className="animate-page-enter h-full">
+            <Suspense fallback={<SectionSkeleton />}>
+              <Outlet />
+            </Suspense>
+          </div>
         </main>
       </SidebarInset>
 

@@ -209,7 +209,7 @@ export default function SalesInterface() {
   };
 
   // Session guard
-  if (!activeSession && !showSessionDialog && user) {
+  if (!activeSession && !showSessionDialog && user && settings?.require_cash_session !== false) {
     return (
       <SessionGuard
         openingBalance={openingBalance}

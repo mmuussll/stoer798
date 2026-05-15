@@ -1,0 +1,24 @@
+# الكوثر للحسابات
+
+> نظام نقاط بيع ومحاسبة سحابي (SaaS) مصمم لأصحاب المتاجر الصغيرة والمتوسطة. يوفر واجهة مبيعات سريعة، إدارة مخزون، ديون، تقارير، ودعم كامل للغة العربية.
+
+## Docs
+
+- [صفحة التعريف](https://iq-system.app/welcome): نظرة عامة على النظام ومميزاته
+- [الباقات والأسعار](https://iq-system.app/pricing): خطط الاشتراك المتاحة
+- [سياسة الخصوصية](https://iq-system.app/privacy): كيفية جمع وحماية البيانات
+- [شروط الاستخدام](https://iq-system.app/terms): شروط الخدمة
+- [إخلاء المسؤولية](https://iq-system.app/disclaimer): حدود المسؤولية القانونية
+- [سياسة ملفات تعريف الارتباط](https://iq-system.app/cookies): استخدام الكوكيز
+- [سياسة الاستخدام المقبول](https://iq-system.app/acceptable-use): قواعد الاستخدام
+
+## Tech
+
+- [Supabase](https://supabase.com): Backend - PostgreSQL, Auth, Realtime, Storage
+- [React](https://react.dev): Frontend framework
+- [Tailwind CSS](https://tailwindcss.com): Utility-first CSS
+- [Shadcn UI](https://ui.shadcn.com): UI component system
+
+## Optional
+
+- [GitHub Issues](https://github.com/anomalyco): الدعم الفني وتتبع المشاكل

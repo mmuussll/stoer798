@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +14,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import * as productsApi from "@/api/products";
 import * as categoriesApi from "@/api/categories";
 import * as customersApi from "@/api/customers";
-import { CURRENCY } from "@/constants";
 import { formatCurrency } from "@/lib/format";
 import { printSaleInvoice } from "@/lib/printInvoice";
 import { cn } from "@/lib/utils";
@@ -28,14 +27,15 @@ import type { HeldOrder } from "@/types";
 import { SessionGuard } from "@/components/pos/SessionGuard";
 import { ProductGrid } from "@/components/pos/ProductGrid";
 import { CartSidebar } from "@/components/pos/CartSidebar";
-import { CheckoutDialog } from "@/components/pos/CheckoutDialog";
-import { DiscountDialog } from "@/components/pos/DiscountDialog";
-import { CustomerSelectDialog } from "@/components/pos/CustomerSelectDialog";
-import { FastSaleDialog } from "@/components/pos/FastSaleDialog";
-import { HoldOrderDialog } from "@/components/pos/HoldOrderDialog";
-import { RecallOrderDialog } from "@/components/pos/RecallOrderDialog";
-import { CloseSessionDialog } from "@/components/pos/CloseSessionDialog";
-import { BarcodeScannerDialog } from "@/components/pos/BarcodeScannerDialog";
+
+const CheckoutDialog = lazy(() => import("@/components/pos/CheckoutDialog"));
+const DiscountDialog = lazy(() => import("@/components/pos/DiscountDialog"));
+const CustomerSelectDialog = lazy(() => import("@/components/pos/CustomerSelectDialog"));
+const FastSaleDialog = lazy(() => import("@/components/pos/FastSaleDialog"));
+const HoldOrderDialog = lazy(() => import("@/components/pos/HoldOrderDialog"));
+const RecallOrderDialog = lazy(() => import("@/components/pos/RecallOrderDialog"));
+const CloseSessionDialog = lazy(() => import("@/components/pos/CloseSessionDialog"));
+const BarcodeScannerDialog = lazy(() => import("@/components/pos/BarcodeScannerDialog"));
 
 export default function SalesInterface() {
   const { user } = useAuth();
@@ -416,19 +416,23 @@ export default function SalesInterface() {
       )}
 
       {/* === DIALOGS === */}
-      <CheckoutDialog
-        open={showCheckoutDialog} onOpenChange={setShowCheckoutDialog}
-        cart={cart} selectedCustomer={selectedCustomer}
-        discountType={discountType} discountAmount={totals.discountAmount}
-        taxEnabled={taxEnabled} taxRate={taxRate} taxAmount={totals.taxAmount}
-        total={totals.total} paymentMethod={paymentMethod}
-        paidAmount={paidAmount}
-        change={paymentMethod === "cash" ? paidAmount - totals.total : 0}
-        isPending={checkoutMutation.isPending}
-        isCredit={paymentMethod === "credit"}
-        debtDueDate={debtDueDate}
-        onConfirm={() => checkoutMutation.mutate(checkoutParams)}
-      />
+      <Suspense fallback={null}>
+        {showCheckoutDialog && (
+          <CheckoutDialog
+            open={showCheckoutDialog} onOpenChange={setShowCheckoutDialog}
+            cart={cart} selectedCustomer={selectedCustomer}
+            discountType={discountType} discountAmount={totals.discountAmount}
+            taxEnabled={taxEnabled} taxRate={taxRate} taxAmount={totals.taxAmount}
+            total={totals.total} paymentMethod={paymentMethod}
+            paidAmount={paidAmount}
+            change={paymentMethod === "cash" ? paidAmount - totals.total : 0}
+            isPending={checkoutMutation.isPending}
+            isCredit={paymentMethod === "credit"}
+            debtDueDate={debtDueDate}
+            onConfirm={() => checkoutMutation.mutate(checkoutParams)}
+          />
+        )}
+      </Suspense>
 
       <Dialog open={showClearCartDialog} onOpenChange={setShowClearCartDialog}>
         <DialogContent dir="rtl" className="max-w-sm">
@@ -443,54 +447,82 @@ export default function SalesInterface() {
         </DialogContent>
       </Dialog>
 
-      <DiscountDialog
-        open={showDiscountDialog} onOpenChange={setShowDiscountDialog}
-        discountType={discountType} discountValue={discountValue}
-        discountAmount={totals.discountAmount}
-        onDiscountTypeChange={setDiscountType}
-        onDiscountValueChange={setDiscountValue}
-      />
+      <Suspense fallback={null}>
+        {showDiscountDialog && (
+          <DiscountDialog
+            open={showDiscountDialog} onOpenChange={setShowDiscountDialog}
+            discountType={discountType} discountValue={discountValue}
+            discountAmount={totals.discountAmount}
+            onDiscountTypeChange={setDiscountType}
+            onDiscountValueChange={setDiscountValue}
+          />
+        )}
+      </Suspense>
 
-      <CustomerSelectDialog
-        open={showCustomerDialog} onOpenChange={setShowCustomerDialog}
-        searchTerm={customerSearch} onSearchChange={setCustomerSearch}
-        searchedCustomers={searchedCustomers}
-        selectedCustomer={selectedCustomer}
-        onSelectCustomer={setSelectedCustomer}
-      />
+      <Suspense fallback={null}>
+        {showCustomerDialog && (
+          <CustomerSelectDialog
+            open={showCustomerDialog} onOpenChange={setShowCustomerDialog}
+            searchTerm={customerSearch} onSearchChange={setCustomerSearch}
+            searchedCustomers={searchedCustomers}
+            selectedCustomer={selectedCustomer}
+            onSelectCustomer={setSelectedCustomer}
+          />
+        )}
+      </Suspense>
 
-      <FastSaleDialog
-        open={showFastSaleDialog} onOpenChange={setShowFastSaleDialog}
-        name={fastSaleName} onNameChange={setFastSaleName}
-        price={fastSalePrice} onPriceChange={setFastSalePrice}
-        onAdd={addFastSale}
-      />
+      <Suspense fallback={null}>
+        {showFastSaleDialog && (
+          <FastSaleDialog
+            open={showFastSaleDialog} onOpenChange={setShowFastSaleDialog}
+            name={fastSaleName} onNameChange={setFastSaleName}
+            price={fastSalePrice} onPriceChange={setFastSalePrice}
+            onAdd={addFastSale}
+          />
+        )}
+      </Suspense>
 
-      <HoldOrderDialog
-        open={showHoldDialog} onOpenChange={setShowHoldDialog}
-        holdLabel={holdLabel} onHoldLabelChange={setHoldLabel}
-        cart={cart} itemCount={calculateItemsCount()} total={totals.total}
-        orderCount={heldOrders.length} onHold={doHoldOrder}
-      />
+      <Suspense fallback={null}>
+        {showHoldDialog && (
+          <HoldOrderDialog
+            open={showHoldDialog} onOpenChange={setShowHoldDialog}
+            holdLabel={holdLabel} onHoldLabelChange={setHoldLabel}
+            cart={cart} itemCount={calculateItemsCount()} total={totals.total}
+            orderCount={heldOrders.length} onHold={doHoldOrder}
+          />
+        )}
+      </Suspense>
 
-      <RecallOrderDialog
-        open={showRecallDialog} onOpenChange={setShowRecallDialog}
-        heldOrders={heldOrders} onRecall={doRecallOrder} onDelete={deleteHeldOrder}
-      />
+      <Suspense fallback={null}>
+        {showRecallDialog && (
+          <RecallOrderDialog
+            open={showRecallDialog} onOpenChange={setShowRecallDialog}
+            heldOrders={heldOrders} onRecall={doRecallOrder} onDelete={deleteHeldOrder}
+          />
+        )}
+      </Suspense>
 
-      <CloseSessionDialog
-        open={showCloseSessionDialog} onOpenChange={setShowCloseSessionDialog}
-        session={activeSession} closingBalance={closingBalance}
-        onClosingBalanceChange={setClosingBalance}
-        onConfirm={() => closeSessionMutation.mutate()}
-        isPending={closeSessionMutation.isPending}
-      />
+      <Suspense fallback={null}>
+        {showCloseSessionDialog && (
+          <CloseSessionDialog
+            open={showCloseSessionDialog} onOpenChange={setShowCloseSessionDialog}
+            session={activeSession} closingBalance={closingBalance}
+            onClosingBalanceChange={setClosingBalance}
+            onConfirm={() => closeSessionMutation.mutate()}
+            isPending={closeSessionMutation.isPending}
+          />
+        )}
+      </Suspense>
 
-      <BarcodeScannerDialog
-        open={showScannerDialog}
-        onOpenChange={setShowScannerDialog}
-        onScan={handleCameraScan}
-      />
+      <Suspense fallback={null}>
+        {showScannerDialog && (
+          <BarcodeScannerDialog
+            open={showScannerDialog}
+            onOpenChange={setShowScannerDialog}
+            onScan={handleCameraScan}
+          />
+        )}
+      </Suspense>
     </div>
   );
 }

@@ -20,7 +20,7 @@ export function usePOSOrders() {
   const [heldOrders, setHeldOrders] = useState<HeldOrder[]>(loadHeldOrders());
   const [holdLabel, setHoldLabel] = useState("");
 
-  const holdOrder = useCallback((cart: CartItem[], _itemCount: number) => {
+  const holdOrder = useCallback((cart: CartItem[]) => {
     if (cart.length === 0) { toast({ title: "السلة فارغة" }); return false; }
     const newOrder: HeldOrder = {
       id: Date.now().toString(), cart: [...cart],

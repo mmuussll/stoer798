@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Check, X, Star, Zap, Crown, Percent, MessageCircle, ArrowRight, Sparkles } from "lucide-react";
 import WhatsAppSupport from "@/components/WhatsAppSupport";
-import { PLANS, DISCOUNT_TIERS, getDiscountPrice, getTotalPrice, WHATSAPP_NUMBER, type PlanType } from "@/constants";
+import { PLANS, DISCOUNT_TIERS, getDiscountPrice, WHATSAPP_NUMBER, type PlanType } from "@/constants";
 
 const WHATSAPP_TEXTS: Record<PlanType, string> = {
   free: "",
@@ -145,7 +145,6 @@ export default function Pricing() {
                       <div className="bg-slate-50 rounded-xl p-3 space-y-1.5">
                         {DISCOUNT_TIERS.filter((t) => t.discountPercent > 0).map((tier) => {
                           const disc = getDiscountPrice(plan.monthlyPrice, tier.discountPercent);
-                          const total = getTotalPrice(plan.monthlyPrice, tier.months, tier.discountPercent);
                           return (
                             <div key={tier.months} className="flex items-center justify-between text-[11px]">
                               <span className="text-slate-500">{tier.label}</span>

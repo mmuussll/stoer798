@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -10,22 +10,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
-  Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious,
-} from "@/components/ui/pagination";
-import {
   Landmark, Search, Plus, Wallet, Calendar, AlertTriangle,
-  User2, Phone, FileText, Banknote, CheckCircle2,
+  User2, Phone, Banknote, CheckCircle2,
   Clock4, History, Filter, ShoppingBag,
-  Pencil, Trash2, X, ChevronDown, ChevronUp, DollarSign,
+  ChevronDown, ChevronUp, DollarSign,
 } from "lucide-react";
 import { StatCard } from "@/components/StatCard";
 import { DebtorDetail } from "@/components/DebtorDetail";
+import DebtsTable from "@/components/debts/DebtsTable";
+import RecordPaymentDialog from "@/components/debts/RecordPaymentDialog";
+import EditDebtDialog from "@/components/debts/EditDebtDialog";
+import DeleteDebtConfirmDialog from "@/components/debts/DeleteDebtConfirmDialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import * as debtsApi from "@/api/debts";
 import * as customersApi from "@/api/customers";
-import { CURRENCY } from "@/constants";
-import { formatNumber, formatCurrency, formatNumberDisplay, formatCurrencyDisplay } from "@/lib/format";
+import { formatCurrency, formatCurrencyDisplay, formatNumberDisplay } from "@/lib/format";
 import {
   STATUS_MAP, PAYMENT_ICONS, PAYMENT_LABELS,
   getDueStatus, todayStr, defaultDueDate,
@@ -181,7 +181,6 @@ export default function DebtManagement() {
       setShowPaymentDialog(false);
     },
     onError: (err: Error) => {
-      console.error("فشل تسجيل الدفعة:", err);
       toast({ title: "فشل تسجيل الدفعة", description: err.message, variant: "destructive" });
     },
   });
@@ -293,8 +292,7 @@ export default function DebtManagement() {
             cashier: user?.email || "البائع",
             user_id: user?.id,
           });
-        } catch (payErr) {
-          console.error("فشل تسجيل الدفعة الأولية:", payErr);
+        } catch {
           toast({ title: "تنبيه", description: "تم إضافة الدين لكن فشل تسجيل الدفعة الأولية", variant: "destructive" });
         }
       }
@@ -309,7 +307,6 @@ export default function DebtManagement() {
       setShowAddDebtDialog(false);
     },
     onError: (err: Error) => {
-      console.error("فشل إضافة الدين:", err);
       toast({ title: "فشل إضافة الدين", description: err.message, variant: "destructive" });
     },
   });
@@ -536,212 +533,38 @@ export default function DebtManagement() {
       </Card>
 
       {/* Debts Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <FileText className="w-5 h-5 text-blue-600" />
-            قائمة الديون ({filteredDebts.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {paginatedDebts.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-              <Landmark className="w-16 h-16 mb-4 opacity-30" />
-              <p className="text-lg font-medium">لا توجد ديون</p>
-              <p className="text-sm mt-1">{searchTerm || statusFilter !== "all" ? "جرب تغيير معايير البحث" : "ستظهر الديون هنا عند البيع بالآجل"}</p>
-            </div>
-          ) : (
-            <>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-right">الزبون</TableHead>
-                      <TableHead className="text-right hidden sm:table-cell">الفاتورة</TableHead>
-                      <TableHead className="text-right">المبلغ الكلي</TableHead>
-                      <TableHead className="text-right">المتبقي</TableHead>
-                      <TableHead className="text-center">الحالة</TableHead>
-                      <TableHead className="text-right hidden sm:table-cell">تاريخ الاستحقاق</TableHead>
-                      <TableHead className="text-center">الإجراءات</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paginatedDebts.map((debt) => {
-                      const status = STATUS_MAP[debt.status] || STATUS_MAP.active;
-                      const StatusIcon = status.icon;
-                      const dueStatus = getDueStatus(debt.due_date);
-                      const paidPercent = debt.total_amount > 0
-                        ? ((debt.total_amount - debt.remaining_amount) / debt.total_amount) * 100 : 0;
+      <DebtsTable
+        debts={paginatedDebts}
+        totalPages={totalPages}
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
+        onDetail={openDetailDialog}
+        onPayment={openPaymentDialog}
+        onEdit={openEditDialog}
+        onDelete={(debt) => { setDeleteTargetId(debt.id); setDeleteTargetName(debt.customer_name); setShowDeleteConfirm(true); }}
+        onDebtorDetail={(debt) => {
+          setDebtorDetailId(debt.customer_id);
+          setDebtorDetailName(debt.customer_name);
+          setDebtorDetailPhone(debt.customer_phone);
+          setDebtorDetailTotal(debts.filter((d) => d.customer_id === debt.customer_id && d.status !== "paid").reduce((s, d) => s + d.remaining_amount, 0));
+          setDebtorDetailCount(debts.filter((d) => d.customer_id === debt.customer_id && d.status !== "paid").length);
+          setShowDebtorDetail(true);
+        }}
+      />
 
-                      return (
-                        <TableRow key={debt.id} className="hover:bg-gray-50">
-                          <TableCell>
-                            <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-                              onClick={() => {
-                                setDebtorDetailId(debt.customer_id);
-                                setDebtorDetailName(debt.customer_name);
-                                setDebtorDetailPhone(debt.customer_phone);
-                                setDebtorDetailTotal(debts.filter((d) => d.customer_id === debt.customer_id && d.status !== "paid").reduce((s, d) => s + d.remaining_amount, 0));
-                                setDebtorDetailCount(debts.filter((d) => d.customer_id === debt.customer_id && d.status !== "paid").length);
-                                setShowDebtorDetail(true);
-                              }}>
-                              <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
-                                <User2 className="w-3.5 h-3.5 text-gray-600" />
-                              </div>
-                              <div>
-                                <p className="font-medium text-sm">{debt.customer_name || "غير معروف"}</p>
-                                {debt.customer_phone && (
-                                  <p className="text-xs text-gray-400 flex items-center gap-1"><Phone className="w-2.5 h-2.5" />{debt.customer_phone}</p>
-                                )}
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell className="hidden sm:table-cell">
-                            {debt.invoice_number ? (
-                              <Badge variant="outline" className="text-xs font-mono text-blue-600">{debt.invoice_number}</Badge>
-                            ) : (
-                              <span className="text-gray-300 text-xs">-</span>
-                            )}
-                          </TableCell>
-                          <TableCell className="font-semibold">{formatCurrency(debt.total_amount, 2)}</TableCell>
-                          <TableCell>
-                            <div>
-                               <p className="font-bold text-red-600">{formatCurrency(debt.remaining_amount, 2)}</p>
-                              {paidPercent > 0 && (
-                                <div className="w-full h-1.5 bg-gray-200 rounded-full mt-1 max-w-[100px]">
-                                  <div className="h-1.5 bg-emerald-500 rounded-full" style={{ width: `${paidPercent}%` }} />
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Badge variant="outline" className={`text-xs flex items-center gap-1 w-fit mx-auto ${status.color}`}>
-                              <StatusIcon className="w-3 h-3" />{status.label}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="hidden sm:table-cell">
-                            <div className="flex items-center gap-1.5">
-                              <Calendar className="w-3 h-3 text-gray-400" />
-                              <span className={`text-sm ${dueStatus.color}`}>
-                                {debt.due_date || <span className="text-gray-300">-</span>}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <div className="flex items-center justify-center gap-1">
-                              <Button variant="ghost" size="icon" className="h-9 w-9 text-blue-600 hover:bg-blue-50 active:bg-blue-100 rounded-xl"
-                                onClick={() => openDetailDialog(debt)} title="التفاصيل والمدفوعات">
-                                <History className="w-4 h-4" />
-                              </Button>
-                              {debt.status !== "paid" && (
-                                <Button variant="ghost" size="icon" className="h-9 w-9 text-emerald-600 hover:bg-emerald-50 active:bg-emerald-100 rounded-xl"
-                                  onClick={() => openPaymentDialog(debt)} title="تسجيل دفعة">
-                                  <Banknote className="w-4 h-4" />
-                                </Button>
-                              )}
-                              <Button variant="ghost" size="icon" className="h-9 w-9 text-amber-600 hover:bg-amber-50 active:bg-amber-100 rounded-xl"
-                                onClick={() => openEditDialog(debt)} title="تعديل الدين">
-                                <Pencil className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon" className="h-9 w-9 text-red-500 hover:bg-red-50 active:bg-red-100 rounded-xl"
-                                onClick={() => { setDeleteTargetId(debt.id); setDeleteTargetName(debt.customer_name); setShowDeleteConfirm(true); }}
-                                title="إلغاء الدين">
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {totalPages > 1 && (
-                <div className="mt-4 flex justify-center">
-                  <Pagination>
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                          className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"} />
-                      </PaginationItem>
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                        <PaginationItem key={page}>
-                          <PaginationLink onClick={() => setCurrentPage(page)} isActive={currentPage === page} className="cursor-pointer">
-                            {page}
-                          </PaginationLink>
-                        </PaginationItem>
-                      ))}
-                      <PaginationItem>
-                        <PaginationNext onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"} />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                </div>
-              )}
-            </>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* ==================== Payment Dialog ==================== */}
-      <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
-        <DialogContent dir="rtl" className="max-w-md max-sm:mx-2 max-sm:w-[calc(100%-16px)]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Banknote className="w-5 h-5 text-emerald-600" />تسجيل دفعة دين
-            </DialogTitle>
-            <DialogDescription>
-              {selectedDebt && <span>تسجيل دفعة من الزبون: <strong>{selectedDebt.customer_name}</strong></span>}
-            </DialogDescription>
-          </DialogHeader>
-          {selectedDebt && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3 bg-gray-50 rounded-lg p-3">
-                <div>
-                  <p className="text-xs text-gray-500">المبلغ الكلي للدين</p>
-                  <p className="font-bold text-lg">{formatCurrency(selectedDebt.total_amount, 2)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">المبلغ المتبقي</p>
-                  <p className="font-bold text-lg text-red-600">{formatCurrency(selectedDebt.remaining_amount, 2)}</p>
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1 block">المبلغ المدفوع <span className="text-red-500">*</span></label>
-                <Input type="number" value={paymentAmount} onChange={(e) => setPaymentAmount(e.target.value)}
-                  placeholder="0.00" dir="ltr" min={0} max={selectedDebt.remaining_amount} autoFocus />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1 block">طريقة الدفع</label>
-                <div className="flex gap-2">
-                  {(["cash", "card", "transfer"] as const).map((m) => {
-                    const Icon = PAYMENT_ICONS[m];
-                    return (
-                      <Button key={m} variant={paymentMethod === m ? "default" : "outline"} size="sm" className="flex-1 gap-1"
-                        onClick={() => setPaymentMethod(m)}>
-                        <Icon className="w-3.5 h-3.5" />{PAYMENT_LABELS[m]}
-                      </Button>
-                    );
-                  })}
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1 block">ملاحظات</label>
-                <Input value={paymentNote} onChange={(e) => setPaymentNote(e.target.value)} placeholder="ملاحظات إضافية..." />
-              </div>
-            </div>
-          )}
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowPaymentDialog(false)}>إلغاء</Button>
-            <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={() => paymentMutation.mutate()}
-              disabled={!paymentAmount || parseFloat(paymentAmount) <= 0 || parseFloat(paymentAmount) > (selectedDebt?.remaining_amount || 0) || paymentMutation.isPending}>
-              {paymentMutation.isPending ? "جاري التسجيل..." : "تسجيل الدفعة"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <RecordPaymentDialog
+        open={showPaymentDialog}
+        onOpenChange={setShowPaymentDialog}
+        debt={selectedDebt}
+        paymentAmount={paymentAmount}
+        onPaymentAmountChange={setPaymentAmount}
+        paymentMethod={paymentMethod}
+        onPaymentMethodChange={setPaymentMethod}
+        paymentNote={paymentNote}
+        onPaymentNoteChange={setPaymentNote}
+        onSubmit={() => paymentMutation.mutate()}
+        isPending={paymentMutation.isPending}
+      />
 
       {/* ==================== Detail Dialog ==================== */}
       <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
@@ -1068,104 +891,34 @@ export default function DebtManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* ==================== Edit Debt Dialog ==================== */}
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent dir="rtl" className="max-w-lg max-h-[90vh] overflow-y-auto max-sm:mx-2 max-sm:w-[calc(100%-16px)]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Pencil className="w-5 h-5 text-amber-600" />تعديل الدين
-            </DialogTitle>
-            <DialogDescription>
-              {selectedDebt && <span>تعديل بيانات الدين للزبون: <strong>{selectedDebt.customer_name}</strong></span>}
-            </DialogDescription>
-          </DialogHeader>
-          {selectedDebt && (
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium mb-1 block">المبلغ الكلي</label>
-                <Input type="number" value={editAmount} onChange={(e) => setEditAmount(e.target.value)}
-                  placeholder="0.00" dir="ltr" className="text-lg font-bold text-center" />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1 block">تاريخ الاستحقاق</label>
-                <Input type="date" value={editDueDate} onChange={(e) => setEditDueDate(e.target.value)} />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1 block">الحالة</label>
-                <Select value={editStatus} onValueChange={setEditStatus}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">نشط</SelectItem>
-                    <SelectItem value="partially_paid">مدفوع جزئياً</SelectItem>
-                    <SelectItem value="overdue">متأخر</SelectItem>
-                    <SelectItem value="paid">مدفوع</SelectItem>
-                    <SelectItem value="cancelled">ملغي</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1 block">رقم هاتف المديون</label>
-                <Input type="tel" value={editDebtorPhone} onChange={(e) => setEditDebtorPhone(e.target.value)}
-                  dir="ltr" placeholder="رقم الهاتف" />
-              </div>
-              <div className="bg-gray-50 border rounded-lg p-3 space-y-3">
-                <span className="text-sm font-semibold text-gray-700">بيانات الكفيل</span>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs text-gray-500 block mb-1">اسم الكفيل</label>
-                    <Input value={editGuarantorName} onChange={(e) => setEditGuarantorName(e.target.value)} placeholder="اسم الكفيل" />
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-500 block mb-1">رقم الكفيل</label>
-                    <Input type="tel" value={editGuarantorPhone} onChange={(e) => setEditGuarantorPhone(e.target.value)}
-                      dir="ltr" placeholder="07xxxxxxxxx" />
-                  </div>
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1 block">ملاحظات</label>
-                <Input value={editNote} onChange={(e) => setEditNote(e.target.value)} placeholder="ملاحظات..." />
-              </div>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <p className="text-xs text-blue-700">
-                  المدفوع حتى الآن: <strong>{formatCurrency(selectedDebt.total_amount - selectedDebt.remaining_amount, 2)}</strong>
-                  {" | "}
-                  المتبقي: <strong>{formatCurrency(selectedDebt.remaining_amount, 2)}</strong>
-                </p>
-              </div>
-            </div>
-          )}
-          <DialogFooter className="gap-2 mt-4">
-            <Button variant="outline" onClick={() => setShowEditDialog(false)}>إلغاء</Button>
-            <Button onClick={() => editMutation.mutate()} disabled={editMutation.isPending}
-              className="bg-amber-600 hover:bg-amber-700">
-              {editMutation.isPending ? "جاري الحفظ..." : "حفظ التعديلات"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <EditDebtDialog
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        selectedDebt={selectedDebt}
+        editAmount={editAmount}
+        setEditAmount={setEditAmount}
+        editDueDate={editDueDate}
+        setEditDueDate={setEditDueDate}
+        editStatus={editStatus}
+        setEditStatus={setEditStatus}
+        editDebtorPhone={editDebtorPhone}
+        setEditDebtorPhone={setEditDebtorPhone}
+        editGuarantorName={editGuarantorName}
+        setEditGuarantorName={setEditGuarantorName}
+        editGuarantorPhone={editGuarantorPhone}
+        setEditGuarantorPhone={setEditGuarantorPhone}
+        editNote={editNote}
+        setEditNote={setEditNote}
+        editMutation={editMutation}
+      />
 
-      {/* ==================== Delete Confirmation Dialog ==================== */}
-      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <DialogContent dir="rtl" className="max-w-md max-sm:mx-2 max-sm:w-[calc(100%-16px)]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-600">
-              <AlertTriangle className="w-5 h-5" />تأكيد الإلغاء
-            </DialogTitle>
-            <DialogDescription>
-              هل أنت متأكد من إلغاء دين <strong>{deleteTargetName}</strong>؟
-              <br />
-              <span className="text-red-500 text-sm">هذا الإجراء لا يمكن التراجع عنه وسيتم إلغاء جميع المدفوعات المرتبطة به.</span>
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>إلغاء</Button>
-            <Button variant="destructive" onClick={() => cancelMutation.mutate()} disabled={cancelMutation.isPending}>
-              {cancelMutation.isPending ? "جاري الإلغاء..." : "تأكيد الإلغاء"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DeleteDebtConfirmDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        customerName={deleteTargetName}
+        onSubmit={() => cancelMutation.mutate()}
+        isPending={cancelMutation.isPending}
+      />
 
       {/* ==================== Debtor Detail ==================== */}
       <DebtorDetail

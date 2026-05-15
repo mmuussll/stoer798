@@ -20,8 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import * as debtsApi from "@/api/debts";
 import * as customersApi from "@/api/customers";
-import { CURRENCY } from "@/constants";
-import { formatNumber, formatCurrency, formatNumberDisplay, formatCurrencyDisplay } from "@/lib/format";
+import { formatCurrency, formatNumberDisplay } from "@/lib/format";
 import {
   STATUS_MAP, PAYMENT_ICONS, PAYMENT_LABELS,
   getDueStatus, todayStr,

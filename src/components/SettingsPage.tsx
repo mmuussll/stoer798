@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -103,21 +103,25 @@ export default function SettingsPage() {
   const queryClient = useQueryClient();
   const { profile } = useAuth();
   const [settings, setSettings] = useState<StoreSettings | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("store");
   const [hasChanges, setHasChanges] = useState(false);
+  const [activeTab, setActiveTab] = useState("store");
   const [serialPort, setSerialPort] = useState<Record<string, unknown> | null>(null);
   const [printerTesting, setPrinterTesting] = useState(false);
   const [serialSupported] = useState(() => isWebSerialSupported());
 
   const isOwner = profile?.role === "owner";
 
+  const { data: fetchedSettings, isLoading } = useQuery({
+    queryKey: ["settings"],
+    queryFn: settingsApi.fetchSettings,
+    staleTime: 5 * 60_000,
+  });
+
   useEffect(() => {
-    settingsApi.fetchSettings().then((s) => {
-      setSettings(s);
-      setLoading(false);
-    }).catch(() => setLoading(false));
-  }, []);
+    if (fetchedSettings && !hasChanges) {
+      setSettings(fetchedSettings);
+    }
+  }, [fetchedSettings, hasChanges]);
 
   const update = (key: keyof StoreSettings, value: unknown) => {
     setSettings((prev) => prev ? { ...prev, [key]: value } : prev);
@@ -253,7 +257,7 @@ export default function SettingsPage() {
     input.click();
   };
 
-  if (loading) {
+  if (isLoading || !fetchedSettings) {
     return (
       <div className="space-y-4 p-4" dir="rtl">
         <Skeleton className="h-8 w-48" />
@@ -677,6 +681,27 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Sticky Save Bar */}
+      {isOwner && (
+        <div className={`fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] px-4 py-3 flex items-center justify-between gap-3 transition-all duration-300 ${hasChanges ? "translate-y-0 opacity-100" : "translate-y-full opacity-0 pointer-events-none"}`}>
+          <div className="flex items-center gap-2 text-sm">
+            <AlertTriangle className="w-4 h-4 text-amber-500" />
+            <span className="text-amber-700 font-medium">توجد تغييرات غير محفوظة</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={resetDefaults} className="gap-2 active:scale-95">
+              <RotateCcw className="w-4 h-4" /> إعادة تعيين
+            </Button>
+            <Button onClick={() => saveMutation.mutate()} disabled={!hasChanges || saveMutation.isPending} className="gap-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 active:scale-95 min-w-[140px] shadow-lg shadow-blue-500/25">
+              <Save className="w-4 h-4" />
+              {saveMutation.isPending ? "جاري الحفظ..." : "حفظ الإعدادات"}
+            </Button>
+          </div>
+        </div>
+      )}
+      {/* Spacer for sticky bar when visible */}
+      {isOwner && hasChanges && <div className="h-16" />}
     </div>
   );
 }

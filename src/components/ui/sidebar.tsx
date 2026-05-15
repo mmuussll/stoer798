@@ -115,6 +115,7 @@ function SidebarTrigger({ className, ...props }: React.ButtonHTMLAttributes<HTML
   return (
     <button
       onClick={() => setOpen(!open)}
+      aria-label={open ? "إغلاق القائمة الجانبية" : "فتح القائمة الجانبية"}
       className={cn(
         "inline-flex items-center justify-center rounded-lg text-sm font-medium h-9 w-9 transition-colors",
         "hover:bg-slate-100 text-slate-500",

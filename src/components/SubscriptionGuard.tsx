@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetchMyProfile } from "@/api/users";
-import { isCurrentUserAdmin } from "@/lib/supabase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShieldAlert, Clock, MessageCircle, Star, Zap, Crown } from "lucide-react";
-import { TRIAL_DAYS, WHATSAPP_NUMBER, WHATSAPP_MESSAGE, PLANS, getPlan } from "@/constants";
+import { TRIAL_DAYS, WHATSAPP_NUMBER, WHATSAPP_MESSAGE, getPlan } from "@/constants";
 import type { UserSubscription } from "@/types";
 
 function getDaysRemaining(sub: UserSubscription): number {
@@ -49,12 +48,16 @@ export function SubscriptionGuard({ children }: { children: React.ReactNode }) {
   const [role, setRole] = useState<string>("user");
   const [subscription, setSubscription] = useState<UserSubscription | null>(null);
   const [loading, setLoading] = useState(true);
+  const lastFetchedUserId = useRef<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
-    Promise.all([fetchMyProfile(), isCurrentUserAdmin()])
-      .then(([profileData, serverIsAdmin]) => {
-        const finalRole = serverIsAdmin || contextIsAdmin || profileData?.role === "admin" ? "admin" : (profileData?.role || "user");
+    if (lastFetchedUserId.current === user.id) return;
+    lastFetchedUserId.current = user.id;
+    setLoading(true);
+    fetchMyProfile()
+      .then((profileData) => {
+        const finalRole = contextIsAdmin || profileData?.role === "admin" ? "admin" : (profileData?.role || "user");
         setRole(finalRole);
         setSubscription(profileData?.subscription || null);
         setLoading(false);
@@ -63,7 +66,7 @@ export function SubscriptionGuard({ children }: { children: React.ReactNode }) {
         setRole(contextIsAdmin ? "admin" : "user");
         setLoading(false);
       });
-  }, [user, contextIsAdmin]);
+  }, [user]);
 
   if (authLoading || loading) {
     return (

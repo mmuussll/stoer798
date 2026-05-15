@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
 import {
   Dialog, DialogContent, DialogDescription,
   DialogFooter, DialogHeader, DialogTitle,
@@ -16,17 +15,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import {
-  Receipt, Search, Calendar, User, Printer, Eye, FileText, X, Package,
+  Receipt, Search, Calendar, User, Eye, FileText, X, Package,
   DollarSign, Hash, Users, CreditCard, Percent, Wallet,
   RotateCcw, Minus, Plus, CheckCheck,
 } from "lucide-react";
 import * as salesApi from "@/api/sales";
 import * as returnsApi from "@/api/returns";
-import { CURRENCY } from "@/constants";
+import { formatNumber, formatCurrency, formatNumberDisplay } from "@/lib/format";
 import { printSaleInvoice } from "@/lib/printInvoice";
-import { formatNumber, formatCurrency, formatNumberDisplay, formatCurrencyDisplay } from "@/lib/format";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import InvoiceDetailDialog from "@/components/sales/InvoiceDetailDialog";
 import type { SaleInvoice } from "@/types";
 
 const ITEMS_PER_PAGE = 10;
@@ -475,190 +474,13 @@ export default function SalesInvoices() {
         </CardContent>
       </Card>
 
-      {/* Invoice Detail Dialog */}
-      <Dialog open={isInvoiceDialogOpen} onOpenChange={setIsInvoiceDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" dir="rtl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Receipt className="w-5 h-5 text-blue-600" />تفاصيل الفاتورة
-            </DialogTitle>
-          </DialogHeader>
-          {selectedInvoice && (
-            <div className="space-y-6">
-              {/* Header Info */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">رقم الفاتورة</p>
-                  <p className="font-semibold text-sm font-mono">{selectedInvoice.invoice_number}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">التاريخ</p>
-                  <p className="font-semibold text-sm">{selectedInvoice.date} - {selectedInvoice.time}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">البائع</p>
-                  <p className="font-semibold text-sm">{selectedInvoice.cashier}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">الزبون</p>
-                  <p className="font-semibold text-sm">
-                    {selectedInvoice.customer ? (
-                      <span className="flex items-center gap-1">
-                        <Users className="w-3 h-3 text-blue-500" />
-                        {selectedInvoice.customer.name}
-                      </span>
-                    ) : (
-                      <span className="text-gray-400">-</span>
-                    )}
-                  </p>
-                </div>
-              </div>
-
-              {/* Items Table */}
-              <div>
-                <h3 className="text-base font-semibold mb-3 flex items-center gap-2">
-                  <Package className="w-4 h-4 text-gray-500" />
-                  تفاصيل المنتجات ({selectedInvoice.items.length})
-                </h3>
-                <div className="border rounded-lg overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-gray-50">
-                        <TableHead className="text-right">#</TableHead>
-                        <TableHead className="text-right">المنتج</TableHead>
-                        <TableHead className="text-right">السعر</TableHead>
-                        <TableHead className="text-right">الكمية</TableHead>
-                        <TableHead className="text-right">الإجمالي</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {selectedInvoice.items.map((item, index) => (
-                        <TableRow key={item.id || index}>
-                          <TableCell className="text-gray-500 text-sm">{index + 1}</TableCell>
-                          <TableCell className="font-medium">{item.name}</TableCell>
-                          <TableCell>{formatCurrency(item.price, 2)}</TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">{item.quantity}</Badge>
-                          </TableCell>
-                          <TableCell className="font-semibold">
-                            {formatCurrency(item.price * item.quantity, 2)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-
-              {/* Totals */}
-              <div className="border-t pt-4 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">المجموع الفرعي:</span>
-                  <span className="font-medium">
-                    {selectedInvoice.subtotal > 0
-                      ? formatCurrency(selectedInvoice.subtotal, 2)
-                      : formatCurrency(selectedInvoice.total, 2)}
-                  </span>
-                </div>
-
-                {selectedInvoice.discount_total > 0 && (
-                  <div className="flex justify-between text-sm text-red-600">
-                    <span>
-                      الخصم
-                      {selectedInvoice.discount_type === "percentage"
-                        ? ` (${selectedInvoice.discount_value}%)`
-                        : ""}:
-                    </span>
-                    <span className="font-medium">
-                      -{formatCurrency(selectedInvoice.discount_total, 2)}
-                    </span>
-                  </div>
-                )}
-
-                {selectedInvoice.tax_total > 0 && (
-                  <div className="flex justify-between text-sm text-orange-600">
-                    <span>الضريبة ({selectedInvoice.tax_rate}%):</span>
-                    <span className="font-medium">
-                      {formatCurrency(selectedInvoice.tax_total, 2)}
-                    </span>
-                  </div>
-                )}
-
-                <div className="flex justify-between text-sm text-gray-600">
-                  <span>طريقة الدفع:</span>
-                  <span className="font-medium flex items-center gap-1">
-                    {getPaymentIcon(selectedInvoice.payment_method)}
-                    {getPaymentLabel(selectedInvoice.payment_method)}
-                  </span>
-                </div>
-
-                {selectedInvoice.paid_amount > 0 && (
-                  <div className="flex justify-between text-sm text-gray-600">
-                    <span>المبلغ المدفوع:</span>
-                    <span className="font-medium">
-                      {formatCurrency(selectedInvoice.paid_amount, 2)}
-                    </span>
-                  </div>
-                )}
-
-                {selectedInvoice.change_amount > 0 && (
-                  <div className="flex justify-between text-sm text-green-600">
-                    <span>الباقي:</span>
-                    <span className="font-medium">
-                      {formatCurrency(selectedInvoice.change_amount, 2)}
-                    </span>
-                  </div>
-                )}
-
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">عدد القطع:</span>
-                  <span className="font-medium">
-                    {selectedInvoice.items.reduce((s, item) => s + item.quantity, 0)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">عدد الأصناف:</span>
-                  <span className="font-medium">{selectedInvoice.items.length}</span>
-                </div>
-
-                <Separator />
-
-                <div className="flex justify-between items-center">
-                  <span className="text-lg font-bold">المبلغ الإجمالي:</span>
-                  <span className="text-2xl font-bold text-blue-600">
-                    {formatCurrency(selectedInvoice.total, 2)}
-                  </span>
-                </div>
-              </div>
-
-              <DialogFooter className="gap-2 flex-wrap">
-                <Button
-                  variant="outline"
-                  className="text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700"
-                  onClick={() => {
-                    setIsInvoiceDialogOpen(false);
-                    setTimeout(() => openReturnDialog(selectedInvoice), 100);
-                  }}
-                >
-                  <RotateCcw className="w-4 h-4 ml-2" />
-                  مرتجع
-                </Button>
-                <Button
-                  className="flex-1 bg-blue-600 hover:bg-blue-700"
-                  onClick={handlePrintInvoice}
-                >
-                  <Printer className="w-4 h-4 ml-2" />
-                  طباعة الفاتورة
-                </Button>
-                <Button variant="outline" onClick={() => setIsInvoiceDialogOpen(false)}>
-                  <X className="w-4 h-4 ml-2" />
-                  إغلاق
-                </Button>
-              </DialogFooter>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <InvoiceDetailDialog
+        open={isInvoiceDialogOpen}
+        onOpenChange={setIsInvoiceDialogOpen}
+        invoice={selectedInvoice}
+        onPrint={handlePrintInvoice}
+        onReturn={() => { if (selectedInvoice) openReturnDialog(selectedInvoice); }}
+      />
 
       {/* Return Dialog */}
       <Dialog open={showReturnDialog} onOpenChange={(open) => { if (!open) resetReturnForm(); }}>

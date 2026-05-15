@@ -72,16 +72,16 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 p-4" dir="rtl">
+    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 p-4" dir="rtl">
       <WhatsAppSupport />
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg mx-auto mb-4">
             <Calculator className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <div className="text-2xl font-bold text-blue-700">
             نظام نقطة البيع
-          </h1>
+          </div>
           <p className="text-gray-500 mt-1">تسجيل الدخول لإدارة المتجر</p>
           <Link
             to="/welcome"
@@ -208,7 +208,7 @@ export default function AuthPage() {
 
             {/* Legal Links Footer */}
             <div className="mt-4 pt-3 border-t border-slate-100 text-center">
-              <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-[11px] text-slate-400">
+              <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-[12px] text-slate-500">
                 {LEGAL_DOCS.map((doc) => (
                   <Link key={doc.path} to={doc.path} target="_blank" className="hover:text-blue-600 transition-colors">
                     {doc.label}
@@ -219,6 +219,6 @@ export default function AuthPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </main>
   );
 }

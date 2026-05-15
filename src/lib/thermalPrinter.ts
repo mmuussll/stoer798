@@ -259,18 +259,6 @@ export async function disconnectSerialPrinter(port: SerialPort): Promise<void> {
   } catch { /* ignore */ }
 }
 
-// ============ Network Printer ============
-
-export async function printViaNetwork(_ip: string, _port: string, _data: Uint8Array): Promise<boolean> {
-  try {
-    // Note: Direct TCP from browser is not possible without a proxy
-    // This is a placeholder - actual implementation requires backend
-    return false;
-  } catch {
-    return false;
-  }
-}
-
 // ============ Printer Test ============
 
 export function generateTestPage(config: PrinterConfig): Uint8Array {

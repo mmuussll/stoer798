@@ -21,7 +21,7 @@ import CategoryManagement from "./CategoryManagement";
 import * as productsApi from "@/api/products";
 import * as categoriesApi from "@/api/categories";
 import { CURRENCY } from "@/constants";
-import { formatNumber, formatCurrency, formatNumberDisplay, formatCurrencyDisplay, priceInWords } from "@/lib/format";
+import { formatCurrency, formatCurrencyDisplay, priceInWords } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { exportProductsCSV } from "@/lib/export";
 import { useDebounce } from "@/hooks/useDebounce";

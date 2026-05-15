@@ -196,13 +196,13 @@ export function ProductGrid({
                 </span>
               ) : null}
 
-              <h3 className="font-semibold text-[12px] lg:text-[13px] text-slate-800 line-clamp-2 leading-tight pr-5">
+              <div className="font-semibold text-[12px] lg:text-[13px] text-slate-800 line-clamp-2 leading-tight pr-5">
                 {product.name}
-              </h3>
+              </div>
 
               <p className="text-sm lg:text-base font-bold text-indigo-600 tracking-tight">
                 {formatNumber(product.price, 3)}{" "}
-                <span className="text-[10px] lg:text-[11px] font-normal text-slate-400">{CURRENCY}</span>
+                <span className="text-[10px] lg:text-[11px] font-normal text-slate-500">{CURRENCY}</span>
               </p>
 
               <div className="flex items-center gap-1 flex-wrap">
@@ -220,8 +220,10 @@ export function ProductGrid({
                 {product.category && (
                   <Badge
                     variant="outline"
-                    className="text-[9px] lg:text-[10px] px-1 lg:px-1.5 py-0 font-medium rounded-md"
-                    style={{ borderColor: product.category.color + "40", color: product.category.color }}
+                    className="text-[9px] lg:text-[10px] px-1 lg:px-1.5 py-0 font-medium rounded-md text-slate-700"
+                    style={{
+                      borderColor: product.category.color + "40",
+                    }}
                   >
                     {product.category.name}
                   </Badge>

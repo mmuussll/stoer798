@@ -25,7 +25,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import * as returnsApi from "@/api/returns";
 import * as salesApi from "@/api/sales";
 import { CURRENCY } from "@/constants";
-import { formatNumber, formatCurrency, formatNumberDisplay, formatCurrencyDisplay } from "@/lib/format";
+import { formatCurrency, formatNumberDisplay } from "@/lib/format";
 import type { SalesReturn, SaleInvoice } from "@/types";
 
 const RETURN_REASONS = [
@@ -179,7 +179,7 @@ export default function SalesReturns() {
     setSelectedItems({});
   };
 
-  const { filtered, totalPages, paginated, stats } = useMemo(() => {
+  const { totalPages, paginated, stats } = useMemo(() => {
     const f = returns.filter((r) => {
       if (searchTerm.trim()) {
         const t = searchTerm.toLowerCase();

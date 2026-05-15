@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import type { UserWithSubscription, UserSubscription } from "@/types";
+import type { UserWithSubscription, UserSubscription, PlanType } from "@/types";
 
 export async function fetchUsers(): Promise<UserWithSubscription[]> {
   const { data: profiles, error: profilesError } = await supabase
@@ -67,7 +67,7 @@ export async function fetchMyProfile(): Promise<{
 export async function activateSubscription(
   userId: string,
   days: number,
-  plan: 'free' | 'basic' | 'pro' = 'pro',
+  plan: PlanType = 'pro',
   note?: string
 ): Promise<UserSubscription> {
   const {
@@ -133,7 +133,7 @@ export async function suspendUser(userId: string): Promise<UserSubscription> {
 export async function extendSubscription(
   userId: string,
   extraDays: number,
-  plan?: 'free' | 'basic' | 'pro'
+  plan?: PlanType
 ): Promise<UserSubscription> {
   const { data: existing } = await supabase
     .from("user_subscriptions")
@@ -142,7 +142,7 @@ export async function extendSubscription(
     .maybeSingle();
 
   const now = new Date();
-  const finalPlan = plan || (existing?.plan as 'free' | 'basic' | 'pro') || 'pro';
+  const finalPlan = plan || (existing?.plan as PlanType) || 'pro';
 
   let currentEnd: Date;
   if (existing && existing.subscription_end_date) {
@@ -243,7 +243,7 @@ function mapSubscription(row: Record<string, unknown>): UserSubscription {
     id: row.id as string,
     user_id: row.user_id as string,
     status: (row.status as UserSubscription["status"]) || "trial",
-    plan: (row.plan as UserSubscription["plan"]) || undefined,
+    plan: row.plan as PlanType | undefined,
     trial_start_date: row.trial_start_date as string,
     trial_end_date: row.trial_end_date as string,
     is_trial_used: Boolean(row.is_trial_used),

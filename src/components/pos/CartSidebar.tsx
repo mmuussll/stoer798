@@ -8,7 +8,6 @@ import {
   DollarSign, CreditCard, Wallet, Minus, Plus, X,
   Printer, CheckCircle2, Landmark,
 } from "lucide-react";
-import { CURRENCY } from "@/constants";
 import { formatNumber, formatCurrency } from "@/lib/format";
 import type { CartItem, Customer } from "@/types";
 

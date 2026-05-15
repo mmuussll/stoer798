@@ -1,3 +1,5 @@
+export type PlanType = "free" | "basic" | "pro";
+
 export interface Category {
   id: string;
   name: string;
@@ -328,7 +330,7 @@ export interface UserSubscription {
   id: string;
   user_id: string;
   status: 'trial' | 'active' | 'suspended' | 'expired';
-  plan?: 'free' | 'basic' | 'pro';
+  plan?: PlanType;
   trial_start_date: string;
   trial_end_date: string;
   is_trial_used: boolean;

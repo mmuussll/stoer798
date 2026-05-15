@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetchMyProfile } from "@/api/users";
 import { Badge } from "@/components/ui/badge";
-import { Clock, ShieldCheck, AlertTriangle, CreditCard, MessageCircle, Crown, Zap, Star, Tag } from "lucide-react";
-import { PLANS, getPlan, DISCOUNT_TIERS, getDiscountPrice, getTotalPrice, type PlanType } from "@/constants";
+import { Clock, AlertTriangle, CreditCard, MessageCircle, Crown, Zap, Star, Tag } from "lucide-react";
+import { getPlan, DISCOUNT_TIERS, getDiscountPrice, getTotalPrice, type PlanType } from "@/constants";
 import type { UserSubscription } from "@/types";
 
 function getDaysRemaining(sub: UserSubscription): number {

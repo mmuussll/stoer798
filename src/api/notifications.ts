@@ -31,12 +31,15 @@ export async function fetchNotifications(): Promise<Notification[]> {
 }
 
 export async function fetchAllNotifications(page?: number, limit?: number): Promise<{ data: Notification[]; count: number }> {
+  const [userId, isAdmin] = await Promise.all([getCurrentUserId(), isCurrentUserAdmin()]);
   const now = new Date().toISOString();
   let query = supabase
     .from("notifications")
     .select("*", { count: "exact" })
     .or(`expires_at.is.null,expires_at.gt.${now}`)
     .order("created_at", { ascending: false });
+
+  if (!isAdmin) query = query.eq("user_id", userId);
 
   if (limit && page !== undefined) {
     const from = (page - 1) * limit;
@@ -81,7 +84,10 @@ export async function deleteNotification(id: string): Promise<void> {
 }
 
 export async function deleteAllNotifications(): Promise<void> {
-  const { error } = await supabase.from("notifications").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+  const [userId, isAdmin] = await Promise.all([getCurrentUserId(), isCurrentUserAdmin()]);
+  let query = supabase.from("notifications").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+  if (!isAdmin) query = query.eq("user_id", userId);
+  const { error } = await query;
   if (error) throw error;
 }
 

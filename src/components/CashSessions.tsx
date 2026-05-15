@@ -22,7 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import * as sessionsApi from "@/api/sessions";
 import { useAuth } from "@/contexts/AuthContext";
 import { CURRENCY } from "@/constants";
-import { formatNumber, formatCurrency, formatNumberDisplay, formatCurrencyDisplay } from "@/lib/format";
+import { formatNumber, formatCurrency, formatNumberDisplay } from "@/lib/format";
 import type { CashSession } from "@/types";
 
 export default function CashSessions() {

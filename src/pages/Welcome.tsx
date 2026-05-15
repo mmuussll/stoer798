@@ -15,8 +15,6 @@ import {
   Zap,
   Cloud,
   Smartphone,
-  CreditCard,
-  Headphones,
   RotateCcw,
   Printer,
   Check,

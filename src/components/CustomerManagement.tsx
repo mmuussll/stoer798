@@ -20,7 +20,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import * as customersApi from "@/api/customers";
 import { CURRENCY } from "@/constants";
-import { formatNumber, formatCurrency, formatNumberDisplay, formatCurrencyDisplay } from "@/lib/format";
+import { formatCurrency, formatNumberDisplay } from "@/lib/format";
 import type { Customer } from "@/types";
 
 interface CustomerFormData {
@@ -111,7 +111,7 @@ export default function CustomerManagement() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const { filtered, totalPages, paginated, stats } = useMemo(() => {
+  const { totalPages, paginated, stats } = useMemo(() => {
     const f = customers.filter((c) => {
       if (!searchTerm.trim()) return true;
       const t = searchTerm.toLowerCase();

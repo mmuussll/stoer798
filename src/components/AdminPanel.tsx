@@ -11,19 +11,21 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Shield, Users, Loader2, Send, Megaphone, Phone, Mail, Eye, CalendarDays, Info, Wrench,
+  Users, Loader2, Send, Megaphone, Phone, Mail, CalendarDays, Info, Wrench,
   TrendingUp, Activity, UserPlus, Zap, Clock, UserCheck,
-  RefreshCw, CheckCircle, Ban, CreditCard, Crown, Star, Percent,
+  RefreshCw, CheckCircle, Ban, CreditCard,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format, startOfWeek, startOfMonth } from "date-fns";
 import { ar } from "date-fns/locale";
-import { CURRENCY, PLANS, DISCOUNT_TIERS, getDiscountPrice, getTotalPrice, type PlanType } from "@/constants";
-import type { UserWithSubscription, UserSubscription } from "@/types";
+import { CURRENCY, type PlanType } from "@/constants";
+import type { UserWithSubscription } from "@/types";
+import NotifyDialog from "@/components/admin/NotifyDialog";
+import ActivateDialog from "@/components/admin/ActivateDialog";
+import ExtendDialog from "@/components/admin/ExtendDialog";
 
 type StatCardData = { label: string; value: string | number; icon: React.ComponentType<{ className?: string }>; color: string; sub?: string };
 
@@ -229,16 +231,6 @@ export default function AdminPanel() {
     },
     onError: (err: Error) => toast.error(err.message || "فشل حذف الحساب"),
   });
-
-  const handleActivate = () => {
-    if (!selectedUser) return;
-    activateMutation.mutate({ userId: selectedUser, days: activationDays, plan: selectedPlan });
-  };
-
-  const handleExtend = () => {
-    if (!selectedUser) return;
-    extendMutation.mutate({ userId: selectedUser, days: extendDays, plan: selectedPlan });
-  };
 
   const handleSetEndDate = () => {
     if (!selectedUser || !endDateValue) return;
@@ -528,75 +520,22 @@ export default function AdminPanel() {
       </Card>
 
       {/* Notify Dialog */}
-      <Dialog open={notifyDialog} onOpenChange={setNotifyDialog}>
-        <DialogContent className="sm:max-w-md" dir="rtl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Send className="w-5 h-5 text-blue-600" />إرسال إشعار</DialogTitle>
-            <DialogDescription>أرسل إشعاراً للمستخدمين</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="nt">المستلم</Label>
-              <Select value={notifyTarget} onValueChange={setNotifyTarget}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">جميع المستخدمين</SelectItem>
-                  {users.map((u) => (<SelectItem key={u.id} value={u.id}>{u.full_name || u.email}</SelectItem>))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="ntype">نوع الإشعار</Label>
-              <Select value={notifyType} onValueChange={setNotifyType}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="system">النظام</SelectItem>
-                  <SelectItem value="debt">ديون</SelectItem>
-                  <SelectItem value="alert">تنبيه</SelectItem>
-                  <SelectItem value="info">معلومة</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="ntitle">العنوان</Label>
-              <Input id="ntitle" value={notifyTitle} onChange={(e) => setNotifyTitle(e.target.value)} placeholder="عنوان الإشعار" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="nmsg">الرسالة</Label>
-              <Input id="nmsg" value={notifyMessage} onChange={(e) => setNotifyMessage(e.target.value)} placeholder="نص الإشعار" />
-            </div>
-            <div className="space-y-2">
-              <Label>حذف تلقائي بعد</Label>
-              <div className="grid grid-cols-6 gap-2">
-                {[
-                  { label: "لا", hours: 0 },
-                  { label: "ساعة", hours: 1 },
-                  { label: "6 ساعات", hours: 6 },
-                  { label: "يوم", hours: 24 },
-                  { label: "أسبوع", hours: 168 },
-                  { label: "شهر", hours: 720 },
-                ].map((p) => (
-                  <Button
-                    key={p.hours}
-                    variant={expiryHours === p.hours ? "default" : "outline"}
-                    size="sm"
-                    className={expiryHours === p.hours ? "bg-amber-600 hover:bg-amber-700 text-[11px]" : "text-[11px]"}
-                    onClick={() => setExpiryHours(p.hours)}
-                  >
-                    {p.label}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setNotifyDialog(false)}>إلغاء</Button>
-            <Button onClick={() => notifyMutation.mutate()} disabled={notifyMutation.isPending || !notifyTitle.trim() || !notifyMessage.trim()} className="bg-blue-600 hover:bg-blue-700">
-              {notifyMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin ml-2" /> : <Send className="w-4 h-4 ml-2" />}إرسال
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <NotifyDialog
+        open={notifyDialog}
+        onOpenChange={setNotifyDialog}
+        users={users}
+        notifyTitle={notifyTitle}
+        setNotifyTitle={setNotifyTitle}
+        notifyMessage={notifyMessage}
+        setNotifyMessage={setNotifyMessage}
+        notifyType={notifyType}
+        setNotifyType={setNotifyType}
+        notifyTarget={notifyTarget}
+        setNotifyTarget={setNotifyTarget}
+        expiryHours={expiryHours}
+        setExpiryHours={setExpiryHours}
+        notifyMutation={notifyMutation}
+      />
 
       {/* User Info Dialog */}
       <Dialog open={!!infoUser} onOpenChange={(open) => { if (!open) setInfoUser(null); }}>
@@ -636,182 +575,34 @@ export default function AdminPanel() {
       </Dialog>
 
       {/* Activate Dialog */}
-      <Dialog open={activateDialog} onOpenChange={setActivateDialog}>
-        <DialogContent className="sm:max-w-md" dir="rtl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><CheckCircle className="w-5 h-5 text-green-600" />تفعيل الاشتراك</DialogTitle>
-            <DialogDescription>اختر الباقة والمدة المناسبة</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label>الباقة</Label>
-              <div className="grid grid-cols-3 gap-2">
-                {(["free", "basic", "pro"] as PlanType[]).map((p) => {
-                  const plan = PLANS[p];
-                  const isSelected = selectedPlan === p;
-                  return (
-                    <button
-                      key={p}
-                      type="button"
-                      onClick={() => { setSelectedPlan(p); }}
-                      className={`p-3 rounded-lg border-2 text-center transition-all ${
-                        isSelected
-                          ? p === "pro" ? "border-purple-400 bg-purple-50" : p === "basic" ? "border-blue-400 bg-blue-50" : "border-gray-400 bg-gray-50"
-                          : "border-gray-200 hover:border-gray-300"
-                      }`}
-                    >
-                      <div className="flex justify-center mb-1">
-                        {p === "pro" ? <Crown className="w-4 h-4 text-amber-500" /> : p === "basic" ? <Zap className="w-4 h-4 text-blue-500" /> : <Star className="w-4 h-4 text-gray-500" />}
-                      </div>
-                      <p className={`text-xs font-bold ${isSelected ? (p === "pro" ? "text-purple-700" : p === "basic" ? "text-blue-700" : "text-gray-700") : "text-gray-600"}`}>{plan.nameAr}</p>
-                      <p className="text-[10px] text-gray-500">{plan.key === "free" ? "مجاني" : `${plan.monthlyPrice.toLocaleString()} د.ع`}</p>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {selectedPlan !== "free" && (
-              <div className="space-y-2">
-                <Label>المدة والخصم</Label>
-                <div className="grid grid-cols-4 gap-2">
-                  {DISCOUNT_TIERS.map((tier, idx) => {
-                    const planPrice = PLANS[selectedPlan].monthlyPrice;
-                    const monthlyWithDiscount = getDiscountPrice(planPrice, tier.discountPercent);
-                    const totalDays = tier.months * 30;
-                    const isSelected = selectedDiscountTier === idx;
-                    return (
-                      <button
-                        key={tier.months}
-                        type="button"
-                        onClick={() => {
-                          setSelectedDiscountTier(idx);
-                          setActivationDays(totalDays);
-                        }}
-                        className={`p-2 rounded-lg border text-center transition-all text-xs ${
-                          isSelected ? "border-green-400 bg-green-50" : "border-gray-200 hover:border-gray-300"
-                        }`}
-                      >
-                        <p className="font-bold text-gray-700">{tier.label}</p>
-                        <p className={`font-bold ${tier.discountPercent > 0 ? "text-green-600" : "text-gray-500"}`}>
-                          {monthlyWithDiscount.toLocaleString()}
-                        </p>
-                        {tier.discountPercent > 0 && (
-                          <p className="text-[9px] text-green-500">خصم {tier.discountPercent}%</p>
-                        )}
-                        <p className="text-[9px] text-gray-400">{totalDays} يوم</p>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="days">عدد مخصص من الأيام</Label>
-              <Input id="days" type="number" min={1} value={activationDays} onChange={(e) => { setActivationDays(Number(e.target.value)); setSelectedDiscountTier(-1); }} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="note">ملاحظة (اختياري)</Label>
-              <Input id="note" value={activationNote} onChange={(e) => setActivationNote(e.target.value)} placeholder="مثال: تم الدفع نقداً" />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setActivateDialog(false)}>إلغاء</Button>
-            <Button onClick={handleActivate} disabled={activateMutation.isPending || activationDays < 1} className="bg-green-600 hover:bg-green-700">
-              {activateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin ml-2" /> : <CheckCircle className="w-4 h-4 ml-2" />}
-              تفعيل {PLANS[selectedPlan].nameAr} - {activationDays} يوم
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ActivateDialog
+        open={activateDialog}
+        onOpenChange={setActivateDialog}
+        selectedUser={selectedUser}
+        activationDays={activationDays}
+        setActivationDays={setActivationDays}
+        activationNote={activationNote}
+        setActivationNote={setActivationNote}
+        selectedPlan={selectedPlan}
+        setSelectedPlan={setSelectedPlan}
+        selectedDiscountTier={selectedDiscountTier}
+        setSelectedDiscountTier={setSelectedDiscountTier}
+        activateMutation={activateMutation}
+      />
 
       {/* Extend Dialog */}
-      <Dialog open={extendDialog} onOpenChange={setExtendDialog}>
-        <DialogContent className="sm:max-w-md" dir="rtl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><RefreshCw className="w-5 h-5 text-purple-600" />تمديد الاشتراك</DialogTitle>
-            <DialogDescription>اختر الباقة والمدة الإضافية مع الخصم</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label>الباقة</Label>
-              <div className="grid grid-cols-3 gap-2">
-                {(["free", "basic", "pro"] as PlanType[]).map((p) => {
-                  const plan = PLANS[p];
-                  const isSelected = selectedPlan === p;
-                  return (
-                    <button
-                      key={p}
-                      type="button"
-                      onClick={() => { setSelectedPlan(p); }}
-                      className={`p-3 rounded-lg border-2 text-center transition-all ${
-                        isSelected
-                          ? p === "pro" ? "border-purple-400 bg-purple-50" : p === "basic" ? "border-blue-400 bg-blue-50" : "border-gray-400 bg-gray-50"
-                          : "border-gray-200 hover:border-gray-300"
-                      }`}
-                    >
-                      <div className="flex justify-center mb-1">
-                        {p === "pro" ? <Crown className="w-4 h-4 text-amber-500" /> : p === "basic" ? <Zap className="w-4 h-4 text-blue-500" /> : <Star className="w-4 h-4 text-gray-500" />}
-                      </div>
-                      <p className={`text-xs font-bold ${isSelected ? (p === "pro" ? "text-purple-700" : p === "basic" ? "text-blue-700" : "text-gray-700") : "text-gray-600"}`}>{plan.nameAr}</p>
-                      <p className="text-[10px] text-gray-500">{plan.key === "free" ? "مجاني" : `${plan.monthlyPrice.toLocaleString()} د.ع`}</p>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {selectedPlan !== "free" && (
-              <div className="space-y-2">
-                <Label>المدة والخصم</Label>
-                <div className="grid grid-cols-4 gap-2">
-                  {DISCOUNT_TIERS.map((tier, idx) => {
-                    const planPrice = PLANS[selectedPlan].monthlyPrice;
-                    const monthlyWithDiscount = getDiscountPrice(planPrice, tier.discountPercent);
-                    const totalDays = tier.months * 30;
-                    const isSelected = selectedDiscountTier === idx;
-                    return (
-                      <button
-                        key={tier.months}
-                        type="button"
-                        onClick={() => {
-                          setSelectedDiscountTier(idx);
-                          setExtendDays(totalDays);
-                        }}
-                        className={`p-2 rounded-lg border text-center transition-all text-xs ${
-                          isSelected ? "border-purple-400 bg-purple-50" : "border-gray-200 hover:border-gray-300"
-                        }`}
-                      >
-                        <p className="font-bold text-gray-700">{tier.label}</p>
-                        <p className={`font-bold ${tier.discountPercent > 0 ? "text-green-600" : "text-gray-500"}`}>
-                          {monthlyWithDiscount.toLocaleString()}
-                        </p>
-                        {tier.discountPercent > 0 && (
-                          <p className="text-[9px] text-green-500">خصم {tier.discountPercent}%</p>
-                        )}
-                        <p className="text-[9px] text-gray-400">{totalDays} يوم</p>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="extendDays">عدد مخصص من الأيام</Label>
-              <Input id="extendDays" type="number" min={1} value={extendDays} onChange={(e) => { setExtendDays(Number(e.target.value)); setSelectedDiscountTier(-1); }} />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setExtendDialog(false)}>إلغاء</Button>
-            <Button onClick={handleExtend} disabled={extendMutation.isPending || extendDays < 1} className="bg-purple-600 hover:bg-purple-700">
-              {extendMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin ml-2" /> : <RefreshCw className="w-4 h-4 ml-2" />}
-              تمديد {selectedPlan === "free" ? "مجاني" : `${extendDays} يوم`}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ExtendDialog
+        open={extendDialog}
+        onOpenChange={setExtendDialog}
+        selectedUser={selectedUser}
+        extendDays={extendDays}
+        setExtendDays={setExtendDays}
+        selectedPlan={selectedPlan}
+        setSelectedPlan={setSelectedPlan}
+        selectedDiscountTier={selectedDiscountTier}
+        setSelectedDiscountTier={setSelectedDiscountTier}
+        extendMutation={extendMutation}
+      />
 
       {/* Set End Date Dialog */}
       <Dialog open={endDateDialog} onOpenChange={setEndDateDialog}>

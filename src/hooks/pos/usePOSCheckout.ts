@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { CURRENCY } from "@/constants";
 import { formatCurrency } from "@/lib/format";
 import { printSaleInvoice } from "@/lib/printInvoice";
 import * as salesApi from "@/api/sales";
@@ -96,8 +95,7 @@ export function usePOSCheckout() {
             })),
             notes: `فاتورة: ${invoiceNumber}`,
           });
-        } catch (debtErr) {
-          console.error("Failed to create debt:", debtErr);
+        } catch {
           toast({ title: "تنبيه", description: "تم البيع لكن فشل تسجيل الدين. يرجى مراجعة قسم الديون.", variant: "destructive" });
         }
       }

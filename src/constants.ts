@@ -1,9 +1,11 @@
+import type { PlanType } from "@/types";
+
 export const CURRENCY = "د.ع";
 export const TRIAL_DAYS = 14;
 export const WHATSAPP_NUMBER = "9647850572326";
 export const WHATSAPP_MESSAGE = encodeURIComponent("السلام عليكم، أرغب في تجديد اشتراكي في نظام الكوثر للحسابات");
 
-export type PlanType = "free" | "basic" | "pro";
+export type { PlanType };
 
 export interface PlanDefinition {
   key: PlanType;

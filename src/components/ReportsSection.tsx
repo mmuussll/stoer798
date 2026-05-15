@@ -4,16 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from "recharts";
 import {
-  FileText, Calendar, TrendingUp, Package, DollarSign, Download,
-  BarChart3, PieChart as PieChartIcon, Activity, RefreshCw,
-  TrendingDown, AlertTriangle, Layers, ShoppingCart, Target,
-  Clock, Zap, Receipt, Landmark, User2, Wallet, CheckCircle2
+  Calendar, TrendingUp, Package, DollarSign, Download,
+  BarChart3, PieChart as PieChartIcon, RefreshCw,
+  Layers, ShoppingCart, Target,
+  Zap, Receipt, Landmark
 } from "lucide-react";
 import { StatCard } from "@/components/StatCard";
 import { useToast } from "@/hooks/use-toast";
@@ -21,93 +17,14 @@ import * as salesApi from "@/api/sales";
 import * as purchasesApi from "@/api/purchases";
 import * as productsApi from "@/api/products";
 import * as debtsApi from "@/api/debts";
-import { STATUS_MAP } from "@/lib/debt-utils";
-import { formatNumber, formatCurrency, formatNumberDisplay, formatCurrencyDisplay } from "@/lib/format";
-
-const COLORS = ["#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#06B6D4", "#EC4899", "#14B8A6", "#F97316", "#6366F1"];
-
-type ReportPeriod = "daily" | "3days" | "weekly" | "monthly";
-
-const MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
-
-function getToday(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function formatDate(date: Date): string {
-  return date.toISOString().slice(0, 10);
-}
-
-function addDays(date: Date, days: number): Date {
-  const d = new Date(date);
-  d.setDate(d.getDate() + days);
-  return d;
-}
-
-function getPeriodKey(dateStr: string, period: ReportPeriod): string {
-  const d = new Date(dateStr);
-  const y = d.getFullYear();
-  const m = d.getMonth() + 1;
-  const day = d.getDate();
-  switch (period) {
-    case "daily":
-      return dateStr;
-    case "3days": {
-      const periodStart = Math.floor((day - 1) / 3) * 3 + 1;
-      return `${y}-${String(m).padStart(2, "0")}-${String(periodStart).padStart(2, "0")}`;
-    }
-    case "weekly": {
-      const daysSinceSaturday = (d.getDay() + 1) % 7;
-      const saturday = new Date(d);
-      saturday.setDate(d.getDate() - daysSinceSaturday);
-      return `${saturday.getFullYear()}-${String(saturday.getMonth() + 1).padStart(2, "0")}-${String(saturday.getDate()).padStart(2, "0")}`;
-    }
-    case "monthly":
-      return `${y}-${String(m).padStart(2, "0")}`;
-    default:
-      return dateStr;
-  }
-}
-
-function getPeriodLabel(key: string, period: ReportPeriod): string {
-  const [y, m, ...rest] = key.split("-").map(Number);
-  switch (period) {
-    case "daily": {
-      const d = new Date(y, m - 1, rest[0]);
-      return `${String(d.getDate()).padStart(2, "0")} ${MONTHS[m - 1]}`;
-    }
-    case "3days": {
-      const end = new Date(y, m - 1, rest[0] + 2);
-      return `${String(rest[0]).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")} ${MONTHS[m - 1]}`;
-    }
-    case "weekly": {
-      const end = new Date(y, m - 1, rest[0] + 6);
-      const startMonth = MONTHS[m - 1];
-      const endMonth = MONTHS[end.getMonth()];
-      if (startMonth === endMonth) {
-        return `${String(rest[0]).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")} ${startMonth}`;
-      }
-      return `${String(rest[0]).padStart(2, "0")} ${startMonth} - ${String(end.getDate()).padStart(2, "0")} ${endMonth}`;
-    }
-    case "monthly":
-      return `${MONTHS[m - 1]} ${y}`;
-    default:
-      return key;
-  }
-}
-
-type XAxisTickProps = { x?: number; y?: number; payload?: { value: string } };
-
-function ArabicXAxisTick(props: XAxisTickProps) {
-  if (props.x == null || props.y == null || !props.payload) return null;
-  return (
-    <foreignObject x={props.x - 65} y={props.y - 2} width="130" height="28" style={{ overflow: "visible" }}>
-      <div xmlns="http://www.w3.org/1999/xhtml" style={{ fontSize: 11, color: "#6B7280", textAlign: "right", direction: "rtl", width: "100%", whiteSpace: "nowrap" }}>
-        {props.payload.value}
-      </div>
-    </foreignObject>
-  );
-}
+import { formatNumber, formatCurrency } from "@/lib/format";
+import { getToday, formatDate, addDays, getPeriodKey, getPeriodLabel, type ReportPeriod } from "@/lib/report-date-utils";
+import { SalesReportTab } from "@/components/reports/SalesReportTab";
+import { ProductsReportTab } from "@/components/reports/ProductsReportTab";
+import { ProfitReportTab } from "@/components/reports/ProfitReportTab";
+import { StockReportTab } from "@/components/reports/StockReportTab";
+import { CategoriesReportTab } from "@/components/reports/CategoriesReportTab";
+import { DebtsReportTab } from "@/components/reports/DebtsReportTab";
 
 export default function ReportsSection() {
   const { toast } = useToast();
@@ -118,17 +35,17 @@ export default function ReportsSection() {
   const [dateTo, setDateTo] = useState("");
   const [chartType, setChartType] = useState<"bar" | "line">("bar");
 
-  const { data: salesInvoices = [], isLoading: salesLoading } = useQuery({
+  const { data: salesInvoices = [] } = useQuery({
     queryKey: ["sales-invoices"],
     queryFn: () => salesApi.fetchSalesInvoices(),
     staleTime: 2 * 60_000,
   });
-  const { data: purchaseInvoices = [], isLoading: purchasesLoading } = useQuery({
+  const { data: purchaseInvoices = [] } = useQuery({
     queryKey: ["purchase-invoices"],
     queryFn: () => purchasesApi.fetchPurchaseInvoices(),
     staleTime: 2 * 60_000,
   });
-  const { data: products = [], isLoading: productsLoading } = useQuery({
+  const { data: products = [] } = useQuery({
     queryKey: ["products"],
     queryFn: () => productsApi.fetchProducts(),
     staleTime: 5 * 60_000,
@@ -139,9 +56,6 @@ export default function ReportsSection() {
     staleTime: 2 * 60_000,
   });
 
-  const _isLoading = salesLoading || purchasesLoading || productsLoading;
-
-  // Quick date presets
   const datePresets = [
     { label: "اليوم", get: () => ({ from: getToday(), to: getToday() }) },
     { label: "أمس", get: () => ({ from: formatDate(addDays(new Date(), -1)), to: formatDate(addDays(new Date(), -1)) }) },
@@ -171,7 +85,6 @@ export default function ReportsSection() {
     setDateTo(to);
   };
 
-  // Filtered data
   const filteredSales = useMemo(() => {
     let result = salesInvoices;
     if (dateFrom) result = result.filter((inv) => inv.date >= dateFrom);
@@ -186,24 +99,20 @@ export default function ReportsSection() {
     return result;
   }, [purchaseInvoices, dateFrom, dateTo]);
 
-  // Summary stats
   const stats = useMemo(() => {
     const totalRevenue = filteredSales.reduce((sum, inv) => sum + inv.total, 0);
     const totalInvoices = filteredSales.length;
     const totalItemsSold = filteredSales.reduce((sum, inv) => sum + inv.items.reduce((s, item) => s + item.quantity, 0), 0);
     const avgInvoice = totalInvoices > 0 ? totalRevenue / totalInvoices : 0;
-
     const totalPurchaseCost = filteredPurchases.reduce(
       (sum, inv) => sum + inv.items.reduce((s, item) => s + item.quantity * item.purchase_price, 0),
       0
     );
     const profit = totalRevenue - totalPurchaseCost;
     const profitMargin = totalRevenue > 0 ? (profit / totalRevenue) * 100 : 0;
-
     return { totalRevenue, totalInvoices, totalItemsSold, avgInvoice, totalPurchaseCost, profit, profitMargin };
   }, [filteredSales, filteredPurchases]);
 
-  // ===================== Sales Report (Tab 1) =====================
   const salesPeriodData = useMemo(() => {
     const grouped = filteredSales.reduce((acc: Record<string, { invoices: number; total: number; items: number }>, inv) => {
       const key = getPeriodKey(inv.date, period);
@@ -218,14 +127,6 @@ export default function ReportsSection() {
       .sort((a, b) => a.rawDate.localeCompare(b.rawDate));
   }, [filteredSales, period]);
 
-  const periodLabelMap: Record<ReportPeriod, string> = {
-    daily: "يومي",
-    "3days": "كل 3 أيام",
-    weekly: "أسبوعي",
-    monthly: "شهري",
-  };
-
-  // ===================== Products Report (Tab 2) =====================
   const allProductStats = useMemo(() => {
     const items = filteredSales.flatMap((inv) => inv.items);
     const grouped = items.reduce((acc: Record<string, { name: string; quantity: number; revenue: number }>, item) => {
@@ -265,30 +166,22 @@ export default function ReportsSection() {
   const selectedProductChartData = Object.values(selectedProductData).sort((a, b) => a.date.localeCompare(b.date));
   const selectedProductStats = allProductStats.find((p) => p.name === selectedProduct);
 
-  // ===================== Profit Report (Tab 3) =====================
   const profitPeriodData = useMemo(() => {
     const grouped: Record<string, { date: string; rawDate: string; sales: number; purchases: number; profit: number }> = {};
-
     filteredSales.forEach((inv) => {
       const key = getPeriodKey(inv.date, period);
       if (!grouped[key]) grouped[key] = { date: getPeriodLabel(key, period), rawDate: key, sales: 0, purchases: 0, profit: 0 };
       grouped[key].sales += inv.total;
     });
-
     filteredPurchases.forEach((inv) => {
       const key = getPeriodKey(inv.date, period);
       if (!grouped[key]) grouped[key] = { date: getPeriodLabel(key, period), rawDate: key, sales: 0, purchases: 0, profit: 0 };
       grouped[key].purchases += inv.items.reduce((s, item) => s + item.quantity * item.purchase_price, 0);
     });
-
-    Object.values(grouped).forEach((g) => {
-      g.profit = g.sales - g.purchases;
-    });
-
+    Object.values(grouped).forEach((g) => { g.profit = g.sales - g.purchases; });
     return Object.values(grouped).sort((a, b) => a.rawDate.localeCompare(b.rawDate));
   }, [filteredSales, filteredPurchases, period]);
 
-  // ===================== Stock Report (Tab 4) =====================
   const lowStockProducts = products.filter((p) => p.stock <= 5).sort((a, b) => a.stock - b.stock);
 
   const soldItemsWithStock = useMemo(() => {
@@ -300,16 +193,12 @@ export default function ReportsSection() {
       return acc;
     }, {});
     return Object.values(grouped)
-      .map((p) => {
-        const product = products.find((pr) => pr.name === p.name);
-        return { ...p, remaining: product?.stock ?? 0 };
-      })
+      .map((p) => { const product = products.find((pr) => pr.name === p.name); return { ...p, remaining: product?.stock ?? 0 }; })
       .sort((a, b) => b.sold - a.sold);
   }, [filteredSales, products]);
 
   const totalStockValue = useMemo(() => products.reduce((sum, p) => sum + p.price * p.stock, 0), [products]);
 
-  // ===================== Categories Report (Tab 5) =====================
   const categoryData = useMemo(() => {
     const items = filteredSales.flatMap((inv) => inv.items);
     const catMap = new Map<string, { revenue: number; items: number }>();
@@ -327,7 +216,6 @@ export default function ReportsSection() {
       .sort((a, b) => b.revenue - a.revenue);
   }, [filteredSales, products]);
 
-  // ===================== Debt Report (Tab 6) =====================
   const debtSummary = useMemo(() => {
     const active = debts.filter((d) => d.status !== "paid");
     const paid = debts.filter((d) => d.status === "paid");
@@ -336,7 +224,6 @@ export default function ReportsSection() {
     const totalPaid = debts.reduce((s, d) => s + (d.total_amount - d.remaining_amount), 0);
     const totalDebtValue = debts.reduce((s, d) => s + d.total_amount, 0);
     const overdueAmount = overdue.reduce((s, d) => s + d.remaining_amount, 0);
-
     const customerMap = new Map<string, { name: string; total: number; count: number; paid: number }>();
     debts.forEach((d) => {
       if (!d.customer_id) return;
@@ -347,70 +234,41 @@ export default function ReportsSection() {
       existing.paid += d.total_amount - d.remaining_amount;
       customerMap.set(key, existing);
     });
-
     return {
-      activeCount: active.length,
-      paidCount: paid.length,
-      overdueCount: overdue.length,
-      totalOutstanding,
-      totalPaid,
-      totalDebtValue,
-      overdueAmount,
-      topCustomers: Array.from(customerMap.values())
-        .sort((a, b) => (b.total - b.paid) - (a.total - a.paid))
-        .slice(0, 10),
+      activeCount: active.length, paidCount: paid.length, overdueCount: overdue.length,
+      totalOutstanding, totalPaid, totalDebtValue, overdueAmount,
+      topCustomers: Array.from(customerMap.values()).sort((a, b) => (b.total - b.paid) - (a.total - a.paid)).slice(0, 10),
     };
   }, [debts]);
 
-  // ===================== CSV Export =====================
   const exportCSV = () => {
     let csv = "";
     let filename = "";
-
     switch (activeTab) {
-      case "sales": {
+      case "sales":
         csv = "الفترة,عدد الفواتير,القطع المباعة,إجمالي المبيعات\n";
-        salesPeriodData.forEach((row) => {
-          csv += `${row.date},${row.invoices},${row.items},${row.total.toFixed(2)}\n`;
-        });
-        filename = `sales-${period}-report`;
-        break;
-      }
-      case "products": {
+        salesPeriodData.forEach((row) => { csv += `${row.date},${row.invoices},${row.items},${row.total.toFixed(2)}\n`; });
+        filename = `sales-${period}-report`; break;
+      case "products":
         csv = "المنتج,الكمية المباعة,الإيرادات,المخزون الحالي\n";
-        allProductStats.forEach((row) => {
-          csv += `${row.name},${row.quantity},${row.revenue.toFixed(2)},${row.stock}\n`;
-        });
-        filename = "products-report";
-        break;
-      }
-      case "profit": {
+        allProductStats.forEach((row) => { csv += `${row.name},${row.quantity},${row.revenue.toFixed(2)},${row.stock}\n`; });
+        filename = "products-report"; break;
+      case "profit":
         csv = "الفترة,المبيعات,المشتريات,الربح\n";
-        profitPeriodData.forEach((row) => {
-          csv += `${row.date},${row.sales.toFixed(2)},${row.purchases.toFixed(2)},${row.profit.toFixed(2)}\n`;
-        });
-        filename = `profit-${period}-report`;
-        break;
-      }
-      case "stock": {
+        profitPeriodData.forEach((row) => { csv += `${row.date},${row.sales.toFixed(2)},${row.purchases.toFixed(2)},${row.profit.toFixed(2)}\n`; });
+        filename = `profit-${period}-report`; break;
+      case "stock":
         csv = "المنتج,الكمية المباعة,المخزون المتبقي,الحالة\n";
         soldItemsWithStock.forEach((row) => {
           const status = row.remaining === 0 ? "نفذ" : row.remaining <= 5 ? "منخفض" : "متوفر";
           csv += `${row.name},${row.sold},${row.remaining},${status}\n`;
         });
-        filename = "stock-report";
-        break;
-      }
-      case "categories": {
+        filename = "stock-report"; break;
+      case "categories":
         csv = "الفئة,الإيرادات,عدد القطع,النسبة المئوية\n";
-        categoryData.forEach((row) => {
-          csv += `${row.name},${row.revenue.toFixed(2)},${row.items},${row.percent.toFixed(1)}%\n`;
-        });
-        filename = "categories-report";
-        break;
-      }
+        categoryData.forEach((row) => { csv += `${row.name},${row.revenue.toFixed(2)},${row.items},${row.percent.toFixed(1)}%\n`; });
+        filename = "categories-report"; break;
     }
-
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
@@ -419,689 +277,8 @@ export default function ReportsSection() {
     toast({ title: "تم التصدير", description: "تم تصدير التقرير بنجاح" });
   };
 
-  // ===================== Render Functions =====================
-  const renderSalesTab = () => (
-    <div className="space-y-6">
-      {/* Period selector */}
-      <Card>
-        <CardContent className="pt-4">
-          <div className="flex items-center gap-2 flex-wrap">
-            <Label className="text-sm font-medium ml-2">تجميع البيانات:</Label>
-            {(["daily", "3days", "weekly", "monthly"] as ReportPeriod[]).map((p) => (
-              <Button
-                key={p}
-                variant={period === p ? "default" : "outline"}
-                size="sm"
-                onClick={() => setPeriod(p)}
-              >
-                <Clock className="w-3.5 h-3.5 ml-1" />
-                {periodLabelMap[p]}
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {salesPeriodData.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-16 text-gray-400">
-            <BarChart3 className="w-12 h-12 mb-4" />
-            <p className="text-lg font-medium">لا توجد بيانات مبيعات</p>
-            <p className="text-sm mt-1">ستظهر البيانات هنا بعد إتمام المبيعات</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <>
-          {/* Chart */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <TrendingUp className="w-5 h-5 text-blue-600" />
-                رسم بياني للمبيعات ({periodLabelMap[period]})
-              </CardTitle>
-              <div className="flex border rounded-md overflow-hidden">
-                <Button variant={chartType === "bar" ? "default" : "ghost"} size="sm" className="rounded-none px-3" onClick={() => setChartType("bar")}>
-                  <BarChart3 className="w-4 h-4" />
-                </Button>
-                <Button variant={chartType === "line" ? "default" : "ghost"} size="sm" className="rounded-none px-3" onClick={() => setChartType("line")}>
-                  <Activity className="w-4 h-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={280}>
-                {chartType === "bar" ? (
-                  <BarChart data={salesPeriodData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" tick={(p: XAxisTickProps) => <ArabicXAxisTick {...p} />} height={50} />
-                    <YAxis />
-                    <Tooltip
-                      formatter={(value: number, name: string) => {
-                        if (name === "total") return [formatCurrency(value), "المبيعات"];
-                        if (name === "invoices") return [value, "الفواتير"];
-                        return [value, "القطع"];
-                      }}
-                    />
-                    <Legend formatter={(v) => (v === "total" ? "المبيعات" : v === "invoices" ? "الفواتير" : "القطع")} />
-                    <Bar dataKey="total" fill="#3B82F6" radius={[4, 4, 0, 0]} name="total" />
-                  </BarChart>
-                ) : (
-                  <LineChart data={salesPeriodData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" tick={(p: XAxisTickProps) => <ArabicXAxisTick {...p} />} height={50} />
-                    <YAxis />
-                    <Tooltip formatter={(value: number) => [formatCurrency(value), "المبيعات"]} />
-                    <Legend formatter={() => "المبيعات"} />
-                    <Line type="monotone" dataKey="total" stroke="#3B82F6" strokeWidth={2} dot={{ r: 4 }} name="total" />
-                  </LineChart>
-                )}
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          {/* Detail table */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <FileText className="w-5 h-5 text-violet-600" />
-                تفاصيل المبيعات ({periodLabelMap[period]})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-right">الفترة</TableHead>
-                    <TableHead className="text-right">عدد الفواتير</TableHead>
-                    <TableHead className="text-right">القطع المباعة</TableHead>
-                    <TableHead className="text-right">إجمالي المبيعات</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {salesPeriodData.map((item, i) => (
-                    <TableRow key={i}>
-                      <TableCell className="font-medium">{item.date}</TableCell>
-                      <TableCell>{item.invoices}</TableCell>
-                      <TableCell>{item.items}</TableCell>
-                      <TableCell className="font-semibold text-blue-600">
-                        {formatCurrency(item.total, 2)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </>
-      )}
-    </div>
-  );
-
-  const renderProductsTab = () => (
-    <div className="space-y-6">
-      {/* Product Selector */}
-      <Card>
-        <CardContent className="pt-4">
-          <div className="flex items-center gap-4 flex-wrap">
-            <div className="flex-1 min-w-0 w-full sm:w-auto sm:min-w-[250px]">
-              <Label className="mb-2 block">اختر منتج لعرض تقريره</Label>
-              <Select value={selectedProduct} onValueChange={setSelectedProduct}>
-                <SelectTrigger>
-                  <SelectValue placeholder="كل المنتجات" />
-                </SelectTrigger>
-                <SelectContent className="max-h-64">
-                  <SelectItem value="all">كل المنتجات (ملخص)</SelectItem>
-                  {products.map((p) => (
-                    <SelectItem key={p.id} value={p.name}>
-                      {p.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Specific Product Report */}
-      {selectedProduct !== "all" && selectedProductStats ? (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard title="الكمية المباعة" value={String(selectedProductStats.quantity)} icon={ShoppingCart} color="text-blue-600" bg="bg-blue-50" />
-            <StatCard title="الإيرادات" value={formatCurrency(selectedProductStats.revenue, 2)} icon={DollarSign} color="text-emerald-600" bg="bg-emerald-50" />
-            <StatCard title="المخزون الحالي" value={String(selectedProductStats.stock)} icon={Package} color="text-violet-600" bg="bg-violet-50" />
-            <StatCard title="متوسط السعر" value={formatCurrency(selectedProductStats.quantity > 0 ? selectedProductStats.revenue / selectedProductStats.quantity : 0, 2)} icon={TrendingUp} color="text-orange-600" bg="bg-orange-50" />
-          </div>
-
-          {selectedProductChartData.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Activity className="w-5 h-5 text-blue-600" />
-                  اتجاه مبيعات: {selectedProduct}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={260}>
-                  <LineChart data={selectedProductChartData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" tick={(p: XAxisTickProps) => <ArabicXAxisTick {...p} />} height={50} />
-                    <YAxis />
-                    <Tooltip formatter={(value: number, name: string) => [name === "revenue" ? formatCurrency(value) : value, name === "revenue" ? "الإيرادات" : "الكمية"]} />
-                    <Legend formatter={(v) => (v === "revenue" ? "الإيرادات" : "الكمية")} />
-                    <Line type="monotone" dataKey="revenue" stroke="#3B82F6" strokeWidth={2} dot={{ r: 4 }} name="revenue" />
-                    <Line type="monotone" dataKey="quantity" stroke="#10B981" strokeWidth={2} dot={{ r: 4 }} name="quantity" />
-                  </LineChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Product invoices list */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <FileText className="w-5 h-5 text-violet-600" />
-                فواتير تحتوي على {selectedProduct}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-right">التاريخ</TableHead>
-                    <TableHead className="text-right">رقم الفاتورة</TableHead>
-                    <TableHead className="text-right">الكمية</TableHead>
-                    <TableHead className="text-right">الإيراد</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredSales
-                    .filter((inv) => inv.items.some((item) => item.name === selectedProduct))
-                    .map((inv) => {
-                      const item = inv.items.find((i) => i.name === selectedProduct)!;
-                      return (
-                        <TableRow key={inv.id}>
-                          <TableCell>{inv.date}</TableCell>
-                          <TableCell className="font-medium">{inv.invoice_number}</TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">{item.quantity}</Badge>
-                          </TableCell>
-                          <TableCell className="font-semibold text-blue-600">
-                            {formatCurrency(item.price * item.quantity, 2)}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </div>
-      ) : (
-        /* All Products Summary */
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Top 10 */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <TrendingUp className="w-5 h-5 text-emerald-600" />
-                الأعلى مبيعاً
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {topProducts.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-8 text-gray-400">
-                  <Package className="w-8 h-8 mb-2" />
-                  <p>لا توجد مبيعات</p>
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-right">المنتج</TableHead>
-                      <TableHead className="text-right">الكمية</TableHead>
-                      <TableHead className="text-right">الإيرادات</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {topProducts.map((item, i) => (
-                      <TableRow key={i}>
-                        <TableCell className="font-medium">{item.name}</TableCell>
-                        <TableCell><Badge variant="secondary">{item.quantity}</Badge></TableCell>
-                        <TableCell className="font-semibold text-emerald-600">{formatCurrency(item.revenue, 2)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Bottom 10 */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <TrendingDown className="w-5 h-5 text-red-500" />
-                الأقل مبيعاً
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {bottomProducts.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-8 text-gray-400">
-                  <Package className="w-8 h-8 mb-2" />
-                  <p>لا توجد مبيعات</p>
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-right">المنتج</TableHead>
-                      <TableHead className="text-right">الكمية</TableHead>
-                      <TableHead className="text-right">الإيرادات</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {bottomProducts.map((item, i) => (
-                      <TableRow key={i}>
-                        <TableCell className="font-medium">{item.name}</TableCell>
-                        <TableCell><Badge variant="secondary">{item.quantity}</Badge></TableCell>
-                        <TableCell className="font-semibold text-red-500">{formatCurrency(item.revenue, 2)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
-    </div>
-  );
-
-  const renderProfitTab = () => (
-    <div className="space-y-6">
-      {profitPeriodData.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-16 text-gray-400">
-            <DollarSign className="w-12 h-12 mb-4" />
-            <p className="text-lg font-medium">لا توجد بيانات كافية</p>
-            <p className="text-sm mt-1">يجب وجود فواتير مبيعات ومشتريات لحساب الأرباح</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <>
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Activity className="w-5 h-5 text-emerald-600" />
-                مقارنة المبيعات والمشتريات ({periodLabelMap[period]})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={profitPeriodData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" tick={(p: XAxisTickProps) => <ArabicXAxisTick {...p} />} height={50} />
-                  <YAxis />
-                  <Tooltip formatter={(value: number) => [formatCurrency(value), ""]} />
-                  <Legend formatter={(v) => (v === "sales" ? "المبيعات" : v === "purchases" ? "المشتريات" : "الربح")} />
-                  <Bar dataKey="sales" fill="#3B82F6" radius={[4, 4, 0, 0]} name="sales" />
-                  <Bar dataKey="purchases" fill="#F59E0B" radius={[4, 4, 0, 0]} name="purchases" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <FileText className="w-5 h-5 text-violet-600" />
-                تفاصيل الأرباح والخسائر ({periodLabelMap[period]})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-right">الفترة</TableHead>
-                    <TableHead className="text-right">المبيعات</TableHead>
-                    <TableHead className="text-right">المشتريات</TableHead>
-                    <TableHead className="text-right">الربح</TableHead>
-                    <TableHead className="text-right">نسبة الربح</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {profitPeriodData.map((item, i) => (
-                    <TableRow key={i}>
-                      <TableCell className="font-medium">{item.date}</TableCell>
-                      <TableCell className="text-blue-600">{formatCurrency(item.sales, 2)}</TableCell>
-                      <TableCell className="text-amber-600">{formatCurrency(item.purchases, 2)}</TableCell>
-                      <TableCell className={`font-semibold ${item.profit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
-                        {formatCurrency(item.profit, 2)}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={item.sales > 0 ? (item.profit / item.sales) * 100 >= 0 ? "default" : "destructive" : "secondary"}>
-                          {item.sales > 0 ? ((item.profit / item.sales) * 100).toFixed(1) : "0.0"}%
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </>
-      )}
-    </div>
-  );
-
-  const renderStockTab = () => (
-    <div className="space-y-6">
-      {/* Low Stock Alert */}
-      {lowStockProducts.length > 0 && (
-        <Card className="border-amber-300 bg-amber-50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base text-amber-800">
-              <AlertTriangle className="w-5 h-5" />
-              تنبيهات المخزون المنخفض
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {lowStockProducts.map((p) => (
-                <div key={p.id} className="flex items-center justify-between bg-white rounded-lg p-3 border border-amber-200">
-                  <div>
-                    <p className="font-medium text-gray-900">{p.name}</p>
-                    <p className="text-xs text-muted-foreground">{p.category?.name || "غير مصنف"}</p>
-                  </div>
-                  <Badge variant={p.stock === 0 ? "destructive" : "outline"} className={p.stock === 0 ? "" : "border-amber-500 text-amber-700"}>
-                    {p.stock === 0 ? "نفذ" : `${p.stock} متبقي`}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Sold Items */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Package className="w-5 h-5 text-blue-600" />
-            المنتجات المباعة والمخزون
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {soldItemsWithStock.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-gray-400">
-              <Package className="w-10 h-10 mb-3" />
-              <p>لا توجد مبيعات بعد</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-right">المنتج</TableHead>
-                  <TableHead className="text-right">الكمية المباعة</TableHead>
-                  <TableHead className="text-right">المخزون المتبقي</TableHead>
-                  <TableHead className="text-right">الحالة</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {soldItemsWithStock.map((item, i) => (
-                  <TableRow key={i}>
-                    <TableCell className="font-medium">{item.name}</TableCell>
-                    <TableCell className="text-blue-600">{item.sold}</TableCell>
-                    <TableCell className="font-semibold">
-                      {item.remaining > 0 ? (
-                        <span className="text-orange-600">{item.remaining}</span>
-                      ) : (
-                        <Badge variant="destructive" className="text-xs">نفذ</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {item.remaining === 0 ? (
-                        <Badge variant="destructive">نفذ المخزون</Badge>
-                      ) : item.remaining <= 5 ? (
-                        <Badge variant="outline" className="border-amber-500 text-amber-700">منخفض</Badge>
-                      ) : (
-                        <Badge variant="secondary">متوفر</Badge>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-
-  const renderCategoriesTab = () => (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <PieChartIcon className="w-5 h-5 text-purple-600" />
-            توزيع المبيعات حسب الفئة
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {categoryData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={280}>
-              <PieChart>
-                <Pie
-                  data={categoryData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} ${formatNumber(percent * 100, 0)}%`}
-                  outerRadius={110}
-                  fill="#8884d8"
-                  dataKey="revenue"
-                >
-                  {categoryData.map((_, i) => (
-                    <Cell key={`cell-${i}`} fill={COLORS[i % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value: number) => [formatCurrency(value), "المبيعات"]} />
-              </PieChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="flex items-center justify-center h-[320px] text-gray-400">لا توجد بيانات كافية</div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Layers className="w-5 h-5 text-indigo-600" />
-            أداء الفئات
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {categoryData.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-gray-400">
-              <Layers className="w-10 h-10 mb-3" />
-              <p>لا توجد بيانات</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-right">الفئة</TableHead>
-                  <TableHead className="text-right">القطع</TableHead>
-                  <TableHead className="text-right">الإيرادات</TableHead>
-                  <TableHead className="text-right">النسبة</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {categoryData.map((cat, i) => (
-                  <TableRow key={i}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                        {cat.name}
-                      </div>
-                    </TableCell>
-                    <TableCell><Badge variant="secondary">{cat.items}</Badge></TableCell>
-                    <TableCell className="font-semibold text-indigo-600">{formatCurrency(cat.revenue, 2)}</TableCell>
-                    <TableCell>{formatNumber(cat.percent, 1)}%</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-
-  const renderDebtsTab = () => {
-    const ds = debtSummary;
-
-    return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-          <StatCard title="الديون المستحقة" value={formatCurrency(ds.totalOutstanding, 2)} icon={Landmark} color="text-red-600" bg="bg-red-50 border border-red-200" />
-          <StatCard title="الديون المسددة" value={formatCurrency(ds.totalPaid, 2)} icon={CheckCircle2} color="text-emerald-600" bg="bg-emerald-50" />
-          <StatCard title="إجمالي الديون" value={formatCurrency(ds.totalDebtValue, 2)} icon={Wallet} color="text-blue-600" bg="bg-blue-50" />
-          <StatCard title="عدد الديون النشطة" value={String(ds.activeCount)} icon={AlertTriangle} color="text-amber-600" bg="bg-amber-50" />
-          <StatCard title="عدد الديون المتأخرة" value={`${ds.overdueCount} (${formatCurrencyDisplay(ds.overdueAmount, 0)})`} icon={AlertTriangle} color={ds.overdueCount > 0 ? "text-red-600" : "text-green-600"} bg={ds.overdueCount > 0 ? "bg-red-50" : "bg-green-50"} />
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <User2 className="w-5 h-5 text-violet-600" />
-                أكثر الزبائن مدينةً
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {ds.topCustomers.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-8 text-gray-400">
-                  <User2 className="w-8 h-8 mb-2" />
-                  <p>لا توجد ديون حتى الآن</p>
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-right">الزبون</TableHead>
-                      <TableHead className="text-right">عدد الديون</TableHead>
-                      <TableHead className="text-right">إجمالي الدين</TableHead>
-                      <TableHead className="text-right">المسدد</TableHead>
-                      <TableHead className="text-right">المتبقي</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {ds.topCustomers.map((c, i) => (
-                      <TableRow key={i}>
-                        <TableCell className="font-medium">{c.name}</TableCell>
-                        <TableCell><Badge variant="secondary">{c.count}</Badge></TableCell>
-                        <TableCell className="font-semibold">{formatCurrency(c.total, 2)}</TableCell>
-                        <TableCell className="text-emerald-600">{formatCurrency(c.paid, 2)}</TableCell>
-                        <TableCell className="font-bold text-red-600">{formatCurrency(c.total - c.paid, 2)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <PieChartIcon className="w-5 h-5 text-blue-600" />
-                توزيع الديون (نشط/مسدد)
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {debts.length === 0 ? (
-                <div className="flex items-center justify-center h-[280px] text-gray-400">لا توجد بيانات</div>
-              ) : (
-                <ResponsiveContainer width="100%" height={280}>
-                  <PieChart>
-                    <Pie
-                      data={[
-                        { name: "مستحق", value: ds.totalOutstanding, color: "#EF4444" },
-                        { name: "مسدد", value: ds.totalPaid, color: "#10B981" },
-                      ]}
-                      cx="50%" cy="50%" labelLine={false}
-                      label={({ name, value }) => `${name}: ${formatCurrencyDisplay(value, 0)}`}
-                      outerRadius={110}
-                      dataKey="value"
-                    >
-                      <Cell fill="#EF4444" />
-                      <Cell fill="#10B981" />
-                    </Pie>
-                  <Tooltip formatter={(value: number) => [formatCurrency(value), ""]} />
-                  </PieChart>
-                </ResponsiveContainer>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <FileText className="w-5 h-5 text-violet-600" />
-              قائمة الديون ({debts.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {debts.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-gray-400">
-                <Landmark className="w-8 h-8 mb-2" />
-                <p>لا توجد ديون</p>
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-right">الزبون</TableHead>
-                    <TableHead className="text-right">المبلغ الكلي</TableHead>
-                    <TableHead className="text-right">المسدد</TableHead>
-                    <TableHead className="text-right">المتبقي</TableHead>
-                    <TableHead className="text-right">الحالة</TableHead>
-                    <TableHead className="text-right">تاريخ الاستحقاق</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {debts.slice(0, 20).map((d) => {
-                    const statusInfo = STATUS_MAP[d.status] || STATUS_MAP.active;
-                    return (
-                      <TableRow key={d.id}>
-                        <TableCell className="font-medium">{d.customer_name || "-"}</TableCell>
-                        <TableCell>{formatCurrency(d.total_amount, 2)}</TableCell>
-                        <TableCell className="text-emerald-600">{formatCurrency(d.total_amount - d.remaining_amount, 2)}</TableCell>
-                        <TableCell className="font-bold text-red-600">{formatCurrency(d.remaining_amount, 2)}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className={statusInfo.color}>{statusInfo.label}</Badge>
-                        </TableCell>
-                        <TableCell className="text-sm">{d.due_date || "-"}</TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    );
-  };
-
   return (
     <div className="space-y-6" dir="rtl">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">التقارير والإحصائيات</h1>
@@ -1113,7 +290,6 @@ export default function ReportsSection() {
         </Button>
       </div>
 
-      {/* Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard title="إجمالي المبيعات" value={formatCurrency(stats.totalRevenue, 2)} icon={DollarSign} color="text-blue-600" bg="bg-blue-50" />
         <StatCard title="عدد الفواتير" value={String(stats.totalInvoices)} icon={Receipt} color="text-violet-600" bg="bg-violet-50" />
@@ -1128,7 +304,6 @@ export default function ReportsSection() {
         <StatCard title="قيمة المخزون" value={formatCurrency(totalStockValue, 2)} icon={Layers} color="text-indigo-600" bg="bg-indigo-50" />
       </div>
 
-      {/* Date Filter */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base">
@@ -1138,7 +313,6 @@ export default function ReportsSection() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {/* Quick presets */}
             <div className="flex items-center gap-2 flex-wrap">
               <Label className="text-xs text-muted-foreground ml-2">سريع:</Label>
               {datePresets.map((preset) => (
@@ -1146,19 +320,11 @@ export default function ReportsSection() {
                   {preset.label}
                 </Button>
               ))}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setDateFrom("");
-                  setDateTo("");
-                }}
-              >
+              <Button variant="ghost" size="sm" onClick={() => { setDateFrom(""); setDateTo(""); }}>
                 <RefreshCw className="w-3 h-3 ml-1" />
                 إعادة
               </Button>
             </div>
-            {/* Custom range */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label className="text-xs">من تاريخ</Label>
@@ -1173,41 +339,39 @@ export default function ReportsSection() {
         </CardContent>
       </Card>
 
-      {/* Report Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="w-full justify-start overflow-x-auto">
-          <TabsTrigger value="sales" className="gap-1.5">
-            <BarChart3 className="w-4 h-4" />
-            المبيعات
-          </TabsTrigger>
-          <TabsTrigger value="products" className="gap-1.5">
-            <Package className="w-4 h-4" />
-            المنتجات
-          </TabsTrigger>
-          <TabsTrigger value="profit" className="gap-1.5">
-            <DollarSign className="w-4 h-4" />
-            الأرباح والخسائر
-          </TabsTrigger>
-          <TabsTrigger value="stock" className="gap-1.5">
-            <Layers className="w-4 h-4" />
-            المخزون
-          </TabsTrigger>
-          <TabsTrigger value="categories" className="gap-1.5">
-            <PieChartIcon className="w-4 h-4" />
-            الفئات
-          </TabsTrigger>
-          <TabsTrigger value="debts" className="gap-1.5">
-            <Landmark className="w-4 h-4" />
-            الديون
-          </TabsTrigger>
+          <TabsTrigger value="sales" className="gap-1.5"><BarChart3 className="w-4 h-4" />المبيعات</TabsTrigger>
+          <TabsTrigger value="products" className="gap-1.5"><Package className="w-4 h-4" />المنتجات</TabsTrigger>
+          <TabsTrigger value="profit" className="gap-1.5"><DollarSign className="w-4 h-4" />الأرباح والخسائر</TabsTrigger>
+          <TabsTrigger value="stock" className="gap-1.5"><Layers className="w-4 h-4" />المخزون</TabsTrigger>
+          <TabsTrigger value="categories" className="gap-1.5"><PieChartIcon className="w-4 h-4" />الفئات</TabsTrigger>
+          <TabsTrigger value="debts" className="gap-1.5"><Landmark className="w-4 h-4" />الديون</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="sales">{renderSalesTab()}</TabsContent>
-        <TabsContent value="products">{renderProductsTab()}</TabsContent>
-        <TabsContent value="profit">{renderProfitTab()}</TabsContent>
-        <TabsContent value="stock">{renderStockTab()}</TabsContent>
-        <TabsContent value="categories">{renderCategoriesTab()}</TabsContent>
-        <TabsContent value="debts">{renderDebtsTab()}</TabsContent>
+        <TabsContent value="sales">
+          <SalesReportTab period={period} onPeriodChange={setPeriod} chartType={chartType} onChartTypeChange={setChartType} salesPeriodData={salesPeriodData} />
+        </TabsContent>
+        <TabsContent value="products">
+          <ProductsReportTab
+            selectedProduct={selectedProduct} onSelectProduct={setSelectedProduct}
+            selectedProductStats={selectedProductStats} selectedProductChartData={selectedProductChartData}
+            filteredSales={filteredSales} topProducts={topProducts} bottomProducts={bottomProducts}
+            products={products}
+          />
+        </TabsContent>
+        <TabsContent value="profit">
+          <ProfitReportTab period={period} profitPeriodData={profitPeriodData} />
+        </TabsContent>
+        <TabsContent value="stock">
+          <StockReportTab lowStockProducts={lowStockProducts} soldItemsWithStock={soldItemsWithStock} />
+        </TabsContent>
+        <TabsContent value="categories">
+          <CategoriesReportTab categoryData={categoryData} />
+        </TabsContent>
+        <TabsContent value="debts">
+          <DebtsReportTab debts={debts} debtSummary={debtSummary} />
+        </TabsContent>
       </Tabs>
     </div>
   );

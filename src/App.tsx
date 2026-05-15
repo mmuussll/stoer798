@@ -1,25 +1,25 @@
 import { lazy, Suspense } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ToastProvider } from "@/components/ui/toast";
 import { Toaster } from "@/components/ui/sonner";
 import { SubscriptionGuard } from "@/components/SubscriptionGuard";
-import MaintenanceGuard from "@/components/MaintenanceGuard";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import Welcome from "./pages/Welcome";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import TermsOfService from "./pages/TermsOfService";
-import Disclaimer from "./pages/Disclaimer";
-import CookiePolicy from "./pages/CookiePolicy";
-import AcceptableUsePolicy from "./pages/AcceptableUsePolicy";
-import Pricing from "./pages/Pricing";
-import AuthPage from "./auth/AuthPage";
 
-const AdminPanel = lazy(() => import("@/components/AdminPanel"));
+const MaintenanceGuard = lazy(() => import("@/components/MaintenanceGuard"));
+const Index = lazy(() => import("./pages/Index"));
+
+const Welcome = lazy(() => import("./pages/Welcome"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("./pages/TermsOfService"));
+const Disclaimer = lazy(() => import("./pages/Disclaimer"));
+const CookiePolicy = lazy(() => import("./pages/CookiePolicy"));
+const AcceptableUsePolicy = lazy(() => import("./pages/AcceptableUsePolicy"));
+const Pricing = lazy(() => import("./pages/Pricing"));
+const AuthPage = lazy(() => import("./auth/AuthPage"));
+const AdminPage = lazy(() => import("@/components/AdminPage"));
 const SalesInterface = lazy(() => import("@/components/SalesInterface"));
 const ProductManagement = lazy(() => import("@/components/ProductManagement"));
 const ReportsSection = lazy(() => import("@/components/ReportsSection"));
@@ -28,20 +28,6 @@ const SalesInvoices = lazy(() => import("@/components/SalesInvoices"));
 const CashSessions = lazy(() => import("@/components/CashSessions"));
 const DebtManagement = lazy(() => import("@/components/DebtManagement"));
 const SettingsPage = lazy(() => import("@/components/SettingsPage"));
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 60_000,
-      gcTime: 5 * 60_000,
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-    mutations: {
-      retry: 0,
-    },
-  },
-});
 
 function LoadingSpinner({ text = "جاري التحميل..." }) {
   return (
@@ -71,47 +57,42 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function AdminRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading, isAdmin } = useAuth();
-  if (loading) return <LoadingSpinner />;
-  if (!user) return <Navigate to="/auth" replace />;
-  if (!isAdmin) return <Navigate to="/" replace />;
-  return <>{children}</>;
-}
-
 const Section = ({ children }: { children: React.ReactNode }) => (
   <ProtectedRoute>
-    <MaintenanceGuard>
-      <SubscriptionGuard>{children}</SubscriptionGuard>
-    </MaintenanceGuard>
+    <Suspense fallback={<LoadingSpinner />}>
+      <MaintenanceGuard>
+        <SubscriptionGuard>{children}</SubscriptionGuard>
+      </MaintenanceGuard>
+    </Suspense>
   </ProtectedRoute>
 );
 
 const App = () => (
   <ErrorBoundary>
-    <QueryClientProvider client={queryClient}>
-      <ToastProvider>
-        <TooltipProvider>
-          <Toaster />
-          <BrowserRouter>
-            <AuthProvider>
-              <Routes>
-                <Route path="/welcome" element={<Welcome />} />
-                <Route path="/privacy" element={<PrivacyPolicy />} />
-                <Route path="/terms" element={<TermsOfService />} />
-                <Route path="/disclaimer" element={<Disclaimer />} />
-                <Route path="/cookies" element={<CookiePolicy />} />
-                <Route path="/acceptable-use" element={<AcceptableUsePolicy />} />
-                <Route path="/pricing" element={<Pricing />} />
+    <ToastProvider>
+      <TooltipProvider>
+        <Toaster />
+        <BrowserRouter>
+          <AuthProvider>
+            <Routes>
+                <Route path="/welcome" element={<Suspense fallback={<LoadingSpinner />}><Welcome /></Suspense>} />
+                <Route path="/privacy" element={<Suspense fallback={<LoadingSpinner />}><PrivacyPolicy /></Suspense>} />
+                <Route path="/terms" element={<Suspense fallback={<LoadingSpinner />}><TermsOfService /></Suspense>} />
+                <Route path="/disclaimer" element={<Suspense fallback={<LoadingSpinner />}><Disclaimer /></Suspense>} />
+                <Route path="/cookies" element={<Suspense fallback={<LoadingSpinner />}><CookiePolicy /></Suspense>} />
+                <Route path="/acceptable-use" element={<Suspense fallback={<LoadingSpinner />}><AcceptableUsePolicy /></Suspense>} />
+                <Route path="/pricing" element={<Suspense fallback={<LoadingSpinner />}><Pricing /></Suspense>} />
                 <Route
                   path="/auth"
                   element={
                     <PublicRoute>
-                      <AuthPage />
+                      <Suspense fallback={<LoadingSpinner />}>
+                        <AuthPage />
+                      </Suspense>
                     </PublicRoute>
                   }
                 />
-                <Route element={<Index />}>
+                <Route element={<Suspense fallback={<LoadingSpinner />}><Index /></Suspense>}>
                   <Route index element={<Navigate to="/sales" replace />} />
                   <Route
                     path="sales"
@@ -197,20 +178,17 @@ const App = () => (
                 <Route
                   path="/admin"
                   element={
-                    <AdminRoute>
-                      <Suspense fallback={<LoadingSpinner />}>
-                        <AdminPanel />
-                      </Suspense>
-                    </AdminRoute>
+                    <Suspense fallback={<LoadingSpinner />}>
+                      <AdminPage />
+                    </Suspense>
                   }
                 />
                 <Route path="*" element={<NotFound />} />
-              </Routes>
-            </AuthProvider>
-          </BrowserRouter>
-        </TooltipProvider>
-      </ToastProvider>
-    </QueryClientProvider>
+            </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </ToastProvider>
   </ErrorBoundary>
 );
 

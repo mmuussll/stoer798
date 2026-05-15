@@ -1,6 +1,6 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
-import { supabase } from "@/lib/supabase";
+import { supabase, isCurrentUserAdmin } from "@/lib/supabase";
 
 interface AuthContextType {
   user: User | null;
@@ -19,6 +19,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const lastFetchedUserId = useRef<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -34,6 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!session) {
         setIsAdmin(false);
         setLoading(false);
+        lastFetchedUserId.current = null;
       }
     });
 
@@ -45,20 +47,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
       return;
     }
-    supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .maybeSingle()
-      .then(({ data, error }) => {
-        if (!error && data) {
-          setIsAdmin(data.role === "admin");
-        }
+    if (lastFetchedUserId.current === user.id) {
+      setLoading(false);
+      return;
+    }
+    lastFetchedUserId.current = user.id;
+    isCurrentUserAdmin()
+      .then((admin) => {
+        setIsAdmin(admin);
         setLoading(false);
       })
       .catch(() => {
         setLoading(false);
       });
+    import("@/components/SalesInterface");
   }, [user]);
 
   const signIn = async (email: string, password: string) => {

@@ -1,4 +1,4 @@
-import { Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, useRef } from "react";
 import {
   SidebarProvider,
   Sidebar,
@@ -35,12 +35,16 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import WhatsAppSupport from "@/components/WhatsAppSupport";
-import SubscriptionStatusBar from "@/components/SubscriptionStatusBar";
-import NotificationsBell from "@/components/NotificationsBell";
-import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { useQuery } from "@tanstack/react-query";
 import { fetchSettings } from "@/api/settings";
+import { QueryProvider } from "@/components/QueryProvider";
+
+import("@/components/SalesInterface");
+
+const WhatsAppSupport = lazy(() => import("@/components/WhatsAppSupport"));
+const SubscriptionStatusBar = lazy(() => import("@/components/SubscriptionStatusBar"));
+const NotificationsBell = lazy(() => import("@/components/NotificationsBell"));
+const MobileBottomNav = lazy(() => import("@/components/MobileBottomNav").then(m => ({ default: m.MobileBottomNav })));
 
 function SectionSkeleton() {
   return (
@@ -68,12 +72,35 @@ const NAV_ITEMS = [
 ] as const;
 
 export default function Index() {
+  return (
+    <QueryProvider>
+      <IndexContent />
+    </QueryProvider>
+  );
+}
+
+function IndexContent() {
   const { user, signOut, isAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { setOpen, isMobile, open } = useSidebar();
 
   const activeSection = location.pathname.replace("/", "") || "sales";
+  const prevPathname = useRef(location.pathname);
+  const pageAnimRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (prevPathname.current !== location.pathname) {
+      const el = pageAnimRef.current;
+      if (el) {
+        el.classList.remove("animate-page-enter");
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+        void el.offsetWidth;
+        el.classList.add("animate-page-enter");
+      }
+      prevPathname.current = location.pathname;
+    }
+  }, [location.pathname]);
 
   const { data: settings } = useQuery({
     queryKey: ["store-settings"],
@@ -99,7 +126,9 @@ export default function Index() {
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <WhatsAppSupport />
+      <Suspense fallback={null}>
+        <WhatsAppSupport />
+      </Suspense>
 
       {/* Premium Sidebar */}
       <Sidebar side="right">
@@ -215,8 +244,12 @@ export default function Index() {
           </div>
           <div className="flex-1" />
           <div className="flex items-center gap-2.5">
-            <NotificationsBell />
-            <SubscriptionStatusBar />
+            <Suspense fallback={null}>
+              <NotificationsBell />
+            </Suspense>
+            <Suspense fallback={null}>
+              <SubscriptionStatusBar />
+            </Suspense>
             <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-200/60 text-[11px] px-2 py-0.5 font-medium animate-in fade-in duration-300">
               متصل
             </Badge>
@@ -237,7 +270,7 @@ export default function Index() {
           isSalesPage ? "p-0" : "p-4 md:p-6",
           "pb-20 lg:pb-4"
         )}>
-          <div key={location.pathname} className="animate-page-enter h-full">
+          <div ref={pageAnimRef} className="animate-page-enter h-full">
             <Suspense fallback={<SectionSkeleton />}>
               <Outlet />
             </Suspense>
@@ -246,13 +279,15 @@ export default function Index() {
       </SidebarInset>
 
       {/* Mobile Bottom Navigation */}
-      <MobileBottomNav
-        items={[...NAV_ITEMS]}
-        activeSection={location.pathname.replace("/", "")}
-        onSelect={handleSectionChange}
-        sidebarOpen={open}
-        onToggleSidebar={() => setOpen(!open)}
-      />
+      <Suspense fallback={null}>
+        <MobileBottomNav
+          items={[...NAV_ITEMS]}
+          activeSection={location.pathname.replace("/", "")}
+          onSelect={handleSectionChange}
+          sidebarOpen={open}
+          onToggleSidebar={() => setOpen(!open)}
+        />
+      </Suspense>
     </SidebarProvider>
   );
 }

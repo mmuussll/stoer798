@@ -1,23 +1,33 @@
 import { supabase, isCurrentUserAdmin } from "@/lib/supabase";
 import { getPlan, type PlanType } from "@/constants";
 
-async function getCurrentUserPlan(): Promise<{ plan: PlanType; isAdmin: boolean } | null> {
+async function getCurrentUserPlan(): Promise<{ plan: PlanType; isAdmin: boolean }> {
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return null;
+  if (!session) throw new PlanLimitError("free", "الاشتراك", 0, 0);
 
   const admin = await isCurrentUserAdmin();
   if (admin) return { plan: "pro", isAdmin: true };
 
   const { data: sub } = await supabase
     .from("user_subscriptions")
-    .select("plan, status")
+    .select("plan, status, is_trial_used")
     .eq("user_id", session.user.id)
     .maybeSingle();
 
-  if (!sub || sub.status !== "active") return null;
+  if (!sub) {
+    return { plan: "free", isAdmin: false };
+  }
 
-  const plan = (sub.plan || "free") as PlanType;
-  return { plan, isAdmin: false };
+  if (sub.status === "active") {
+    const plan = (sub.plan || "free") as PlanType;
+    return { plan, isAdmin: false };
+  }
+
+  if (sub.status === "trial") {
+    return { plan: "free", isAdmin: false };
+  }
+
+  return { plan: "free", isAdmin: false };
 }
 
 export class PlanLimitError extends Error {
@@ -32,7 +42,7 @@ export class PlanLimitError extends Error {
 
 export async function checkProductLimit(userId: string): Promise<void> {
   const result = await getCurrentUserPlan();
-  if (!result || result.isAdmin) return;
+  if (result.isAdmin) return;
 
   const planDef = getPlan(result.plan);
   if (planDef.maxProducts === Infinity) return;
@@ -50,7 +60,7 @@ export async function checkProductLimit(userId: string): Promise<void> {
 
 export async function checkCustomerLimit(userId: string): Promise<void> {
   const result = await getCurrentUserPlan();
-  if (!result || result.isAdmin) return;
+  if (result.isAdmin) return;
 
   const planDef = getPlan(result.plan);
   if (planDef.maxCustomers === Infinity) return;
@@ -68,7 +78,7 @@ export async function checkCustomerLimit(userId: string): Promise<void> {
 
 export async function checkDailyInvoiceLimit(userId: string): Promise<void> {
   const result = await getCurrentUserPlan();
-  if (!result || result.isAdmin) return;
+  if (result.isAdmin) return;
 
   const planDef = getPlan(result.plan);
   if (planDef.maxDailyInvoices === Infinity) return;

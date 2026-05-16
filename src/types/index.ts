@@ -221,6 +221,7 @@ export interface CashSession {
 
 export interface StoreSettings {
   id: number;
+  user_id?: string;
   store_name: string;
   store_phone: string;
   store_address: string;

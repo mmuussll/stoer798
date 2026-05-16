@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase, isCurrentUserAdmin } from "@/lib/supabase";
+import { TRIAL_DAYS } from "@/constants";
 
 interface AuthContextType {
   user: User | null;
@@ -72,13 +73,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, fullName: string, phone: string) => {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: { full_name: fullName, phone },
       },
     });
+
+    if (!error && data.user) {
+      const now = new Date();
+      const trialEnd = new Date(now.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
+      const { data: existing } = await supabase
+        .from("user_subscriptions")
+        .select("id")
+        .eq("user_id", data.user.id)
+        .maybeSingle();
+      if (!existing) {
+        await supabase.from("user_subscriptions").insert({
+          user_id: data.user.id,
+          status: "trial",
+          plan: "free",
+          trial_start_date: now.toISOString(),
+          trial_end_date: trialEnd.toISOString(),
+          is_trial_used: true,
+        });
+      }
+    }
+
     return { error };
   };
 

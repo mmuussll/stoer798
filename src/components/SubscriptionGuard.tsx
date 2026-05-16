@@ -1,10 +1,18 @@
 import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetchMyProfile } from "@/api/users";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShieldAlert, Clock, MessageCircle, Star, Zap, Crown } from "lucide-react";
 import { TRIAL_DAYS, WHATSAPP_NUMBER, WHATSAPP_MESSAGE, getPlan } from "@/constants";
 import type { UserSubscription } from "@/types";
+
+const FEATURE_ROUTES: Record<string, string> = {
+  "/debts": "نظام الديون",
+  "/reports": "التقارير والتحليلات",
+  "/purchases": "إدارة المشتريات",
+  "/sales-returns": "المرتجعات والاستبدال",
+};
 
 function getDaysRemaining(sub: UserSubscription): number {
   const now = new Date();
@@ -19,9 +27,18 @@ function getDaysRemaining(sub: UserSubscription): number {
   return 0;
 }
 
-function isAccessBlocked(sub: UserSubscription | null, role: string): boolean {
+function isAccessBlocked(sub: UserSubscription | null, role: string, userCreatedAt?: string): boolean {
   if (role === "admin") return false;
-  if (!sub) return false;
+
+  if (!sub) {
+    if (userCreatedAt) {
+      const created = new Date(userCreatedAt);
+      const trialEnd = new Date(created.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
+      if (new Date() <= trialEnd) return false;
+    }
+    return true;
+  }
+
   if (sub.status === "active") {
     const plan = getPlan(sub.plan);
     if (plan.key === "free") return false;
@@ -45,6 +62,7 @@ function PlanIcon({ plan }: { plan: string }) {
 
 export function SubscriptionGuard({ children }: { children: React.ReactNode }) {
   const { user, loading: authLoading, isAdmin: contextIsAdmin } = useAuth();
+  const location = useLocation();
   const [role, setRole] = useState<string>("user");
   const [subscription, setSubscription] = useState<UserSubscription | null>(null);
   const [loading, setLoading] = useState(true);
@@ -79,7 +97,7 @@ export function SubscriptionGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const blocked = isAccessBlocked(subscription, role);
+  const blocked = isAccessBlocked(subscription, role, user?.created_at);
 
   if (blocked) {
     const daysRemaining = subscription ? getDaysRemaining(subscription) : 0;
@@ -94,10 +112,14 @@ export function SubscriptionGuard({ children }: { children: React.ReactNode }) {
             <CardTitle className="text-xl text-red-700">
               {subscription?.status === "trial" && daysRemaining === 0
                 ? "انتهت الفترة التجريبية"
+                : subscription?.status === "trial" && !subscription
+                ? "انتهت الفترة التجريبية"
                 : "الحساب موقوف"}
             </CardTitle>
             <CardDescription className="text-base mt-2">
               {subscription?.status === "trial" && daysRemaining === 0
+                ? `انتهت فترة الـ ${TRIAL_DAYS} يوم التجريبية المجانية. يرجى التواصل مع مدير النظام لتفعيل الاشتراك.`
+                : !subscription
                 ? `انتهت فترة الـ ${TRIAL_DAYS} يوم التجريبية المجانية. يرجى التواصل مع مدير النظام لتفعيل الاشتراك.`
                 : subscription?.status === "suspended"
                 ? "تم إيقاف حسابك من قبل مدير النظام. يرجى التواصل لمعرفة التفاصيل."
@@ -132,6 +154,53 @@ export function SubscriptionGuard({ children }: { children: React.ReactNode }) {
               <Clock className="w-4 h-4" />
               <span>الحساب: {user?.email}</span>
             </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const planDef = getPlan(subscription?.plan);
+  const currentFeature = FEATURE_ROUTES[location.pathname];
+  const isFeatureRestricted = currentFeature && planDef.missingFeatures.includes(currentFeature);
+
+  if (isFeatureRestricted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 p-4" dir="rtl">
+        <Card className="max-w-md w-full shadow-lg">
+          <CardHeader className="text-center">
+            <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Crown className="w-8 h-8 text-amber-600" />
+            </div>
+            <CardTitle className="text-xl text-amber-700">ميزة غير متاحة</CardTitle>
+            <CardDescription className="text-base mt-2">
+              {currentFeature} غير متاحة في باقتك الحالية ({planDef.nameAr}). يرجى الترقية إلى باقة أعلى للوصول إلى هذه الميزة.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="p-4 bg-amber-50 rounded-lg border border-amber-100 space-y-2">
+              <p className="text-sm text-amber-800 font-medium">لترقية باقتك:</p>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="bg-white rounded p-2 text-center border border-blue-100">
+                  <p className="font-bold text-blue-700">أساسي</p>
+                  <p className="text-blue-600">10,000 د.ع / شهرياً</p>
+                </div>
+                <div className="bg-white rounded p-2 text-center border border-purple-100">
+                  <p className="font-bold text-purple-700">برو</p>
+                  <p className="text-purple-600">25,000 د.ع / شهرياً</p>
+                </div>
+              </div>
+              <p className="text-xs text-amber-600 mt-1">يرجى التواصل مع مدير النظام لتفعيل الترقية</p>
+            </div>
+            <a
+              href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("السلام عليكم، أرغب في الترقية إلى باقة برو")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 flex items-center justify-center gap-2 w-full bg-green-500 hover:bg-green-600 text-white py-2.5 rounded-lg font-medium text-sm transition-colors"
+            >
+              <MessageCircle className="w-4 h-4" />
+              مراسلة الدعم عبر واتساب
+            </a>
           </CardContent>
         </Card>
       </div>

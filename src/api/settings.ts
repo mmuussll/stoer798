@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabase, getCurrentUserId } from "@/lib/supabase";
 import { toNumber } from "@/lib/db";
 import type { StoreSettings } from "@/types";
 
@@ -182,19 +182,24 @@ function mapSettings(row: Record<string, unknown>): StoreSettings {
 }
 
 export async function fetchSettings(): Promise<StoreSettings> {
+  const userId = await getCurrentUserId().catch(() => null);
+  if (!userId) return { ...STORE_SETTINGS_DEFAULTS };
+
   const { data, error } = await supabase
     .from("store_settings")
     .select("*")
-    .eq("id", 1)
-    .single();
+    .eq("user_id", userId)
+    .maybeSingle();
 
-  if (error) return { ...STORE_SETTINGS_DEFAULTS };
+  if (error || !data) return { ...STORE_SETTINGS_DEFAULTS };
   return mapSettings(data);
 }
 
 export async function updateSettings(
-  settings: Partial<Omit<StoreSettings, "id" | "created_at">>
+  settings: Partial<Omit<StoreSettings, "id" | "created_at" | "updated_at" | "user_id">>
 ): Promise<StoreSettings> {
+  const userId = await getCurrentUserId();
+
   const payload: Record<string, unknown> = {
     updated_at: new Date().toISOString(),
   };
@@ -258,12 +263,32 @@ export async function updateSettings(
       payload[key] = settings[key as keyof typeof settings];
   }
 
-  const { data, error } = await supabase
+  const { data: existing } = await supabase
     .from("store_settings")
-    .upsert({ id: 1, ...payload })
-    .select()
-    .single();
+    .select("id")
+    .eq("user_id", userId)
+    .maybeSingle();
 
-  if (error) throw error;
-  return mapSettings(data);
+  let result: Record<string, unknown>;
+  if (existing) {
+    const { data, error } = await supabase
+      .from("store_settings")
+      .update(payload)
+      .eq("id", existing.id)
+      .select()
+      .single();
+    if (error) throw error;
+    result = data;
+  } else {
+    payload.user_id = userId;
+    const { data, error } = await supabase
+      .from("store_settings")
+      .insert(payload)
+      .select()
+      .single();
+    if (error) throw error;
+    result = data;
+  }
+
+  return mapSettings(result);
 }

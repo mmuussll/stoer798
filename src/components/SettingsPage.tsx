@@ -101,7 +101,7 @@ function SettingSelect({
 export default function SettingsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { profile } = useAuth();
+  const { isAdmin } = useAuth();
   const [settings, setSettings] = useState<StoreSettings | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
   const [activeTab, setActiveTab] = useState("store");
@@ -109,7 +109,7 @@ export default function SettingsPage() {
   const [printerTesting, setPrinterTesting] = useState(false);
   const [serialSupported] = useState(() => isWebSerialSupported());
 
-  const isOwner = profile?.role === "owner";
+  const isOwner = !isAdmin;
 
   const { data: fetchedSettings, isLoading } = useQuery({
     queryKey: ["settings"],

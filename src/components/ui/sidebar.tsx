@@ -151,7 +151,6 @@ const Sidebar = React.forwardRef<
             "fixed inset-y-0 z-50 w-[--sidebar-width-mobile] max-w-[85vw] bg-sidebar text-sidebar-foreground",
             "transition-transform duration-400 ease-premium",
             "shadow-2xl shadow-black/30",
-            "pb-[env(safe-area-inset-bottom,0px)]",
             side === "right"
               ? "right-0 rounded-l-2xl border-l border-sidebar-border"
               : "left-0 rounded-r-2xl border-r border-sidebar-border",
@@ -163,19 +162,21 @@ const Sidebar = React.forwardRef<
           ref={ref}
           {...props}
         >
-          <button
-            onClick={() => setOpenMobile(false)}
-            aria-label="إغلاق القائمة"
-            className={cn(
-              "absolute top-3 z-10 flex h-8 w-8 items-center justify-center rounded-xl",
-              "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/60",
-              "transition-all duration-200",
-              side === "right" ? "left-3" : "right-3"
-            )}
-          >
-            <X className="w-[18px] h-[18px]" />
-          </button>
-          {children}
+          <div className="relative flex h-full flex-col pb-[env(safe-area-inset-bottom,0px)]">
+            <button
+              onClick={() => setOpenMobile(false)}
+              aria-label="إغلاق القائمة"
+              className={cn(
+                "absolute top-3 z-10 flex h-8 w-8 items-center justify-center rounded-xl",
+                "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/60",
+                "transition-all duration-200",
+                side === "right" ? "left-3" : "right-3"
+              )}
+            >
+              <X className="w-[18px] h-[18px]" />
+            </button>
+            {children}
+          </div>
         </div>
       </>
     );

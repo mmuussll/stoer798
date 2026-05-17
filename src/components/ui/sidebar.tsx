@@ -1,6 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { ChevronRight, ChevronLeft, Menu, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { ChevronRight, ChevronLeft, Menu, X, PanelRightClose, PanelRightOpen } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const SIDEBAR_WIDTH = "17rem";
@@ -112,6 +112,13 @@ const Sidebar = React.forwardRef<
 >(({ side = "right", variant = "sidebar", collapsible = "offcanvas", className, children, ...props }, ref) => {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
 
+  React.useEffect(() => {
+    if (!isMobile) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = openMobile ? "hidden" : "";
+    return () => { document.body.style.overflow = prev; };
+  }, [isMobile, openMobile]);
+
   if (collapsible === "none") {
     return (
       <div
@@ -141,9 +148,10 @@ const Sidebar = React.forwardRef<
         <div
           data-state={openMobile ? "open" : "closed"}
           className={cn(
-            "fixed inset-y-0 z-50 w-[--sidebar-width-mobile] bg-sidebar text-sidebar-foreground",
+            "fixed inset-y-0 z-50 w-[--sidebar-width-mobile] max-w-[85vw] bg-sidebar text-sidebar-foreground",
             "transition-transform duration-400 ease-premium",
             "shadow-2xl shadow-black/30",
+            "pb-[env(safe-area-inset-bottom,0px)]",
             side === "right"
               ? "right-0 rounded-l-2xl border-l border-sidebar-border"
               : "left-0 rounded-r-2xl border-r border-sidebar-border",
@@ -155,7 +163,19 @@ const Sidebar = React.forwardRef<
           ref={ref}
           {...props}
         >
-          <div className="flex h-full flex-col">{children}</div>
+          <button
+            onClick={() => setOpenMobile(false)}
+            aria-label="إغلاق القائمة"
+            className={cn(
+              "absolute top-3 z-10 flex h-8 w-8 items-center justify-center rounded-xl",
+              "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/60",
+              "transition-all duration-200",
+              side === "right" ? "left-3" : "right-3"
+            )}
+          >
+            <X className="w-[18px] h-[18px]" />
+          </button>
+          {children}
         </div>
       </>
     );

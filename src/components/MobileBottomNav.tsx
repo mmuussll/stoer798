@@ -106,7 +106,7 @@ export function MobileBottomNav({ items, activeSection, onSelect, sidebarOpen, o
       </div>
 
       <nav
-        className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white/90 backdrop-blur-2xl border-t border-border/60 shadow-[0_-6px_24px_rgba(0,0,0,0.06)]"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-[35] bg-white/90 backdrop-blur-2xl border-t border-border/60 shadow-[0_-6px_24px_rgba(0,0,0,0.06)]"
         style={{ paddingBottom: "max(env(safe-area-inset-bottom, 0px), 4px)" }}
       >
         <div className="flex items-center justify-around max-w-lg mx-auto px-1 pt-1.5">

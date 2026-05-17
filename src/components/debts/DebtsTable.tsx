@@ -40,13 +40,13 @@ export default function DebtsTable({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <FileText className="w-5 h-5 text-blue-600" />
+          <FileText className="w-5 h-5 text-primary" />
           قائمة الديون ({debts.length})
         </CardTitle>
       </CardHeader>
       <CardContent>
         {debts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+          <div className="flex flex-col items-center justify-center py-16 text-muted-foreground/60">
             <Landmark className="w-16 h-16 mb-4 opacity-30" />
             <p className="text-lg font-medium">لا توجد ديون</p>
             <p className="text-sm mt-1">جرب تغيير معايير البحث</p>
@@ -75,26 +75,26 @@ export default function DebtsTable({
                       ? ((debt.total_amount - debt.remaining_amount) / debt.total_amount) * 100 : 0;
 
                     return (
-                      <TableRow key={debt.id} className="hover:bg-gray-50">
+                      <TableRow key={debt.id} className="hover:bg-muted/50">
                         <TableCell>
                           <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
                             onClick={() => onDebtorDetail(debt)}>
-                            <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
-                              <User2 className="w-3.5 h-3.5 text-gray-600" />
+                            <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center shrink-0">
+                              <User2 className="w-3.5 h-3.5 text-muted-foreground" />
                             </div>
                             <div>
                               <p className="font-medium text-sm">{debt.customer_name || "غير معروف"}</p>
                               {debt.customer_phone && (
-                                <p className="text-xs text-gray-400 flex items-center gap-1"><Phone className="w-2.5 h-2.5" />{debt.customer_phone}</p>
+                                <p className="text-xs text-muted-foreground/60 flex items-center gap-1"><Phone className="w-2.5 h-2.5" />{debt.customer_phone}</p>
                               )}
                             </div>
                           </div>
                         </TableCell>
                         <TableCell className="hidden sm:table-cell">
                           {debt.invoice_number ? (
-                            <Badge variant="outline" className="text-xs font-mono text-blue-600">{debt.invoice_number}</Badge>
+                            <Badge variant="outline" className="text-xs font-mono text-primary">{debt.invoice_number}</Badge>
                           ) : (
-                            <span className="text-gray-300 text-xs">-</span>
+                            <span className="text-muted-foreground/30 text-xs">-</span>
                           )}
                         </TableCell>
                         <TableCell className="font-semibold">{formatCurrency(debt.total_amount, 2)}</TableCell>
@@ -102,7 +102,7 @@ export default function DebtsTable({
                           <div>
                             <p className="font-bold text-red-600">{formatCurrency(debt.remaining_amount, 2)}</p>
                             {paidPercent > 0 && (
-                              <div className="w-full h-1.5 bg-gray-200 rounded-full mt-1 max-w-[100px]">
+                              <div className="w-full h-1.5 bg-muted/70 rounded-full mt-1 max-w-[100px]">
                                 <div className="h-1.5 bg-emerald-500 rounded-full" style={{ width: `${paidPercent}%` }} />
                               </div>
                             )}
@@ -115,15 +115,15 @@ export default function DebtsTable({
                         </TableCell>
                         <TableCell className="hidden sm:table-cell">
                           <div className="flex items-center gap-1.5">
-                            <Calendar className="w-3 h-3 text-gray-400" />
+                            <Calendar className="w-3 h-3 text-muted-foreground/60" />
                             <span className={`text-sm ${dueStatus.color}`}>
-                              {debt.due_date || <span className="text-gray-300">-</span>}
+                              {debt.due_date || <span className="text-muted-foreground/30">-</span>}
                             </span>
                           </div>
                         </TableCell>
                         <TableCell className="text-center">
                           <div className="flex items-center justify-center gap-1">
-                            <Button variant="ghost" size="icon" className="h-9 w-9 text-blue-600 hover:bg-blue-50 active:bg-blue-100 rounded-xl"
+                            <Button variant="ghost" size="icon" className="h-9 w-9 text-primary hover:bg-primary/5 active:bg-primary/10 rounded-xl"
                               onClick={() => onDetail(debt)} title="التفاصيل والمدفوعات">
                               <History className="w-4 h-4" />
                             </Button>

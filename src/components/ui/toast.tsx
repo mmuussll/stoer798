@@ -11,8 +11,8 @@ const variantConfig = {
   default: {
     icon: Info,
     bg: "bg-white/95 border-slate-200/60",
-    iconColor: "text-indigo-500",
-    accent: "border-r-indigo-500",
+    iconColor: "text-primary",
+    accent: "border-r-primary",
   },
   destructive: {
     icon: AlertCircle,
@@ -28,8 +28,8 @@ const variantConfig = {
   },
   info: {
     icon: Info,
-    bg: "bg-blue-50/95 border-blue-200/60",
-    iconColor: "text-blue-500",
+    bg: "bg-primary/5 border-primary/20",
+    iconColor: "text-primary",
     accent: "border-r-blue-500",
   },
 };

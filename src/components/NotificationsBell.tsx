@@ -59,14 +59,14 @@ const TYPE_CONFIG: Record<string, { icon: typeof Bell; color: string; bg: string
   },
   info: {
     icon: Info,
-    color: "text-blue-500",
-    bg: "bg-blue-50",
+    color: "text-primary",
+    bg: "bg-primary/5",
     border: "border-blue-500",
     label: "معلومة",
   },
   system: {
     icon: Megaphone,
-    color: "text-slate-500",
+    color: "text-muted-foreground",
     bg: "bg-slate-50",
     border: "border-slate-500",
     label: "نظام",
@@ -228,14 +228,14 @@ export default function NotificationsBell() {
         className={cn(
           "relative p-2 rounded-xl transition-all duration-300",
           open
-            ? "bg-indigo-50 text-indigo-600 shadow-[0_0_0_4px_rgba(79,70,229,0.1)]"
-            : "hover:bg-slate-100 text-slate-500 hover:text-slate-700"
+            ? "bg-primary/10 text-primary shadow-[0_0_0_4px_hsl(var(--primary)/0.1)]"
+            : "hover:bg-muted text-muted-foreground hover:text-slate-700"
         )}
         title="الإشعارات"
       >
         <Bell className={cn(
           "w-5 h-5 transition-transform duration-300",
-          unreadCount > 0 && "drop-shadow-[0_0_4px_rgba(79,70,229,0.4)]",
+          unreadCount > 0 && "drop-shadow-[0_0_4px_hsl(var(--primary)/0.4)]",
           open && "scale-110"
         )} />
         {unreadCount > 0 && (
@@ -255,7 +255,7 @@ export default function NotificationsBell() {
           className={cn(
             "absolute top-12 left-1/2 -translate-x-1/2 z-50 w-[420px] rounded-2xl overflow-hidden",
             "bg-white/95 backdrop-blur-2xl border border-white/20",
-            "shadow-2xl shadow-indigo-500/10",
+            "shadow-2xl shadow-primary/5",
             "transition-all duration-300 origin-top",
             animatedIn
               ? "scale-100 opacity-100 translate-y-0"
@@ -265,16 +265,16 @@ export default function NotificationsBell() {
         >
           {/* Header */}
           <div className="relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-blue-600 to-purple-600 opacity-[0.03]" />
+            <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/70 to-purple-600 opacity-[0.03]" />
             <div className="relative flex items-center justify-between px-5 py-4">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-md shadow-indigo-500/20">
+                <div className="w-9 h-9 bg-gradient-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-md shadow-primary/15">
                   <Bell className="w-4.5 h-4.5 text-white" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-slate-800 text-sm leading-tight">الإشعارات</h4>
+                  <h4 className="font-bold text-foreground text-sm leading-tight">الإشعارات</h4>
                   {unreadCount > 0 && (
-                    <p className="text-[11px] text-slate-400 font-medium">
+                    <p className="text-[11px] text-muted-foreground/60 font-medium">
                       {unreadCount} إشعار غير مقروء
                     </p>
                   )}
@@ -285,7 +285,7 @@ export default function NotificationsBell() {
                   <button
                     onClick={handleDeleteAll}
                     disabled={loading}
-                    className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all duration-200"
+                    className="p-2 rounded-lg text-muted-foreground/60 hover:text-red-500 hover:bg-red-50 transition-all duration-200"
                     title="حذف الكل"
                   >
                     {loading ? (
@@ -297,7 +297,7 @@ export default function NotificationsBell() {
                 )}
                 <button
                   onClick={() => setOpen(false)}
-                  className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all duration-200"
+                  className="p-2 rounded-lg text-muted-foreground/60 hover:text-foreground/70 hover:bg-muted transition-all duration-200"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -315,8 +315,8 @@ export default function NotificationsBell() {
                   className={cn(
                     "shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200",
                     activeTab === tab.key
-                      ? "bg-indigo-600 text-white shadow-sm shadow-indigo-500/25"
-                      : "bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700"
+                      ? "bg-primary text-white shadow-sm shadow-primary/20"
+                      : "bg-muted text-muted-foreground hover:bg-muted/70 hover:text-slate-700"
                   )}
                 >
                   {tab.label}
@@ -325,7 +325,7 @@ export default function NotificationsBell() {
                       "mr-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full text-[10px] font-bold px-1",
                       activeTab === tab.key
                         ? "bg-white/20 text-white"
-                        : "bg-slate-200 text-slate-500"
+                        : "bg-muted/70 text-muted-foreground"
                     )}>
                       {tabCounts[tab.key]}
                     </span>
@@ -336,7 +336,7 @@ export default function NotificationsBell() {
                 <button
                   onClick={handleMarkAllAsRead}
                   disabled={markingAll}
-                  className="mr-auto shrink-0 px-3 py-1.5 rounded-full text-xs font-medium text-indigo-600 hover:bg-indigo-50 transition-all duration-200 flex items-center gap-1"
+                  className="mr-auto shrink-0 px-3 py-1.5 rounded-full text-xs font-medium text-primary hover:bg-primary/10 transition-all duration-200 flex items-center gap-1"
                 >
                   {markingAll ? (
                     <Loader2 className="w-3 h-3 animate-spin" />
@@ -353,23 +353,23 @@ export default function NotificationsBell() {
           <div className="max-h-[460px] overflow-y-auto scrollbar-thin">
             {filteredNotifications.length === 0 ? (
               <div className="py-12 px-4 text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-gradient-to-br from-muted to-muted/70 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   {activeTab === "all" ? (
-                    <Sparkles className="w-7 h-7 text-slate-400" />
+                    <Sparkles className="w-7 h-7 text-muted-foreground/60" />
                   ) : activeTab === "unread" ? (
-                    <CheckCheck className="w-7 h-7 text-slate-400" />
+                    <CheckCheck className="w-7 h-7 text-muted-foreground/60" />
                   ) : (
-                    <Bell className="w-7 h-7 text-slate-400" />
+                    <Bell className="w-7 h-7 text-muted-foreground/60" />
                   )}
                 </div>
-                <p className="text-sm font-medium text-slate-500 mb-1">
+                <p className="text-sm font-medium text-muted-foreground mb-1">
                   {activeTab === "all"
                     ? "لا توجد إشعارات"
                     : activeTab === "unread"
                     ? "جميع الإشعارات مقروءة"
                     : "لا توجد إشعارات في هذا القسم"}
                 </p>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-muted-foreground/60">
                   {activeTab === "all" && "ستظهر الإشعارات هنا فور وصولها"}
                 </p>
               </div>
@@ -386,15 +386,15 @@ export default function NotificationsBell() {
                       }}
                       className={cn(
                         "group relative flex gap-3 px-3 py-3 rounded-xl cursor-pointer transition-all duration-200",
-                        "hover:bg-slate-50/80 hover:shadow-sm",
-                        !notification.is_read && "bg-indigo-50/40",
+                        "hover:bg-muted/30 hover:shadow-sm",
+                        !notification.is_read && "bg-primary/5",
                         "animate-in fade-in slide-in-from-right-2",
                       )}
                       style={{ animationDelay: `${idx * 30}ms`, animationFillMode: "both" }}
                     >
                       {/* Left accent bar for unread */}
                       {!notification.is_read && (
-                        <div className="absolute right-0 top-3 bottom-3 w-[3px] bg-gradient-to-b from-indigo-500 to-purple-500 rounded-full" />
+                        <div className="absolute right-0 top-3 bottom-3 w-[3px] bg-gradient-to-b from-primary to-purple-500 rounded-full" />
                       )}
 
                       {/* Type Icon */}
@@ -412,8 +412,8 @@ export default function NotificationsBell() {
                           <p className={cn(
                             "text-sm leading-tight",
                             !notification.is_read
-                              ? "font-bold text-slate-800"
-                              : "font-medium text-slate-600"
+                              ? "font-bold text-foreground"
+                              : "font-medium text-foreground/70"
                           )}>
                             {notification.title}
                           </p>
@@ -426,10 +426,10 @@ export default function NotificationsBell() {
                             {config.label}
                           </span>
                         </div>
-                        <p className="text-xs text-slate-500 mt-0.5 line-clamp-2 leading-relaxed">
+                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2 leading-relaxed">
                           {notification.message}
                         </p>
-                        <p className="text-[10px] text-slate-500 mt-1.5 font-medium">
+                        <p className="text-[10px] text-muted-foreground mt-1.5 font-medium">
                           {formatNotificationDate(notification.created_at)}
                         </p>
                       </div>
@@ -440,7 +440,7 @@ export default function NotificationsBell() {
                         className={cn(
                           "shrink-0 p-1.5 rounded-lg transition-all duration-200",
                           "opacity-0 group-hover:opacity-100",
-                          "text-slate-300 hover:text-red-500 hover:bg-red-50"
+                          "text-muted-foreground/30 hover:text-red-500 hover:bg-red-50"
                         )}
                       >
                         {deletingId === notification.id ? (
@@ -458,8 +458,8 @@ export default function NotificationsBell() {
 
           {/* Footer */}
           {notifications.length > 0 && (
-            <div className="px-4 py-2.5 border-t border-slate-100 bg-slate-50/50">
-              <p className="text-[10px] text-slate-500 text-center font-medium">
+            <div className="px-4 py-2.5 border-t border-border/40 bg-muted/30">
+              <p className="text-[10px] text-muted-foreground text-center font-medium">
                 آخر {notifications.length} إشعار
               </p>
             </div>

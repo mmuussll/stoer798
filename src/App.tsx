@@ -31,7 +31,7 @@ const SettingsPage = lazy(() => import("@/components/SettingsPage"));
 
 function LoadingSpinner({ text = "جاري التحميل..." }) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
       <div className="text-center">
         <div className="relative mx-auto mb-5 w-12 h-12">
           <div className="absolute inset-0 rounded-full border-3 border-blue-200/60" />

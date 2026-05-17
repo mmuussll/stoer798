@@ -236,13 +236,13 @@ export default function SalesReturns() {
       {/* Search + Filters */}
       <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1 max-w-sm">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
           <Input value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }} placeholder="ابحث برقم المرتجع..." className="pr-10" />
         </div>
         <div className="flex gap-1.5 items-center text-xs">
-          <span className="text-gray-500 shrink-0">من:</span>
+          <span className="text-muted-foreground shrink-0">من:</span>
           <Input type="date" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setPage(1); }} className="w-32 h-8 text-xs" />
-          <span className="text-gray-500 shrink-0">إلى:</span>
+          <span className="text-muted-foreground shrink-0">إلى:</span>
           <Input type="date" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setPage(1); }} className="w-32 h-8 text-xs" />
           {(dateFrom || dateTo) && (
             <Button variant="ghost" size="sm" onClick={() => { setDateFrom(""); setDateTo(""); }} className="h-7 text-[10px] text-red-500"><X className="w-3 h-3 ml-0.5" />مسح</Button>
@@ -257,7 +257,7 @@ export default function SalesReturns() {
           {isLoading ? (
             <div className="p-4 space-y-2">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
           ) : paginated.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground/60">
               <RotateCcw className="w-16 h-16 mb-4 opacity-30" />
               <p className="text-lg font-medium">لا توجد مرتجعات</p>
               <p className="text-sm">{searchTerm || dateFrom || dateTo ? "جرب تغيير معايير البحث" : "لم يتم تسجيل أي مرتجع بعد"}</p>
@@ -277,19 +277,19 @@ export default function SalesReturns() {
               </TableHeader>
               <TableBody>
                 {paginated.map((r) => (
-                  <TableRow key={r.id} className="hover:bg-gray-50">
+                  <TableRow key={r.id} className="hover:bg-muted/40">
                     <TableCell><Badge variant="outline" className="font-mono text-xs">{r.return_number}</Badge></TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-1 text-sm"><Clock className="w-3 h-3 text-gray-400" />{r.date}</div>
+                      <div className="flex items-center gap-1 text-sm"><Clock className="w-3 h-3 text-muted-foreground/60" />{r.date}</div>
                     </TableCell>
                     <TableCell className="text-center">
                       <Badge variant="secondary">{r.items.reduce((s, i) => s + i.quantity, 0)}</Badge>
                     </TableCell>
                     <TableCell className="text-center font-semibold text-red-600">{formatCurrency(r.total, 2)}</TableCell>
-                    <TableCell className="text-sm text-gray-600 max-w-[200px] truncate hidden sm:table-cell">{r.reason || "-"}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate hidden sm:table-cell">{r.reason || "-"}</TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-1.5">
-                        <Button variant="ghost" size="icon" className="h-10 w-10 text-blue-600 hover:bg-blue-50 active:bg-blue-100 rounded-xl" onClick={() => { setSelectedReturn(r); setShowDetailDialog(true); }}>
+                        <Button variant="ghost" size="icon" className="h-10 w-10 text-primary hover:bg-primary/5 rounded-xl" onClick={() => { setSelectedReturn(r); setShowDetailDialog(true); }}>
                           <Eye className="w-4 h-4" />
                         </Button>
                         <Button variant="ghost" size="icon" className="h-10 w-10 text-red-500 hover:bg-red-50 active:bg-red-100 rounded-xl" onClick={() => { setDeletingReturn(r); setShowDeleteDialog(true); }}>
@@ -348,17 +348,17 @@ export default function SalesReturns() {
                   {searchingInvoice ? "بحث..." : "بحث"}
                 </Button>
               </div>
-              <p className="text-xs text-gray-500 text-center">أدخل رقم الفاتورة للبحث عنها (مثال: INV-20250101-XXXX)</p>
+              <p className="text-xs text-muted-foreground text-center">أدخل رقم الفاتورة للبحث عنها (مثال: INV-20250101-XXXX)</p>
             </div>
           ) : (
             <div className="space-y-3">
-              <div className="flex items-center justify-between bg-blue-50 rounded-lg p-3">
+              <div className="flex items-center justify-between bg-primary/5 rounded-lg p-3">
                 <div>
                   <div className="font-semibold text-sm">{foundInvoice.invoice_number}</div>
-                  <div className="text-xs text-gray-500">{foundInvoice.date} - {foundInvoice.time}</div>
+                  <div className="text-xs text-muted-foreground">{foundInvoice.date} - {foundInvoice.time}</div>
                 </div>
-                <div className="text-sm font-bold text-blue-600">{formatCurrency(foundInvoice.total, 2)}</div>
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-blue-100" onClick={resetCreateForm}><X className="w-4 h-4" /></Button>
+                <div className="text-sm font-bold text-primary">{formatCurrency(foundInvoice.total, 2)}</div>
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-primary/100" onClick={resetCreateForm}><X className="w-4 h-4" /></Button>
               </div>
 
               <div className="flex items-center justify-between">
@@ -377,16 +377,16 @@ export default function SalesReturns() {
                     const itemId = item.product_id || item.id;
                     const returnQty = selectedItems[itemId] || 0;
                     return (
-                      <div key={itemId} className="flex items-center justify-between p-2 rounded-lg border hover:bg-gray-50 gap-2">
+                      <div key={itemId} className="flex items-center justify-between p-2 rounded-lg border hover:bg-muted/40 gap-2">
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-sm truncate">{item.name}</div>
-                          <div className="text-xs text-gray-500">x{item.quantity} قطعة - السعر: {formatNumber(item.price, 2)}</div>
+                          <div className="text-xs text-muted-foreground">x{item.quantity} قطعة - السعر: {formatNumber(item.price, 2)}</div>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
                           <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" disabled={returnQty <= 0} onClick={() => updateItemQuantity(itemId, -1, item.quantity)}>
                             <Minus className="w-3.5 h-3.5" />
                           </Button>
-                          <span className={`w-7 text-center text-sm font-bold tabular-nums ${returnQty > 0 ? "text-red-600" : "text-gray-400"}`}>{returnQty}</span>
+                          <span className={`w-7 text-center text-sm font-bold tabular-nums ${returnQty > 0 ? "text-red-600" : "text-muted-foreground/60"}`}>{returnQty}</span>
                           <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" disabled={returnQty >= item.quantity} onClick={() => updateItemQuantity(itemId, 1, item.quantity)}>
                             <Plus className="w-3.5 h-3.5" />
                           </Button>
@@ -440,15 +440,15 @@ export default function SalesReturns() {
       <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
         <DialogContent dir="rtl" className="max-w-md max-sm:mx-2 max-sm:w-[calc(100%-16px)] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><FileText className="w-5 h-5 text-blue-600" />تفاصيل المرتجع</DialogTitle>
+            <DialogTitle className="flex items-center gap-2"><FileText className="w-5 h-5 text-primary" />تفاصيل المرتجع</DialogTitle>
           </DialogHeader>
           {selectedReturn && (
             <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-2 text-sm bg-gray-50 p-3 rounded-lg">
-                <div><span className="text-gray-500">الرقم:</span> <span className="font-mono font-medium">{selectedReturn.return_number}</span></div>
-                <div><span className="text-gray-500">التاريخ:</span> <span className="font-medium">{selectedReturn.date} {selectedReturn.time}</span></div>
-                <div><span className="text-gray-500">البائع:</span> <span className="font-medium">{selectedReturn.cashier}</span></div>
-                <div><span className="text-gray-500">السبب:</span> <span className="font-medium">{selectedReturn.reason || "-"}</span></div>
+              <div className="grid grid-cols-2 gap-2 text-sm bg-muted/50 p-3 rounded-lg">
+                <div><span className="text-muted-foreground">الرقم:</span> <span className="font-mono font-medium">{selectedReturn.return_number}</span></div>
+                <div><span className="text-muted-foreground">التاريخ:</span> <span className="font-medium">{selectedReturn.date} {selectedReturn.time}</span></div>
+                <div><span className="text-muted-foreground">البائع:</span> <span className="font-medium">{selectedReturn.cashier}</span></div>
+                <div><span className="text-muted-foreground">السبب:</span> <span className="font-medium">{selectedReturn.reason || "-"}</span></div>
               </div>
               <Table>
                 <TableHeader>

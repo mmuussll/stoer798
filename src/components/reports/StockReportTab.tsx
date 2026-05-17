@@ -31,7 +31,7 @@ export function StockReportTab({ lowStockProducts, soldItemsWithStock }: StockTa
               {lowStockProducts.map((p) => (
                 <div key={p.id} className="flex items-center justify-between bg-white rounded-lg p-3 border border-amber-200">
                   <div>
-                    <p className="font-medium text-gray-900">{p.name}</p>
+                    <p className="font-medium text-foreground">{p.name}</p>
                     <p className="text-xs text-muted-foreground">{p.category?.name || "غير مصنف"}</p>
                   </div>
                   <Badge variant={p.stock === 0 ? "destructive" : "outline"} className={p.stock === 0 ? "" : "border-amber-500 text-amber-700"}>
@@ -47,13 +47,13 @@ export function StockReportTab({ lowStockProducts, soldItemsWithStock }: StockTa
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Package className="w-5 h-5 text-blue-600" />
+            <Package className="w-5 h-5 text-primary" />
             المنتجات المباعة والمخزون
           </CardTitle>
         </CardHeader>
         <CardContent>
           {soldItemsWithStock.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground/60">
               <Package className="w-10 h-10 mb-3" />
               <p>لا توجد مبيعات بعد</p>
             </div>
@@ -71,7 +71,7 @@ export function StockReportTab({ lowStockProducts, soldItemsWithStock }: StockTa
                 {soldItemsWithStock.map((item, i) => (
                   <TableRow key={i}>
                     <TableCell className="font-medium">{item.name}</TableCell>
-                    <TableCell className="text-blue-600">{item.sold}</TableCell>
+                    <TableCell className="text-primary">{item.sold}</TableCell>
                     <TableCell className="font-semibold">
                       {item.remaining > 0 ? (
                         <span className="text-orange-600">{item.remaining}</span>

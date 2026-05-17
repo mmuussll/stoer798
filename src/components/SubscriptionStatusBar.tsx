@@ -23,7 +23,7 @@ function getDaysRemaining(sub: UserSubscription): number {
 function PlanIcon({ plan }: { plan: PlanType }) {
   if (plan === "pro") return <Crown className="w-3.5 h-3.5 text-amber-500" />;
   if (plan === "basic") return <Zap className="w-3.5 h-3.5 text-blue-500" />;
-  return <Star className="w-3.5 h-3.5 text-gray-500" />;
+  return <Star className="w-3.5 h-3.5 text-muted-foreground" />;
 }
 
 export default function SubscriptionStatusBar() {
@@ -87,13 +87,13 @@ export default function SubscriptionStatusBar() {
         <span
           className={
             subscription.status === "trial"
-              ? "text-blue-700"
+              ? "text-primary/80"
               : isExpiring
               ? "text-orange-700"
               : isExpired
               ? "text-red-700"
               : isFree
-              ? "text-gray-700"
+              ? "text-foreground/80"
               : "text-green-700"
           }
         >
@@ -110,10 +110,10 @@ export default function SubscriptionStatusBar() {
       {showDetails && (
         <div className="fixed top-16 left-4 z-50 w-80 bg-white rounded-xl shadow-xl border border-gray-200 p-4 animate-in slide-in-from-top-2" dir="rtl">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="font-bold text-gray-900 text-sm">حالة الاشتراك</h4>
+            <h4 className="font-bold text-foreground text-sm">حالة الاشتراك</h4>
             <button
               onClick={() => setShowDetails(false)}
-              className="text-gray-400 hover:text-gray-600 text-lg leading-none"
+              className="text-muted-foreground/60 hover:text-muted-foreground text-lg leading-none"
             >
               ×
             </button>
@@ -134,13 +134,13 @@ export default function SubscriptionStatusBar() {
               </div>
             )}
 
-            <div className={`p-2 rounded-lg ${isExpiring ? "bg-red-50" : "bg-gray-50"}`}>
+            <div className={`p-2 rounded-lg ${isExpiring ? "bg-red-50" : "bg-muted/50"}`}>
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs text-gray-500">الحالة</span>
+                <span className="text-xs text-muted-foreground">الحالة</span>
                 <Badge
                   className={
                     subscription.status === "trial"
-                      ? "bg-blue-100 text-blue-800 border-blue-200 text-[10px]"
+                      ? "bg-primary/10 text-primary border-primary/20 text-[10px]"
                       : subscription.status === "active"
                       ? "bg-green-100 text-green-800 border-green-200 text-[10px]"
                       : "bg-red-100 text-red-800 border-red-200 text-[10px]"
@@ -151,7 +151,7 @@ export default function SubscriptionStatusBar() {
               </div>
               {!isFree && subscription.status === "active" && (
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">المتبقي</span>
+                  <span className="text-xs text-muted-foreground">المتبقي</span>
                   <span className={`text-xs font-bold ${isExpiring || isExpired ? "text-red-600" : "text-green-600"}`}>
                     {days} يوم
                   </span>
@@ -162,11 +162,11 @@ export default function SubscriptionStatusBar() {
             {plan && plan.key !== "free" && (
               <>
                 <div className="border-t border-gray-100 pt-2">
-                  <p className="text-xs font-semibold text-gray-700 mb-2">خصومات الاشتراك طويل المدى:</p>
+                  <p className="text-xs font-semibold text-foreground/80 mb-2">خصومات الاشتراك طويل المدى:</p>
                   <div className="space-y-1">
                     {DISCOUNT_TIERS.filter((t) => t.discountPercent > 0).map((tier) => (
                       <div key={tier.months} className="flex items-center justify-between text-xs">
-                        <span className="text-gray-600">{tier.label} (خصم {tier.discountPercent}%)</span>
+                        <span className="text-muted-foreground">{tier.label} (خصم {tier.discountPercent}%)</span>
                         <span className="font-bold text-green-700">
                           {getDiscountPrice(plan.monthlyPrice, tier.discountPercent).toLocaleString()} د.ع / شهرياً
                         </span>
@@ -196,8 +196,8 @@ export default function SubscriptionStatusBar() {
               <div className="bg-amber-50 rounded-lg p-3 border border-amber-100">
                 <p className="text-xs text-amber-800 font-medium mb-2">للحصول على الميزات الكاملة:</p>
                 <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="bg-white rounded p-2 text-center border border-blue-100">
-                    <p className="font-bold text-blue-700">أساسي</p>
+                  <div className="bg-white rounded p-2 text-center border border-primary/20">
+                    <p className="font-bold text-primary/80">أساسي</p>
                     <p className="text-blue-600">10,000 د.ع</p>
                   </div>
                   <div className="bg-white rounded p-2 text-center border border-purple-100">
@@ -225,7 +225,7 @@ export default function SubscriptionStatusBar() {
             <a
               onClick={(e) => { e.preventDefault(); navigate("/pricing"); setShowDetails(false); }}
               href="/pricing"
-              className="flex items-center justify-center gap-1.5 w-full p-2 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-100 text-xs font-bold text-blue-700 hover:from-blue-100 hover:to-purple-100 transition-all cursor-pointer"
+              className="flex items-center justify-center gap-1.5 w-full p-2 rounded-lg bg-gradient-to-r from-primary/5 to-purple-50/30 border border-primary/20 text-xs font-bold text-primary/80 hover:from-primary/10 hover:to-purple-50/40 transition-all cursor-pointer"
             >
               <Tag className="w-3.5 h-3.5" />
               عرض كل الباقات والأسعار

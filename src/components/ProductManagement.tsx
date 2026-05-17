@@ -325,8 +325,8 @@ export default function ProductManagement() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">إدارة المنتجات</h1>
-          <p className="text-sm text-gray-500 mt-1">إدارة منتجات المتجر والمخزون</p>
+          <h1 className="text-2xl font-bold text-foreground">إدارة المنتجات</h1>
+          <p className="text-sm text-muted-foreground mt-1">إدارة منتجات المتجر والمخزون</p>
         </div>
         <div className="flex gap-2 flex-wrap">
           <Button
@@ -340,7 +340,7 @@ export default function ProductManagement() {
           </Button>
           <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
             <DialogTrigger asChild>
-              <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleOpenNew}>
+              <Button className="bg-primary hover:bg-primary/90" onClick={handleOpenNew}>
                 <Plus className="w-4 h-4 ml-2" />إضافة منتج جديد
               </Button>
             </DialogTrigger>
@@ -351,8 +351,8 @@ export default function ProductManagement() {
               <div className="p-6 pb-2">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2 text-xl">
-                    <span className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
-                      {editingProduct ? <Edit className="w-4 h-4 text-blue-600" /> : <Plus className="w-4 h-4 text-blue-600" />}
+                    <span className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                      {editingProduct ? <Edit className="w-4 h-4 text-primary" /> : <Plus className="w-4 h-4 text-primary" />}
                     </span>
                     {editingProduct ? "تعديل المنتج" : "إضافة منتج جديد"}
                   </DialogTitle>
@@ -365,25 +365,25 @@ export default function ProductManagement() {
               <form onSubmit={(e) => handleSubmit(e)} className="p-6 pt-0">
                 {/* SECTION: Basic Info */}
                 <div className="mb-4">
-                  <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-700">
-                    <Info className="w-4 h-4 text-blue-500" />
+                  <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-foreground/80">
+                    <Info className="w-4 h-4 text-primary" />
                     المعلومات الأساسية
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="name" className="text-sm font-medium">اسم المنتج <span className="text-red-500">*</span></Label>
+                      <Label htmlFor="name" className="text-sm font-medium">اسم المنتج <span className="text-destructive">*</span></Label>
                       <Input
                         id="name"
                         value={formData.name}
                         onChange={(e) => { setFormData({ ...formData, name: e.target.value }); setFormErrors((p) => ({ ...p, name: undefined })); }}
                         placeholder="مثال: قهوة تركية 250g"
-                        className={formErrors.name ? "border-red-400 focus-visible:ring-red-300" : ""}
+                        className={formErrors.name ? "border-destructive/40 focus-visible:ring-destructive/40" : ""}
                         autoFocus
                       />
-                      {formErrors.name && <p className="text-xs text-red-500">{formErrors.name}</p>}
+                      {formErrors.name && <p className="text-xs text-destructive">{formErrors.name}</p>}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="price" className="text-sm font-medium">السعر ({CURRENCY}) <span className="text-red-500">*</span></Label>
+                      <Label htmlFor="price" className="text-sm font-medium">السعر ({CURRENCY}) <span className="text-destructive">*</span></Label>
                       <Input
                         id="price"
                         type="number"
@@ -392,9 +392,9 @@ export default function ProductManagement() {
                         value={formData.price}
                         onChange={(e) => { setFormData({ ...formData, price: e.target.value }); setFormErrors((p) => ({ ...p, price: undefined })); }}
                         placeholder="أدخل السعر"
-                        className={formErrors.price ? "border-red-400 focus-visible:ring-red-300" : ""}
+                        className={formErrors.price ? "border-destructive/40 focus-visible:ring-destructive/40" : ""}
                       />
-                      {formErrors.price && <p className="text-xs text-red-500">{formErrors.price}</p>}
+                      {formErrors.price && <p className="text-xs text-destructive">{formErrors.price}</p>}
                       {currentPrice > 0 && (
                         <p className="text-xs text-emerald-600 font-medium">{priceInWords(currentPrice)}</p>
                       )}
@@ -419,7 +419,7 @@ export default function ProductManagement() {
 
                 {/* SECTION: Stock & Category */}
                 <div className="mb-4">
-                  <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-700">
+                  <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-foreground/80">
                     <Package className="w-4 h-4 text-emerald-500" />
                     المخزون والتصنيف
                   </div>
@@ -468,7 +468,7 @@ export default function ProductManagement() {
 
                 {/* SECTION: Barcode */}
                 <div className="mb-4">
-                  <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-700">
+                  <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-foreground/80">
                     <Hash className="w-4 h-4 text-violet-500" />
                     الباركود
                   </div>
@@ -482,7 +482,7 @@ export default function ProductManagement() {
 
                 {/* SECTION: Description */}
                 <div className="mb-4">
-                  <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-700">
+                  <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-foreground/80">
                     <Info className="w-4 h-4 text-teal-500" />
                     الوصف
                   </div>
@@ -498,13 +498,13 @@ export default function ProductManagement() {
 
                 {/* SECTION: Image */}
                 <div className="mb-4">
-                  <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-700">
+                  <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-foreground/80">
                     <ImagePlus className="w-4 h-4 text-pink-500" />
                     صورة المنتج
                   </div>
                   {imagePreview ? (
                     <div className="flex gap-4 items-start">
-                      <div className="relative w-40 h-40 rounded-xl overflow-hidden border-2 border-blue-200 shadow-sm group">
+                      <div className="relative w-40 h-40 rounded-xl overflow-hidden border-2 border-primary/20 shadow-sm group">
                         <img src={imagePreview} alt="معاينة" className="w-full h-full object-cover" />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                           <ZoomIn className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
@@ -512,26 +512,26 @@ export default function ProductManagement() {
                         <Button type="button" variant="destructive" size="icon" className="absolute top-1.5 end-1.5 h-7 w-7 rounded-full shadow-md" onClick={removeImage}><X className="w-3.5 h-3.5" /></Button>
                       </div>
                       <div className="flex-1 space-y-2">
-                        <p className="text-sm text-gray-600">تم اختيار الصورة</p>
-                        <label className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 cursor-pointer font-medium">
+                        <p className="text-sm text-muted-foreground">تم اختيار الصورة</p>
+                        <label className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 cursor-pointer font-medium">
                           <RotateCcw className="w-3 h-3" /> تغيير الصورة
                           <input type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
                         </label>
                       </div>
                     </div>
                   ) : (
-                    <label className="flex flex-col items-center justify-center h-40 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition-all group">
-                      <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center mb-2 group-hover:bg-blue-100 transition-colors">
-                        <ImagePlus className="w-6 h-6 text-blue-400" />
+                    <label className="flex flex-col items-center justify-center h-40 border-2 border-dashed border-border/60 rounded-xl cursor-pointer hover:border-primary/40 hover:bg-primary/5 transition-all group">
+                      <div className="w-12 h-12 rounded-full bg-primary/5 flex items-center justify-center mb-2 group-hover:bg-primary/10 transition-colors">
+                        <ImagePlus className="w-6 h-6 text-primary/60" />
                       </div>
-                      <p className="text-sm font-medium text-gray-600">اسحب الصورة هنا أو اضغط للاختيار</p>
-                      <p className="text-xs text-gray-400 mt-1">PNG, JPG حتى 5MB</p>
+                      <p className="text-sm font-medium text-muted-foreground">اسحب الصورة هنا أو اضغط للاختيار</p>
+                      <p className="text-xs text-muted-foreground/60 mt-1">PNG, JPG حتى 5MB</p>
                       <input type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
                     </label>
                   )}
                   {uploading && (
-                    <div className="flex items-center gap-2 mt-2 text-sm text-blue-600">
-                      <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                    <div className="flex items-center gap-2 mt-2 text-sm text-primary">
+                      <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                       جاري رفع الصورة...
                     </div>
                   )}
@@ -544,7 +544,7 @@ export default function ProductManagement() {
 
                 {/* SECTION: Description */}
                 <div className="mb-4">
-                  <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-700">
+                  <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-foreground/80">
                     <Info className="w-4 h-4 text-teal-500" />
                     الوصف
                   </div>
@@ -558,24 +558,24 @@ export default function ProductManagement() {
 
                 <Separator className="mb-4" />
                     <div className="mb-4">
-                      <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-700">
-                        <LayoutGrid className="w-4 h-4 text-gray-400" />
+                      <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-foreground/80">
+                        <LayoutGrid className="w-4 h-4 text-muted-foreground/60" />
                         معاينة المنتج في الشبكة
                       </div>
                       <div className="max-w-[220px] mx-auto">
-                        <Card className="overflow-hidden border border-gray-200 rounded-xl">
+                        <Card className="overflow-hidden border border-border/60 rounded-xl">
                           {imagePreview ? (
-                            <div className="h-28 bg-gray-100 overflow-hidden">
+                            <div className="h-28 bg-muted/30 overflow-hidden">
                               <img src={imagePreview} alt="" className="w-full h-full object-cover" />
                             </div>
                           ) : (
-                            <div className="h-20 bg-gradient-to-br from-slate-50 to-blue-50/50 flex items-center justify-center">
+                            <div className="h-20 bg-gradient-to-br from-muted/40 to-primary/5 flex items-center justify-center">
                               <Package className="w-8 h-8 text-slate-300" />
                             </div>
                           )}
                           <CardContent className="p-3 space-y-1.5">
-                            <h4 className="font-semibold text-sm text-gray-800 line-clamp-1">{formData.name || "اسم المنتج"}</h4>
-                            <p className="text-base font-bold text-blue-600">{currentPrice > 0 ? formatCurrency(currentPrice) : formatCurrencyDisplay(0)}</p>
+                            <h4 className="font-semibold text-sm text-foreground line-clamp-1">{formData.name || "اسم المنتج"}</h4>
+                            <p className="text-base font-bold text-primary">{currentPrice > 0 ? formatCurrency(currentPrice) : formatCurrencyDisplay(0)}</p>
                             <div className="flex gap-1 flex-wrap">
                               <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{formData.stock ? `متوفر: ${formData.stock}` : "متوفر: 0"}</Badge>
                               {selectedCategory && (
@@ -609,7 +609,7 @@ export default function ProductManagement() {
                       <span className="flex items-center gap-2"><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> جاري...</span>
                     ) : editingProduct ? "تحديث المنتج" : "إضافة المنتج"}
                   </Button>
-                  <Button type="button" variant="ghost" onClick={resetForm} className="text-gray-500">إلغاء</Button>
+                  <Button type="button" variant="ghost" onClick={resetForm} className="text-muted-foreground">إلغاء</Button>
                 </div>
               </form>
             </DialogContent>
@@ -619,10 +619,10 @@ export default function ProductManagement() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Card className="bg-blue-50 border-blue-200">
+        <Card className="bg-primary/5 border-primary/20">
           <CardContent className="p-4">
-            <p className="text-sm text-blue-600 font-medium">إجمالي المنتجات</p>
-            <p className="text-2xl font-bold text-blue-900 mt-1">{allProducts.length}</p>
+            <p className="text-sm text-primary font-medium">إجمالي المنتجات</p>
+            <p className="text-2xl font-bold text-primary/80 mt-1">{allProducts.length}</p>
           </CardContent>
         </Card>
         <Card className="bg-amber-50 border-amber-200">
@@ -654,7 +654,7 @@ export default function ProductManagement() {
           {/* Row 1: Search + View Toggle */}
           <div className="flex gap-2 items-center">
             <div className="relative flex-1">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
               <Input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="ابحث بالاسم أو الباركود..." className="pr-10 h-9 lg:h-10" />
             </div>
             <div className="flex border rounded-md overflow-hidden shrink-0">
@@ -668,7 +668,7 @@ export default function ProductManagement() {
             <div className="flex gap-1.5 overflow-x-auto flex-1 scrollbar-thin pb-1">
               <Button variant={categoryFilter === "all" ? "default" : "outline"} size="sm"
                 onClick={() => setCategoryFilter("all")}
-                className={cn("h-8 text-xs px-3 shrink-0", categoryFilter === "all" ? "bg-blue-600 hover:bg-blue-700" : "")}>الكل</Button>
+                className={cn("h-8 text-xs px-3 shrink-0", categoryFilter === "all" ? "bg-primary hover:bg-primary/90" : "")}>الكل</Button>
               {categories.map((cat: Category) => (
                 <Button key={cat.id} variant={categoryFilter === cat.id ? "default" : "outline"} size="sm"
                   onClick={() => setCategoryFilter(cat.id)}
@@ -678,7 +678,7 @@ export default function ProductManagement() {
             </div>
             <button
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              className="flex items-center gap-1 shrink-0 h-8 px-2.5 rounded-lg text-xs font-medium border border-slate-200 hover:bg-slate-50 text-slate-500 transition-colors"
+              className="flex items-center gap-1 shrink-0 h-8 px-2.5 rounded-lg text-xs font-medium border border-border/60 hover:bg-muted/40 text-muted-foreground transition-colors"
             >
               <Filter className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">فلاتر</span>
@@ -693,16 +693,16 @@ export default function ProductManagement() {
                 <SelectTrigger className="w-full sm:w-40 h-9 text-xs"><AlertTriangle className="w-3.5 h-3.5 ml-1.5" /><SelectValue placeholder="المخزون" /></SelectTrigger>
                 <SelectContent><SelectItem value="all">جميع المنتجات</SelectItem><SelectItem value="low">مخزون منخفض</SelectItem><SelectItem value="out">نفذ المخزون</SelectItem></SelectContent>
               </Select>
-              <div className="flex items-center gap-1.5 text-xs text-gray-500">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <span className="shrink-0">السعر:</span>
                 <Input type="number" min="0" step="0.001" placeholder="من" value={priceRange.min} onChange={(e) => setPriceRange({ ...priceRange, min: e.target.value })} className="w-20 h-8 text-xs" />
                 <span>-</span>
                 <Input type="number" min="0" step="0.001" placeholder="إلى" value={priceRange.max} onChange={(e) => setPriceRange({ ...priceRange, max: e.target.value })} className="w-20 h-8 text-xs" />
                 {(priceRange.min || priceRange.max) && (
-                  <Button variant="ghost" size="sm" onClick={() => setPriceRange({ min: "", max: "" })} className="h-7 text-[10px] text-red-500 px-1.5"><X className="w-3 h-3 ml-0.5" />مسح</Button>
+                  <Button variant="ghost" size="sm" onClick={() => setPriceRange({ min: "", max: "" })} className="h-7 text-[10px] text-destructive px-1.5"><X className="w-3 h-3 ml-0.5" />مسح</Button>
                 )}
               </div>
-              <span className="text-[11px] text-gray-400 mr-auto self-center shrink-0">{filteredProducts.length} منتج</span>
+              <span className="text-[11px] text-muted-foreground/60 mr-auto self-center shrink-0">{filteredProducts.length} منتج</span>
             </div>
           )}
         </CardContent>
@@ -717,7 +717,7 @@ export default function ProductManagement() {
         ) : <Skeleton className="h-96 rounded-lg" />
       ) : filteredProducts.length === 0 ? (
         <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-16 text-gray-400">
+          <CardContent className="flex flex-col items-center justify-center py-16 text-muted-foreground/60">
             <Package className="w-12 h-12 mb-4" />
             <p className="text-lg font-medium">لا توجد منتجات</p>
             <p className="text-sm mt-1">{searchTerm || categoryFilter !== "all" || stockFilter !== "all" || priceRange.min || priceRange.max ? "جرب تغيير معايير البحث" : "أضف منتجات جديدة للبدء"}</p>
@@ -731,7 +731,7 @@ export default function ProductManagement() {
               <Card key={product.id} className="hover:shadow-md transition-all duration-200 group overflow-hidden">
                 {product.image_url && (
                   <div
-                    className="h-40 bg-gray-100 overflow-hidden cursor-pointer relative"
+                    className="h-40 bg-muted/30 overflow-hidden cursor-pointer relative"
                     onClick={() => setZoomedImage(product.image_url!)}
                   >
                     <img src={product.image_url} alt={product.name} className="w-full h-full object-cover lg:group-hover:scale-105 transition-transform duration-300" loading="lazy" />
@@ -742,7 +742,7 @@ export default function ProductManagement() {
                 )}
                 <CardHeader className={product.image_url ? "pb-1 pt-3" : "pb-3"}>
                   <div className="flex justify-between items-start">
-                    <CardTitle className="text-base text-gray-800 line-clamp-1 flex-1">{product.name}</CardTitle>
+                    <CardTitle className="text-base text-foreground line-clamp-1 flex-1">{product.name}</CardTitle>
                     {category && (
                       <Badge variant="secondary" className="text-xs text-white border-0 shrink-0 mr-2" style={{ backgroundColor: category.color }}>
                         {category.name}
@@ -752,32 +752,32 @@ export default function ProductManagement() {
                 </CardHeader>
                 <CardContent className="space-y-2 pt-0">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-500">السعر</span>
-                    <span className="text-lg font-bold text-blue-600">{formatCurrency(product.price)}</span>
+                    <span className="text-sm text-muted-foreground">السعر</span>
+                    <span className="text-lg font-bold text-primary">{formatCurrency(product.price)}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-500">المخزون</span>
+                    <span className="text-sm text-muted-foreground">المخزون</span>
                     {getStockBadge(product.stock)}
                   </div>
                   {product.barcode && (
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-500">الباركود</span>
+                      <span className="text-sm text-muted-foreground">الباركود</span>
                       <button
                         onClick={() => copyBarcode(product.barcode!)}
-                        className="text-xs font-mono bg-gray-100 px-2 py-1 rounded hover:bg-blue-50 hover:text-blue-600 transition-colors flex items-center gap-1"
+                        className="text-xs font-mono bg-muted/30 px-2 py-1 rounded hover:bg-primary/5 hover:text-primary transition-colors flex items-center gap-1"
                         title="نسخ الباركود"
                       >
                         {product.barcode} <CopyCheck className="w-3 h-3" />
                       </button>
                     </div>
                   )}
-                  <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground/60">
                     <span>الكمية:</span>
-                    <button onClick={() => handleStockAdjust(product, -1)} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 hover:text-red-500 active:bg-red-100 transition-colors" title="إنقاص 1"><MinusCircle className="w-4 h-4" /></button>
-                    <span className="font-bold text-gray-600 w-6 text-center">{product.stock}</span>
-                    <button onClick={() => handleStockAdjust(product, 1)} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-green-50 hover:text-green-500 active:bg-green-100 transition-colors" title="زيادة 1"><PlusCircle className="w-4 h-4" /></button>
-                    <button onClick={() => handleStockAdjust(product, 5)} className="px-1.5 h-6 flex items-center justify-center rounded-md hover:bg-green-50 hover:text-green-600 active:bg-green-100 transition-colors text-[11px] font-bold" title="زيادة 5">+5</button>
-                    <button onClick={() => handleStockAdjust(product, -5)} className="px-1.5 h-6 flex items-center justify-center rounded-md hover:bg-red-50 hover:text-red-600 active:bg-red-100 transition-colors text-[11px] font-bold" title="إنقاص 5">-5</button>
+                    <button onClick={() => handleStockAdjust(product, -1)} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-destructive/5 hover:text-destructive active:bg-destructive/10 transition-colors" title="إنقاص 1"><MinusCircle className="w-4 h-4" /></button>
+                    <span className="font-bold text-muted-foreground w-6 text-center">{product.stock}</span>
+                    <button onClick={() => handleStockAdjust(product, 1)} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-success/5 hover:text-green-500 active:bg-success/10 transition-colors" title="زيادة 1"><PlusCircle className="w-4 h-4" /></button>
+                    <button onClick={() => handleStockAdjust(product, 5)} className="px-1.5 h-6 flex items-center justify-center rounded-md hover:bg-success/5 hover:text-green-600 active:bg-success/10 transition-colors text-[11px] font-bold" title="زيادة 5">+5</button>
+                    <button onClick={() => handleStockAdjust(product, -5)} className="px-1.5 h-6 flex items-center justify-center rounded-md hover:bg-destructive/5 hover:text-red-600 active:bg-destructive/10 transition-colors text-[11px] font-bold" title="إنقاص 5">-5</button>
                   </div>
                   <div className="flex gap-2 pt-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                     <Button size="sm" variant="outline" onClick={() => handleEdit(product)} className="flex-1"><Edit className="w-3.5 h-3.5 ml-1" />تعديل</Button>
@@ -808,38 +808,38 @@ export default function ProductManagement() {
                 const category = getCategoryById(product.category_id);
                 return (
                   <TableRow key={product.id}>
-                    <TableCell className="text-gray-400 text-xs">{idx + 1}</TableCell>
+                    <TableCell className="text-muted-foreground/60 text-xs">{idx + 1}</TableCell>
                     <TableCell className="font-medium flex items-center gap-2">
                       {product.image_url && (
                         <img src={product.image_url} alt="" className="w-8 h-8 rounded object-cover cursor-pointer" onClick={() => setZoomedImage(product.image_url!)} />
                       )}
                       {product.name}
                     </TableCell>
-                    <TableCell className="text-blue-600 font-semibold">{formatCurrency(product.price)}</TableCell>
+                    <TableCell className="text-primary font-semibold">{formatCurrency(product.price)}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1.5">
-                        <button onClick={() => handleStockAdjust(product, -1)} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 hover:text-red-500 transition-colors"><MinusCircle className="w-4 h-4" /></button>
+                        <button onClick={() => handleStockAdjust(product, -1)} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-destructive/5 hover:text-destructive transition-colors"><MinusCircle className="w-4 h-4" /></button>
                         {getStockBadge(product.stock)}
-                        <button onClick={() => handleStockAdjust(product, 1)} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-green-50 hover:text-green-500 transition-colors"><PlusCircle className="w-4 h-4" /></button>
+                        <button onClick={() => handleStockAdjust(product, 1)} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-success/5 hover:text-green-500 transition-colors"><PlusCircle className="w-4 h-4" /></button>
                       </div>
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
                       {category ? (
                         <Badge variant="secondary" className="text-xs text-white border-0" style={{ backgroundColor: category.color }}>{category.name}</Badge>
-                      ) : <span className="text-gray-400 text-sm">-</span>}
+                      ) : <span className="text-muted-foreground/60 text-sm">-</span>}
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
                       {product.barcode ? (
-                        <button onClick={() => copyBarcode(product.barcode!)} className="text-xs font-mono bg-gray-100 px-2 py-1 rounded hover:bg-blue-50 hover:text-blue-600 transition-colors inline-flex items-center gap-1" title="نسخ">
+                        <button onClick={() => copyBarcode(product.barcode!)} className="text-xs font-mono bg-muted/30 px-2 py-1 rounded hover:bg-primary/5 hover:text-primary transition-colors inline-flex items-center gap-1" title="نسخ">
                           {product.barcode} <CopyCheck className="w-3 h-3" />
                         </button>
-                      ) : <span className="text-gray-400 text-sm">-</span>}
+                      ) : <span className="text-muted-foreground/60 text-sm">-</span>}
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-0.5">
                         <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => handleEdit(product)} title="تعديل"><Edit className="w-4 h-4" /></Button>
                         <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => handleDuplicate(product)} disabled={duplicateMutation.isPending} title="نسخ"><Copy className="w-4 h-4" /></Button>
-                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => setDeleteTarget(product)} title="حذف"><Trash2 className="w-4 h-4" /></Button>
+                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-destructive hover:text-red-700 hover:bg-destructive/5" onClick={() => setDeleteTarget(product)} title="حذف"><Trash2 className="w-4 h-4" /></Button>
                       </div>
                     </TableCell>
                   </TableRow>

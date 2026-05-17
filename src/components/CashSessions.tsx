@@ -103,7 +103,7 @@ export default function CashSessions() {
     <div className="space-y-4 p-4" dir="rtl">
       {/* Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+        <Card className="bg-gradient-brand text-white">
           <CardContent className="p-4 flex items-center gap-3">
             <Landmark className="w-8 h-8 opacity-80" />
             <div><div className="text-2xl font-bold">{sessions.length}</div><div className="text-xs opacity-80">الجلسات</div></div>
@@ -115,7 +115,7 @@ export default function CashSessions() {
             <div><div className="text-2xl font-bold">{formatNumberDisplay(stats.totalSales, 0)}</div><div className="text-xs opacity-80">المبيعات ({CURRENCY})</div></div>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-green-600 to-green-700 text-white">
+        <Card className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white">
           <CardContent className="p-4 flex items-center gap-3">
             <DollarSign className="w-8 h-8 opacity-80" />
             <div><div className="text-2xl font-bold">{formatNumberDisplay(stats.totalCash, 0)}</div><div className="text-xs opacity-80">نقدي ({CURRENCY})</div></div>
@@ -139,22 +139,22 @@ export default function CashSessions() {
       <div className="flex gap-3 items-center flex-wrap">
         {activeSession ? (
           <div className="flex items-center gap-3 flex-1">
-            <Badge variant="default" className="bg-green-500 text-white gap-1 px-3 py-1.5">
+            <Badge variant="default" className="bg-success text-white gap-1 px-3 py-1.5">
               <CheckCircle2 className="w-3.5 h-3.5" /> جلسة مفتوحة
             </Badge>
-            <span className="text-sm text-gray-600">{activeSession.cashier_name} | {activeSession.start_date} {activeSession.start_time}</span>
+            <span className="text-sm text-muted-foreground">{activeSession.cashier_name} | {activeSession.start_date} {activeSession.start_time}</span>
             <span className="text-sm font-semibold">المبيعات: {formatCurrency(activeSession.total_sales, 2)}</span>
             <Button
               variant="outline"
               size="sm"
-              className="ml-auto text-red-600 border-red-300 hover:bg-red-50 active:bg-red-100 active:scale-95"
+              className="ml-auto text-destructive border-destructive/30 hover:bg-destructive/5 active:bg-destructive/10 active:scale-95"
               onClick={() => { setClosingSession(activeSession); setClosingBalance(activeSession.total_cash.toFixed(0)); setShowCloseDialog(true); }}
             >
               <X className="w-3.5 h-3.5 ml-1" /> إقفال الجلسة
             </Button>
           </div>
         ) : (
-          <Button onClick={() => setShowOpenDialog(true)} className="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 active:scale-95 gap-2">
+          <Button onClick={() => setShowOpenDialog(true)} className="bg-primary hover:bg-primary/90 active:bg-primary/80 active:scale-95 gap-2">
             <Play className="w-4 h-4" /> فتح جلسة جديدة
           </Button>
         )}
@@ -166,7 +166,7 @@ export default function CashSessions() {
           {isLoading ? (
             <div className="p-4 space-y-2">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}</div>
           ) : paginated.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground/60">
               <Landmark className="w-16 h-16 mb-4 opacity-30" />
               <p className="text-lg font-medium">لا توجد جلسات</p>
               <p className="text-sm">لم يتم فتح أي جلسة صندوق بعد</p>
@@ -192,33 +192,33 @@ export default function CashSessions() {
                   <TableRow key={session.id}>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                          <Landmark className="w-4 h-4 text-blue-600" />
+                        <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                          <Landmark className="w-4 h-4 text-primary" />
                         </div>
                         <div>
                           <div className="font-medium text-sm">{session.cashier_name}</div>
-                          <div className="text-xs text-gray-500">{session.start_time} - {session.end_time || "..."}</div>
+                          <div className="text-xs text-muted-foreground">{session.start_time} - {session.end_time || "..."}</div>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell className="text-center text-sm">{session.start_date}</TableCell>
                     <TableCell className="text-center">
-                      <Badge variant={session.status === "open" ? "default" : "secondary"} className={session.status === "open" ? "bg-green-500" : ""}>
+                      <Badge variant={session.status === "open" ? "default" : "secondary"} className={session.status === "open" ? "bg-success" : ""}>
                         {session.status === "open" ? "مفتوحة" : "مقفلة"}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-center font-medium">{formatNumber(session.opening_balance, 2)}</TableCell>
-                    <TableCell className="text-center font-semibold text-blue-600">{formatNumber(session.total_sales, 2)}</TableCell>
+                    <TableCell className="text-center font-semibold text-primary">{formatNumber(session.total_sales, 2)}</TableCell>
                     <TableCell className="text-center">{formatNumber(session.total_cash, 2)}</TableCell>
                     <TableCell className="text-center">{formatNumber(session.total_card, 2)}</TableCell>
                     <TableCell className="text-center">
-                      <span className={session.difference === 0 ? "text-green-600" : session.difference > 0 ? "text-red-600" : "text-amber-600"}>
+                      <span className={session.difference === 0 ? "text-success" : session.difference > 0 ? "text-destructive" : "text-warning"}>
                         {session.status === "closed" ? formatNumber(session.difference, 2) : "-"}
                       </span>
                     </TableCell>
                     <TableCell className="text-center">
-                      <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-blue-50 active:bg-blue-100" onClick={() => { setSelectedSession(session); setShowDetailDialog(true); }}>
-                        <Eye className="w-4 h-4 text-blue-600" />
+                      <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-primary/5 active:bg-primary/10" onClick={() => { setSelectedSession(session); setShowDetailDialog(true); }}>
+                        <Eye className="w-4 h-4 text-primary" />
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -253,7 +253,7 @@ export default function CashSessions() {
       <Dialog open={showOpenDialog} onOpenChange={setShowOpenDialog}>
         <DialogContent dir="rtl" className="max-w-sm max-sm:mx-2 max-sm:w-[calc(100%-16px)] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Play className="w-5 h-5 text-blue-600" />فتح جلسة جديدة</DialogTitle>
+            <DialogTitle className="flex items-center gap-2"><Play className="w-5 h-5 text-primary" />فتح جلسة جديدة</DialogTitle>
             <DialogDescription>أدخل المبلغ الافتتاحي الموجود في الصندوق</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
@@ -264,7 +264,7 @@ export default function CashSessions() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowOpenDialog(false)}>إلغاء</Button>
-            <Button onClick={() => openSessionMutation.mutate()} disabled={openSessionMutation.isPending} className="bg-blue-600">
+            <Button onClick={() => openSessionMutation.mutate()} disabled={openSessionMutation.isPending} className="bg-primary">
               {openSessionMutation.isPending ? "جاري..." : "فتح الجلسة"}
             </Button>
           </DialogFooter>
@@ -275,17 +275,17 @@ export default function CashSessions() {
       <Dialog open={showCloseDialog} onOpenChange={setShowCloseDialog}>
         <DialogContent dir="rtl" className="max-w-sm max-sm:mx-2 max-sm:w-[calc(100%-16px)] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-600"><X className="w-5 h-5" />إقفال الجلسة</DialogTitle>
+            <DialogTitle className="flex items-center gap-2 text-destructive"><X className="w-5 h-5" />إقفال الجلسة</DialogTitle>
             <DialogDescription>أدخل المبلغ النقدي الفعلي الموجود في الصندوق الآن</DialogDescription>
           </DialogHeader>
           {closingSession && (
             <div className="space-y-3">
-              <div className="bg-gray-50 rounded-lg p-3 space-y-1 text-sm">
+              <div className="bg-muted/40 rounded-lg p-3 space-y-1 text-sm">
                 <div className="flex justify-between"><span>المبلغ الافتتاحي:</span><span>{formatCurrency(closingSession.opening_balance, 2)}</span></div>
                 <div className="flex justify-between"><span>إجمالي المبيعات:</span><span>{formatCurrency(closingSession.total_sales, 2)}</span></div>
                 <div className="flex justify-between"><span>نقدي مستلم:</span><span>{formatCurrency(closingSession.total_cash, 2)}</span></div>
                 <div className="flex justify-between"><span>بطاقة:</span><span>{formatCurrency(closingSession.total_card, 2)}</span></div>
-                <div className="flex justify-between"><span>مرتجعات:</span><span className="text-red-500">-{formatCurrency(closingSession.total_returns, 2)}</span></div>
+                <div className="flex justify-between"><span>مرتجعات:</span><span className="text-destructive">-{formatCurrency(closingSession.total_returns, 2)}</span></div>
                 <Separator />
                 <div className="flex justify-between font-bold">
                   <span>النقدي المتوقع:</span>
@@ -298,7 +298,7 @@ export default function CashSessions() {
               </div>
               {closingBalance && (
                 <div className="text-center">
-                  <Badge variant="outline" className={parseFloat(closingBalance) >= (closingSession.opening_balance + closingSession.total_cash - closingSession.total_returns) ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}>
+                  <Badge variant="outline" className={parseFloat(closingBalance) >= (closingSession.opening_balance + closingSession.total_cash - closingSession.total_returns) ? "bg-success/5 text-success/90" : "bg-destructive/5 text-destructive/90"}>
                     الفرق: {formatCurrency(parseFloat(closingBalance) - (closingSession.opening_balance + closingSession.total_cash - closingSession.total_returns), 2)}
                   </Badge>
                 </div>
@@ -307,7 +307,7 @@ export default function CashSessions() {
           )}
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setShowCloseDialog(false)}>إلغاء</Button>
-            <Button onClick={() => closeSessionMutation.mutate()} disabled={closeSessionMutation.isPending} className="bg-red-600 hover:bg-red-700">
+            <Button onClick={() => closeSessionMutation.mutate()} disabled={closeSessionMutation.isPending} className="bg-destructive hover:bg-destructive/90">
               {closeSessionMutation.isPending ? "جاري..." : "تأكيد الإقفال"}
             </Button>
           </DialogFooter>
@@ -318,28 +318,28 @@ export default function CashSessions() {
       <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
         <DialogContent dir="rtl" className="max-w-md max-sm:mx-2 max-sm:w-[calc(100%-16px)] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Landmark className="w-5 h-5 text-blue-600" />تفاصيل الجلسة</DialogTitle>
+            <DialogTitle className="flex items-center gap-2"><Landmark className="w-5 h-5 text-primary" />تفاصيل الجلسة</DialogTitle>
           </DialogHeader>
           {selectedSession && (
             <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-2 text-sm bg-gray-50 p-3 rounded-lg">
-                <div><span className="text-gray-500">الكاشير:</span> <span className="font-medium">{selectedSession.cashier_name}</span></div>
+              <div className="grid grid-cols-2 gap-2 text-sm bg-muted/40 p-3 rounded-lg">
+                <div><span className="text-muted-foreground">الكاشير:</span> <span className="font-medium">{selectedSession.cashier_name}</span></div>
                 <div>
-                  <Badge variant={selectedSession.status === "open" ? "default" : "secondary"} className={selectedSession.status === "open" ? "bg-green-500" : ""}>
+                  <Badge variant={selectedSession.status === "open" ? "default" : "secondary"} className={selectedSession.status === "open" ? "bg-success" : ""}>
                     {selectedSession.status === "open" ? "مفتوحة" : "مقفلة"}
                   </Badge>
                 </div>
-                <div><span className="text-gray-500">تاريخ البدء:</span> <span className="font-medium">{selectedSession.start_date} {selectedSession.start_time}</span></div>
-                {selectedSession.end_date && <div><span className="text-gray-500">تاريخ الإقفال:</span> <span className="font-medium">{selectedSession.end_date} {selectedSession.end_time}</span></div>}
-                <div><span className="text-gray-500">عدد الفواتير:</span> <span className="font-medium">{selectedSession.invoice_count}</span></div>
+                <div><span className="text-muted-foreground">تاريخ البدء:</span> <span className="font-medium">{selectedSession.start_date} {selectedSession.start_time}</span></div>
+                {selectedSession.end_date && <div><span className="text-muted-foreground">تاريخ الإقفال:</span> <span className="font-medium">{selectedSession.end_date} {selectedSession.end_time}</span></div>}
+                <div><span className="text-muted-foreground">عدد الفواتير:</span> <span className="font-medium">{selectedSession.invoice_count}</span></div>
               </div>
               <Separator />
               <div className="space-y-1.5 text-sm">
                 <div className="flex justify-between"><span>مبلغ افتتاحي:</span><span className="font-bold">{formatCurrency(selectedSession.opening_balance, 2)}</span></div>
-                <div className="flex justify-between"><span>إجمالي المبيعات:</span><span className="font-bold text-blue-600">{formatCurrency(selectedSession.total_sales, 2)}</span></div>
-                <div className="flex justify-between"><span className="text-emerald-600">نقدي:</span><span className="font-semibold">{formatCurrency(selectedSession.total_cash, 2)}</span></div>
+                <div className="flex justify-between"><span>إجمالي المبيعات:</span><span className="font-bold text-primary">{formatCurrency(selectedSession.total_sales, 2)}</span></div>
+                <div className="flex justify-between"><span className="text-success">نقدي:</span><span className="font-semibold">{formatCurrency(selectedSession.total_cash, 2)}</span></div>
                 <div className="flex justify-between"><span className="text-purple-600">بطاقة:</span><span className="font-semibold">{formatCurrency(selectedSession.total_card, 2)}</span></div>
-                <div className="flex justify-between"><span className="text-red-600">مرتجعات:</span><span className="font-semibold">-{formatCurrency(selectedSession.total_returns, 2)}</span></div>
+                <div className="flex justify-between"><span className="text-destructive">مرتجعات:</span><span className="font-semibold">-{formatCurrency(selectedSession.total_returns, 2)}</span></div>
                 <Separator />
                 <div className="flex justify-between"><span>النقدي المتوقع:</span><span className="font-semibold">{formatCurrency(selectedSession.expected_cash, 2)}</span></div>
                 {selectedSession.status === "closed" && (
@@ -347,7 +347,7 @@ export default function CashSessions() {
                     <div className="flex justify-between"><span>النقدي الفعلي:</span><span className="font-semibold">{formatCurrency(selectedSession.closing_balance, 2)}</span></div>
                     <div className="flex justify-between">
                       <span>الفرق:</span>
-                      <span className={`font-bold text-lg ${selectedSession.difference === 0 ? "text-green-600" : selectedSession.difference > 0 ? "text-red-600" : "text-amber-600"}`}>
+                      <span className={`font-bold text-lg ${selectedSession.difference === 0 ? "text-success" : selectedSession.difference > 0 ? "text-destructive" : "text-warning"}`}>
                         {selectedSession.difference >= 0 ? "+" : ""}{formatCurrency(selectedSession.difference, 2)}
                       </span>
                     </div>

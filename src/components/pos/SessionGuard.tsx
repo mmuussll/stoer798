@@ -13,15 +13,15 @@ interface SessionGuardProps {
 
 export function SessionGuard({ openingBalance, setOpeningBalance, onOpenSession, isLoading }: SessionGuardProps) {
   return (
-    <div className="h-[calc(100vh-3.5rem)] flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50" dir="rtl">
-      <Card className="max-w-md w-full mx-4 shadow-xl border-2 border-blue-200">
+    <div className="h-[calc(100vh-3.5rem)] flex items-center justify-center bg-gradient-to-br from-primary/5 via-indigo-50/30 to-purple-50/20" dir="rtl">
+      <Card className="max-w-md w-full mx-4 shadow-xl border-2 border-primary/20">
         <CardHeader className="text-center pb-4">
-          <div className="w-16 h-16 mx-auto mb-3 bg-blue-100 rounded-full flex items-center justify-center">
-            <Landmark className="w-8 h-8 text-blue-600" />
+          <div className="w-16 h-16 mx-auto mb-3 bg-primary/10 rounded-full flex items-center justify-center">
+            <Landmark className="w-8 h-8 text-primary" />
           </div>
           <CardTitle className="text-xl">فتح جلسة صندوق</CardTitle>
           <p className="text-sm text-muted-foreground">يجب فتح جلسة صندوق قبل البدء بعمليات البيع</p>
-          <p className="text-xs text-gray-400 mt-1">يمكن تعطيل هذه الميزة من الإعدادات</p>
+          <p className="text-xs text-muted-foreground/60 mt-1">يمكن تعطيل هذه الميزة من الإعدادات</p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
@@ -38,7 +38,7 @@ export function SessionGuard({ openingBalance, setOpeningBalance, onOpenSession,
           <Button
             onClick={onOpenSession}
             disabled={isLoading}
-            className="w-full bg-blue-600 hover:bg-blue-700 h-12 text-lg"
+            className="w-full bg-primary hover:bg-primary/90 h-12 text-lg"
           >
             {isLoading ? "جاري..." : "فتح الجلسة"}
           </Button>

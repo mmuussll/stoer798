@@ -361,8 +361,8 @@ export function DebtorDetail({
                   onClick={() => setActiveTab("debts")}
                   className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
                     activeTab === "debts"
-                      ? "border-blue-600 text-blue-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700"
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground/80"
                   }`}
                 >
                   <FileText className="w-4 h-4 inline ml-1.5" />
@@ -372,8 +372,8 @@ export function DebtorDetail({
                   onClick={() => setActiveTab("payments")}
                   className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
                     activeTab === "payments"
-                      ? "border-blue-600 text-blue-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700"
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground/80"
                   }`}
                 >
                   <History className="w-4 h-4 inline ml-1.5" />
@@ -386,7 +386,7 @@ export function DebtorDetail({
                 {activeTab === "debts" && (
                   <div className="space-y-4">
                     {debts.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+                      <div className="flex flex-col items-center justify-center py-12 text-muted-foreground/60">
                         <Landmark className="w-12 h-12 mb-3 opacity-30" />
                         <p className="text-lg font-medium">لا توجد ديون لهذا الزبون</p>
                       </div>
@@ -403,10 +403,10 @@ export function DebtorDetail({
                             <div className="flex items-start justify-between mb-3">
                               <div className="flex items-center gap-3">
                                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                                  debt.status === "paid" ? "bg-emerald-50" : debt.status === "overdue" ? "bg-red-50" : "bg-blue-50"
+                                  debt.status === "paid" ? "bg-emerald-50" : debt.status === "overdue" ? "bg-red-50" : "bg-primary/5"
                                 }`}>
                                   <StatusIcon className={`w-5 h-5 ${
-                                    debt.status === "paid" ? "text-emerald-600" : debt.status === "overdue" ? "text-red-600" : "text-blue-600"
+                                    debt.status === "paid" ? "text-emerald-600" : debt.status === "overdue" ? "text-red-600" : "text-primary"
                                   }`} />
                                 </div>
                                 <div>
@@ -414,14 +414,14 @@ export function DebtorDetail({
                                     {debt.invoice_number ? (
                                       <Badge variant="outline" className="text-xs font-mono">{debt.invoice_number}</Badge>
                                     ) : (
-                                      <span className="text-xs text-gray-400">يدوي</span>
+                                      <span className="text-xs text-muted-foreground/60">يدوي</span>
                                     )}
                                     <Badge variant="outline" className={`text-xs ${status.color}`}>
                                       {status.label}
                                     </Badge>
                                   </div>
                                   {debt.notes && (
-                                    <p className="text-xs text-gray-500 mt-1 line-clamp-1">{debt.notes}</p>
+                                    <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{debt.notes}</p>
                                   )}
                                 </div>
                               </div>
@@ -453,23 +453,23 @@ export function DebtorDetail({
                               <div className="space-y-3 mt-3 pt-3 border-t">
                                 <div className="grid grid-cols-2 gap-3">
                                   <div>
-                                    <label className="text-xs text-gray-500 block mb-1">المبلغ الكلي</label>
+                                    <label className="text-xs text-muted-foreground block mb-1">المبلغ الكلي</label>
                                     <Input type="number" value={editAmount} onChange={(e) => setEditAmount(e.target.value)}
                                       dir="ltr" className="text-sm font-bold text-center" />
                                   </div>
                                   <div>
-                                    <label className="text-xs text-gray-500 block mb-1">المدفوع</label>
-                                    <Input type="text" dir="ltr" className="text-sm font-bold text-center bg-gray-100"
+                                    <label className="text-xs text-muted-foreground block mb-1">المدفوع</label>
+                                    <Input type="text" dir="ltr" className="text-sm font-bold text-center bg-muted"
                                       disabled value={(debt.total_amount - debt.remaining_amount).toFixed(2)} />
                                   </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-3">
                                   <div>
-                                    <label className="text-xs text-gray-500 block mb-1">تاريخ الاستحقاق</label>
+                                    <label className="text-xs text-muted-foreground block mb-1">تاريخ الاستحقاق</label>
                                     <Input type="date" value={editDueDate} onChange={(e) => setEditDueDate(e.target.value)} className="text-sm" />
                                   </div>
                                   <div>
-                                    <label className="text-xs text-gray-500 block mb-1">الحالة</label>
+                                    <label className="text-xs text-muted-foreground block mb-1">الحالة</label>
                                     <Select value={editStatus} onValueChange={setEditStatus}>
                                       <SelectTrigger className="text-sm h-9"><SelectValue /></SelectTrigger>
                                       <SelectContent>
@@ -483,27 +483,27 @@ export function DebtorDetail({
                                   </div>
                                 </div>
                                 <div>
-                                  <label className="text-xs text-gray-500 block mb-1">رقم هاتف المديون</label>
+                                  <label className="text-xs text-muted-foreground block mb-1">رقم هاتف المديون</label>
                                   <Input type="tel" value={editDebtorPhone} onChange={(e) => setEditDebtorPhone(e.target.value)}
                                     dir="ltr" className="text-sm" placeholder="رقم الهاتف" />
                                 </div>
-                                <div className="bg-gray-50 border rounded-lg p-2 space-y-2">
-                                  <span className="text-xs font-medium text-gray-600">بيانات الكفيل</span>
+                                <div className="bg-muted/50 border rounded-lg p-2 space-y-2">
+                                  <span className="text-xs font-medium text-muted-foreground">بيانات الكفيل</span>
                                   <div className="grid grid-cols-2 gap-2">
                                     <div>
-                                      <label className="text-[11px] text-gray-400 block mb-0.5">اسم الكفيل</label>
+                                      <label className="text-[11px] text-muted-foreground/60 block mb-0.5">اسم الكفيل</label>
                                       <Input value={editGuarantorName} onChange={(e) => setEditGuarantorName(e.target.value)}
                                         className="text-sm h-8" placeholder="اسم الكفيل" />
                                     </div>
                                     <div>
-                                      <label className="text-[11px] text-gray-400 block mb-0.5">رقم الكفيل</label>
+                                      <label className="text-[11px] text-muted-foreground/60 block mb-0.5">رقم الكفيل</label>
                                       <Input type="tel" value={editGuarantorPhone} onChange={(e) => setEditGuarantorPhone(e.target.value)}
                                         dir="ltr" className="text-sm h-8" placeholder="رقم الهاتف" />
                                     </div>
                                   </div>
                                 </div>
                                 <div>
-                                  <label className="text-xs text-gray-500 block mb-1">ملاحظات</label>
+                                  <label className="text-xs text-muted-foreground block mb-1">ملاحظات</label>
                                   <Input value={editNote} onChange={(e) => setEditNote(e.target.value)}
                                     className="text-sm" placeholder="ملاحظات..." />
                                 </div>
@@ -523,23 +523,23 @@ export function DebtorDetail({
                               <>
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                                   <div>
-                                    <span className="text-gray-400 text-xs">المبلغ الكلي</span>
+                                    <span className="text-muted-foreground/60 text-xs">المبلغ الكلي</span>
                                     <p className="font-bold">{formatCurrency(debt.total_amount, 2)}</p>
                                   </div>
                                   <div>
-                                    <span className="text-gray-400 text-xs">المتبقي</span>
+                                    <span className="text-muted-foreground/60 text-xs">المتبقي</span>
                                     <p className={`font-bold ${debt.remaining_amount > 0 ? "text-red-600" : "text-emerald-600"}`}>
                                       {formatCurrency(debt.remaining_amount, 2)}
                                     </p>
                                   </div>
                                   <div>
-                                    <span className="text-gray-400 text-xs">المدفوع</span>
+                                    <span className="text-muted-foreground/60 text-xs">المدفوع</span>
                                     <p className="font-bold text-emerald-600">
                                       {formatCurrency(debt.total_amount - debt.remaining_amount, 2)}
                                     </p>
                                   </div>
                                   <div>
-                                    <span className="text-gray-400 text-xs">تاريخ الاستحقاق</span>
+                                    <span className="text-muted-foreground/60 text-xs">تاريخ الاستحقاق</span>
                                     <p className={`font-medium flex items-center gap-1 ${dueStatus.color}`}>
                                       <Calendar className="w-3 h-3" />
                                       {debt.due_date || "غير محدد"}
@@ -550,11 +550,11 @@ export function DebtorDetail({
                                 {/* Progress bar */}
                                 {paidPercent > 0 && debt.status !== "paid" && (
                                   <div className="mt-3">
-                                    <div className="flex justify-between text-xs text-gray-400 mb-1">
+                                    <div className="flex justify-between text-xs text-muted-foreground/60 mb-1">
                                       <span>نسبة السداد</span>
                                       <span>{formatNumberDisplay(paidPercent, 0)}%</span>
                                     </div>
-                                    <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                                    <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
                                       <div
                                         className="h-full bg-emerald-500 rounded-full transition-all duration-500"
                                         style={{ width: `${paidPercent}%` }}
@@ -584,14 +584,14 @@ export function DebtorDetail({
                 {activeTab === "payments" && (
                   <div>
                     {customerPayments.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+                      <div className="flex flex-col items-center justify-center py-12 text-muted-foreground/60">
                         <Wallet className="w-12 h-12 mb-3 opacity-30" />
                         <p className="text-lg font-medium">لا توجد مدفوعات لهذا الزبون</p>
                       </div>
                     ) : (
                       <Table>
                         <TableHeader>
-                          <TableRow className="bg-gray-50">
+                          <TableRow className="bg-muted/50">
                             <TableHead className="text-right">التاريخ</TableHead>
                             <TableHead className="text-right">رقم الفاتورة</TableHead>
                             <TableHead className="text-right">المبلغ</TableHead>
@@ -607,9 +607,9 @@ export function DebtorDetail({
                               <TableRow key={p.id}>
                                 <TableCell className="text-sm">
                                   <div className="flex items-center gap-1">
-                                    <Calendar className="w-3 h-3 text-gray-400" />
+                                    <Calendar className="w-3 h-3 text-muted-foreground/60" />
                                     {p.payment_date}
-                                    {p.payment_time && <span className="text-gray-400 text-xs">{p.payment_time}</span>}
+                                    {p.payment_time && <span className="text-muted-foreground/60 text-xs">{p.payment_time}</span>}
                                   </div>
                                 </TableCell>
                                 <TableCell>{/* debt info could be linked here */}-</TableCell>
@@ -622,7 +622,7 @@ export function DebtorDetail({
                                   </Badge>
                                 </TableCell>
                                 <TableCell className="text-sm">{p.cashier || "-"}</TableCell>
-                                <TableCell className="text-sm text-gray-500 max-w-[120px] truncate">
+                                <TableCell className="text-sm text-muted-foreground max-w-[120px] truncate">
                                   {p.notes || "-"}
                                 </TableCell>
                               </TableRow>
@@ -652,13 +652,13 @@ export function DebtorDetail({
           </DialogHeader>
           {selectedDebt && (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3 bg-gray-50 rounded-lg p-3">
+              <div className="grid grid-cols-2 gap-3 bg-muted/50 rounded-lg p-3">
                 <div>
-                  <p className="text-xs text-gray-500">المبلغ الكلي</p>
+                  <p className="text-xs text-muted-foreground">المبلغ الكلي</p>
                   <p className="font-bold text-lg">{formatCurrency(selectedDebt.total_amount, 2)}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">المتبقي</p>
+                  <p className="text-xs text-muted-foreground">المتبقي</p>
                   <p className="font-bold text-lg text-red-600">{formatCurrency(selectedDebt.remaining_amount, 2)}</p>
                 </div>
               </div>

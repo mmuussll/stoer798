@@ -21,7 +21,7 @@ export function FastSaleDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent dir="rtl" className="max-w-sm">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2"><Hash className="w-5 h-5 text-blue-600" />بيع سريع</DialogTitle>
+          <DialogTitle className="flex items-center gap-2"><Hash className="w-5 h-5 text-primary" />بيع سريع</DialogTitle>
           <DialogDescription>إضافة منتج غير مسجل في المخزون بسرعة</DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
@@ -36,7 +36,7 @@ export function FastSaleDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>إلغاء</Button>
-          <Button onClick={onAdd} className="bg-blue-600">إضافة للسلة</Button>
+          <Button onClick={onAdd} className="bg-primary">إضافة للسلة</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

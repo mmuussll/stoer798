@@ -132,13 +132,13 @@ export default function CategoryManagement() {
     <Card className="bg-white/60 backdrop-blur-sm border-blue-100" dir="rtl">
       <CardHeader>
         <div className="flex justify-between items-center">
-          <CardTitle className="flex items-center gap-2 text-blue-800">
+          <CardTitle className="flex items-center gap-2 text-primary/80">
             <Tag className="w-5 h-5" />
             الفئات ({categories.length})
           </CardTitle>
           <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="border-blue-200 hover:bg-blue-50" onClick={openNewDialog}>
+              <Button variant="outline" size="sm" className="border-primary/20 hover:bg-primary/5" onClick={openNewDialog}>
                 <Plus className="w-4 h-4 ml-1" /> إضافة فئة
               </Button>
             </DialogTrigger>
@@ -149,8 +149,8 @@ export default function CategoryManagement() {
               <div className="p-5 pb-2">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2 text-lg">
-                    <span className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
-                      {editingCategory ? <Edit className="w-4 h-4 text-indigo-600" /> : <Tag className="w-4 h-4 text-indigo-600" />}
+                    <span className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                      {editingCategory ? <Edit className="w-4 h-4 text-primary" /> : <Tag className="w-4 h-4 text-primary" />}
                     </span>
                     {editingCategory ? "تعديل الفئة" : "إضافة فئة جديدة"}
                   </DialogTitle>
@@ -190,7 +190,7 @@ export default function CategoryManagement() {
 
                 {/* Color Section */}
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-foreground/80">
                     <Palette className="w-4 h-4 text-violet-500" />
                     اختر لون الفئة
                   </div>
@@ -227,7 +227,7 @@ export default function CategoryManagement() {
                   {/* Custom HEX Input */}
                   <div className="flex gap-2 items-center justify-center">
                     <div className="relative">
-                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-mono">#</span>
+                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground/60 font-mono">#</span>
                       <Input
                         value={customColor}
                         onChange={(e) => setCustomColor(e.target.value)}
@@ -245,12 +245,12 @@ export default function CategoryManagement() {
 
                 {/* Actions */}
                 <div className="flex gap-2 pt-1">
-                  <Button type="submit" className="flex-1 bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 shadow-sm" disabled={isPending}>
+                  <Button type="submit" className="flex-1 bg-gradient-brand hover:opacity-90 shadow-md" disabled={isPending}>
                     {isPending ? (
                       <span className="flex items-center gap-2"><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> جاري...</span>
                     ) : editingCategory ? "تحديث الفئة" : "إضافة الفئة"}
                   </Button>
-                  <Button type="button" variant="ghost" onClick={resetForm} className="text-gray-500">إلغاء</Button>
+                  <Button type="button" variant="ghost" onClick={resetForm} className="text-muted-foreground">إلغاء</Button>
                 </div>
               </form>
             </DialogContent>
@@ -264,9 +264,9 @@ export default function CategoryManagement() {
             <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : categories.length === 0 ? (
-          <div className="text-center py-8 text-gray-400">
-            <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-3">
-              <Tag className="w-6 h-6 text-gray-300" />
+          <div className="text-center py-8 text-muted-foreground/60">
+            <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-3">
+              <Tag className="w-6 h-6 text-muted-foreground/40" />
             </div>
             <p className="font-medium">لا توجد فئات</p>
             <p className="text-sm mt-1">أضف فئات لتنظيم منتجاتك</p>
@@ -310,11 +310,11 @@ export default function CategoryManagement() {
             </DialogTitle>
           </DialogHeader>
           <div className="py-3">
-            <p className="text-gray-700">
+            <p className="text-foreground/80">
               هل أنت متأكد من حذف فئة{" "}
               <span className="font-bold text-red-600">{deletingCategory?.name}</span>؟
             </p>
-            <p className="text-sm text-gray-500 mt-2">
+            <p className="text-sm text-muted-foreground mt-2">
               المنتجات المرتبطة بهذه الفئة لن تحذف ولكن ستصبح بدون فئة.
             </p>
           </div>

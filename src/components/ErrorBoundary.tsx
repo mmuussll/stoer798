@@ -43,10 +43,10 @@ export class ErrorBoundary extends Component<Props, State> {
             <div className="w-20 h-20 bg-gradient-to-br from-red-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg mx-auto mb-6">
               <AlertTriangle className="w-10 h-10 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">حدث خطأ غير متوقع</h1>
-            <p className="text-gray-500 mb-4 text-sm">{this.state.error?.message || "يرجى المحاولة مرة أخرى"}</p>
+            <h1 className="text-2xl font-bold text-foreground mb-2">حدث خطأ غير متوقع</h1>
+            <p className="text-muted-foreground mb-4 text-sm">{this.state.error?.message || "يرجى المحاولة مرة أخرى"}</p>
             <div className="p-4 bg-white rounded-xl border border-red-200 shadow-sm mb-4">
-              <p className="text-xs text-gray-400 text-left break-all font-mono" dir="ltr">
+              <p className="text-xs text-muted-foreground/60 text-left break-all font-mono" dir="ltr">
                 {this.state.error?.stack?.slice(0, 300) || "—"}
               </p>
             </div>

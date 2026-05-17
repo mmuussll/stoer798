@@ -135,7 +135,7 @@ export default function CustomerManagement() {
     <div className="space-y-4 p-4" dir="rtl">
       {/* Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+        <Card className="bg-gradient-brand text-white">
           <CardContent className="p-4 flex items-center gap-3">
             <Users className="w-8 h-8 opacity-80" />
             <div><div className="text-2xl font-bold">{stats.total}</div><div className="text-xs opacity-80">إجمالي الزبائن</div></div>
@@ -164,10 +164,10 @@ export default function CustomerManagement() {
       {/* Search + Add */}
       <div className="flex gap-3 items-center flex-wrap">
         <div className="relative flex-1 max-w-sm">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }} placeholder="ابحث بالاسم أو رقم الهاتف..." className="pr-10" />
         </div>
-        <Button onClick={openAdd} className="bg-blue-600 hover:bg-blue-700 gap-2"><Plus className="w-4 h-4" />إضافة زبون</Button>
+        <Button onClick={openAdd} className="bg-primary hover:bg-primary/90 gap-2"><Plus className="w-4 h-4" />إضافة زبون</Button>
       </div>
 
       {/* Customers Table */}
@@ -176,7 +176,7 @@ export default function CustomerManagement() {
           {isLoading ? (
             <div className="p-4 space-y-2">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
           ) : paginated.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
               <Users className="w-16 h-16 mb-4 opacity-30" />
               <p className="text-lg font-medium">لا يوجد زبائن</p>
               <p className="text-sm mb-4">{searchTerm ? "جرب تغيير معايير البحث" : "أضف أول زبون لبدء التتبع"}</p>
@@ -197,34 +197,34 @@ export default function CustomerManagement() {
               </TableHeader>
               <TableBody>
                 {paginated.map((c) => (
-                  <TableRow key={c.id} className="hover:bg-gray-50">
+                  <TableRow key={c.id} className="hover:bg-muted/30">
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center shrink-0">
-                          <User2 className="w-4 h-4 text-blue-600" />
+                        <div className="w-9 h-9 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
+                          <User2 className="w-4 h-4 text-primary" />
                         </div>
                         <div>
                           <div className="font-medium text-sm">{c.name}</div>
-                          {c.address && <div className="text-xs text-gray-500 flex items-center gap-1"><MapPin className="w-2.5 h-2.5" /> {c.address}</div>}
+                          {c.address && <div className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="w-2.5 h-2.5" /> {c.address}</div>}
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       {c.phone ? (
-                        <div className="flex items-center gap-1 text-sm"><Phone className="w-3 h-3 text-gray-400" /> {c.phone}</div>
-                      ) : <span className="text-gray-300">-</span>}
+                        <div className="flex items-center gap-1 text-sm"><Phone className="w-3 h-3 text-muted-foreground" /> {c.phone}</div>
+                      ) : <span className="text-muted-foreground/30">-</span>}
                     </TableCell>
                     <TableCell className="text-center"><Badge variant="secondary">{c.total_visits}</Badge></TableCell>
                     <TableCell className="text-center font-medium">{formatCurrency(c.total_purchases, 2)}</TableCell>
                     <TableCell className="text-center hidden sm:table-cell">
-                      <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-                        <Star className="w-3 h-3 ml-0.5 fill-amber-400" /> {c.points}
+                      <Badge variant="outline" className="bg-warning/5 text-warning border-warning/20">
+                        <Star className="w-3 h-3 ml-0.5 fill-warning" /> {c.points}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-1.5">
-                        <Button variant="ghost" size="icon" className="h-10 w-10 text-blue-600 hover:bg-blue-50 active:bg-blue-100 rounded-xl" onClick={() => openEdit(c)}><Pencil className="w-4 h-4" /></Button>
-                        <Button variant="ghost" size="icon" className="h-10 w-10 text-red-500 hover:bg-red-50 active:bg-red-100 rounded-xl" onClick={() => { setDeletingCustomer(c); setShowDeleteDialog(true); }}><Trash2 className="w-4 h-4" /></Button>
+                        <Button variant="ghost" size="icon" className="h-10 w-10 text-primary hover:bg-primary/5 active:bg-primary/10 rounded-xl" onClick={() => openEdit(c)}><Pencil className="w-4 h-4" /></Button>
+                        <Button variant="ghost" size="icon" className="h-10 w-10 text-destructive hover:bg-destructive/5 active:bg-destructive/10 rounded-xl" onClick={() => { setDeletingCustomer(c); setShowDeleteDialog(true); }}><Trash2 className="w-4 h-4" /></Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -259,12 +259,12 @@ export default function CustomerManagement() {
       <Dialog open={showAddEditDialog} onOpenChange={(open) => { if (!open) resetForm(); }}>
         <DialogContent dir="rtl" className="max-w-md max-sm:mx-2 max-sm:w-[calc(100%-16px)] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><User2 className="w-5 h-5 text-blue-600" />{editingCustomer ? "تعديل بيانات الزبون" : "إضافة زبون جديد"}</DialogTitle>
+            <DialogTitle className="flex items-center gap-2"><User2 className="w-5 h-5 text-primary" />{editingCustomer ? "تعديل بيانات الزبون" : "إضافة زبون جديد"}</DialogTitle>
             <DialogDescription>{editingCustomer ? "عدل بيانات الزبون الحالي" : "أدخل بيانات الزبون الجديد"}</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <label className="text-sm font-medium mb-1 block">الاسم <span className="text-red-500">*</span></label>
+              <label className="text-sm font-medium mb-1 block">الاسم <span className="text-destructive">*</span></label>
               <Input value={formData.name} onChange={(e) => updateFormField("name", e.target.value)} placeholder="اسم الزبون الكامل" autoFocus />
             </div>
             <div>
@@ -286,7 +286,7 @@ export default function CustomerManagement() {
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={resetForm}>إلغاء</Button>
-            <Button onClick={() => addEditMutation.mutate()} disabled={!formData.name.trim() || addEditMutation.isPending} className="bg-blue-600">
+            <Button onClick={() => addEditMutation.mutate()} disabled={!formData.name.trim() || addEditMutation.isPending} className="bg-primary">
               {addEditMutation.isPending ? "جاري..." : editingCustomer ? "حفظ التغييرات" : "إضافة الزبون"}
             </Button>
           </DialogFooter>
@@ -297,13 +297,13 @@ export default function CustomerManagement() {
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent dir="rtl" className="max-w-sm max-sm:mx-2 max-sm:w-[calc(100%-16px)]">
           <DialogHeader>
-            <DialogTitle className="text-red-600">حذف الزبون</DialogTitle>
+            <DialogTitle className="text-destructive">حذف الزبون</DialogTitle>
             <DialogDescription>
               هل أنت متأكد من حذف "{deletingCustomer?.name}"؟ لا يمكن التراجع عن هذا الإجراء.
             </DialogDescription>
           </DialogHeader>
           {deletingCustomer && deletingCustomer.total_debt > 0 && (
-            <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+            <div className="flex items-start gap-2 bg-destructive/5 border border-destructive/20 rounded-lg p-3 text-sm text-destructive/90">
               <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
               <div>
                 <p className="font-semibold">تنبيه: ديون مستحقة</p>

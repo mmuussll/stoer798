@@ -49,7 +49,7 @@ export function SalesReportTab({ period, onPeriodChange, chartType, onChartTypeC
 
       {salesPeriodData.length === 0 ? (
         <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-16 text-gray-400">
+          <CardContent className="flex flex-col items-center justify-center py-16 text-muted-foreground/60">
             <BarChart3 className="w-12 h-12 mb-4" />
             <p className="text-lg font-medium">لا توجد بيانات مبيعات</p>
             <p className="text-sm mt-1">ستظهر البيانات هنا بعد إتمام المبيعات</p>
@@ -60,7 +60,7 @@ export function SalesReportTab({ period, onPeriodChange, chartType, onChartTypeC
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="flex items-center gap-2 text-base">
-                <TrendingUp className="w-5 h-5 text-blue-600" />
+                <TrendingUp className="w-5 h-5 text-primary" />
                 رسم بياني للمبيعات ({PERIOD_LABEL_MAP[period]})
               </CardTitle>
               <div className="flex border rounded-md overflow-hidden">
@@ -126,7 +126,7 @@ export function SalesReportTab({ period, onPeriodChange, chartType, onChartTypeC
                       <TableCell className="font-medium">{item.date}</TableCell>
                       <TableCell>{item.invoices}</TableCell>
                       <TableCell>{item.items}</TableCell>
-                      <TableCell className="font-semibold text-blue-600">
+                      <TableCell className="font-semibold text-primary">
                         {formatCurrency(item.total, 2)}
                       </TableCell>
                     </TableRow>

@@ -25,27 +25,27 @@ export function RecallOrderDialog({
         </DialogHeader>
         <ScrollArea className="max-h-72">
           {heldOrders.length === 0 ? (
-            <div className="text-center text-gray-400 py-6">لا توجد فواتير معلقة</div>
+            <div className="text-center text-muted-foreground/60 py-6">لا توجد فواتير معلقة</div>
           ) : (
             <div className="space-y-2">
               {heldOrders.map((order) => {
                 const orderTotal = order.cart.reduce((t, i) => t + i.price * i.quantity, 0);
                 const orderCount = order.cart.reduce((c, i) => c + i.quantity, 0);
                 return (
-                  <div key={order.id} className="border rounded-lg p-3 hover:bg-blue-50 cursor-pointer transition-colors" onClick={() => onRecall(order)}>
+                  <div key={order.id} className="border rounded-lg p-3 hover:bg-primary/5 cursor-pointer transition-colors" onClick={() => onRecall(order)}>
                     <div className="flex justify-between items-start mb-2">
                       <div>
                         <h4 className="font-semibold text-sm">{order.label}</h4>
-                        <p className="text-xs text-gray-500">{order.createdAt}</p>
+                        <p className="text-xs text-muted-foreground">{order.createdAt}</p>
                       </div>
                       <Button variant="ghost" size="icon" className="h-6 w-6 text-red-400" onClick={(e) => { e.stopPropagation(); onDelete(order); }}>
                         <X className="w-3 h-3" />
                       </Button>
                     </div>
-                    <div className="flex gap-3 text-xs text-gray-600">
+                    <div className="flex gap-3 text-xs text-muted-foreground">
                       <span>{order.cart.length} صنف</span>
                       <span>{orderCount} قطعة</span>
-                      <span className="font-bold text-blue-600">{formatCurrency(orderTotal, 2)}</span>
+                      <span className="font-bold text-primary">{formatCurrency(orderTotal, 2)}</span>
                     </div>
                   </div>
                 );

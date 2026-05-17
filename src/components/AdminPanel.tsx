@@ -4,6 +4,8 @@ import { fetchUsers, activateSubscription, suspendUser, extendSubscription, setS
 import { createNotification, broadcastNotification, fetchAllNotifications, deleteNotification, deleteAllNotifications } from "@/api/notifications";
 import { fetchSettings, updateSettings } from "@/api/settings";
 import { fetchSalesInvoices } from "@/api/sales";
+import { fetchProductsCountForUser } from "@/api/products";
+import { fetchCustomersCountForUser } from "@/api/customers";
 import { toNumber } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,10 +15,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
 import {
   Users, Loader2, Send, Megaphone, Phone, Mail, CalendarDays, Info, Wrench,
   TrendingUp, Activity, UserPlus, Zap, Clock, UserCheck,
-  RefreshCw, CheckCircle, Ban, CreditCard,
+  RefreshCw, CheckCircle, Ban, CreditCard, Search, DollarSign,
+  ShoppingCart, Package, Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format, startOfWeek, startOfMonth } from "date-fns";
@@ -36,12 +40,12 @@ function formatDate(dateStr: string | undefined) {
 function formatCurrency(amount: number) { return `${amount.toLocaleString()} ${CURRENCY}`; }
 
 const COLORS: Record<string, { bg: string; text: string }> = {
-  blue: { bg: "bg-blue-100", text: "text-blue-600" },
+  blue: { bg: "bg-primary/10", text: "text-primary" },
   green: { bg: "bg-emerald-100", text: "text-emerald-600" },
   purple: { bg: "bg-purple-100", text: "text-purple-600" },
   red: { bg: "bg-rose-100", text: "text-rose-600" },
   orange: { bg: "bg-amber-100", text: "text-amber-600" },
-  indigo: { bg: "bg-indigo-100", text: "text-indigo-600" },
+  indigo: { bg: "bg-primary/10", text: "text-primary" },
   teal: { bg: "bg-teal-100", text: "text-teal-600" },
   slate: { bg: "bg-slate-100", text: "text-slate-600" },
 };
@@ -56,7 +60,7 @@ function StatCard({ card }: { card: StatCardData }) {
         <div>
           <p className="text-xl font-bold">{card.value}</p>
           <p className="text-xs text-muted-foreground">{card.label}</p>
-          {card.sub && <p className="text-[10px] text-gray-400">{card.sub}</p>}
+          {card.sub && <p className="text-[10px] text-muted-foreground/60">{card.sub}</p>}
         </div>
       </CardContent>
     </Card>
@@ -95,6 +99,8 @@ export default function AdminPanel() {
   const [endDateValue, setEndDateValue] = useState("");
   const [selectedPlan, setSelectedPlan] = useState<PlanType>("pro");
   const [selectedDiscountTier, setSelectedDiscountTier] = useState(0);
+  const [userSearch, setUserSearch] = useState("");
+  const [infoUserStats, setInfoUserStats] = useState<{ productsCount: number; customersCount: number } | null>(null);
 
   const { data: users = [], isLoading: usersLoading } = useQuery({
     queryKey: ["admin-users"], queryFn: fetchUsers,
@@ -146,6 +152,9 @@ export default function AdminPanel() {
     { label: "مسجل اليوم", value: meta.regToday, icon: UserPlus, color: "indigo", sub: meta.regToday > 0 ? "مستخدم جديد" : "لا جديد" },
     { label: "مسجل هذا الأسبوع", value: meta.regWeek, icon: UserPlus, color: "purple", sub: "" },
     { label: "مسجل هذا الشهر", value: meta.regMonth, icon: UserCheck, color: "slate", sub: "" },
+    { label: "إيرادات اليوم", value: formatCurrency(meta.todaySales), icon: DollarSign, color: "green", sub: `${meta.todayCount} فاتورة` },
+    { label: "إيرادات الأسبوع", value: formatCurrency(meta.weekSales), icon: TrendingUp, color: "teal", sub: "" },
+    { label: "إيرادات الشهر", value: formatCurrency(meta.monthSales), icon: DollarSign, color: "indigo", sub: "" },
   ];
 
   const notifyMutation = useMutation({
@@ -237,6 +246,33 @@ export default function AdminPanel() {
     setEndDateMutation.mutate({ userId: selectedUser, endDate: new Date(endDateValue).toISOString() });
   };
 
+  const filteredUsers = useMemo(
+    () => {
+      const q = userSearch.trim().toLowerCase();
+      if (!q) return users;
+      return users.filter(
+        (u) =>
+          (u.full_name || "").toLowerCase().includes(q) ||
+          (u.email || "").toLowerCase().includes(q) ||
+          (u.phone || "").includes(q)
+      );
+    },
+    [users, userSearch],
+  );
+
+  const handleUserClick = async (u: UserWithSubscription) => {
+    setInfoUser(u);
+    try {
+      const [pCount, cCount] = await Promise.all([
+        fetchProductsCountForUser(u.id).catch(() => 0),
+        fetchCustomersCountForUser(u.id).catch(() => 0),
+      ]);
+      setInfoUserStats({ productsCount: pCount, customersCount: cCount });
+    } catch {
+      setInfoUserStats(null);
+    }
+  };
+
   if (usersLoading || invLoading) return <StatSkeleton />;
 
   return (
@@ -248,11 +284,11 @@ export default function AdminPanel() {
             <Zap className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-gray-900">مركز القيادة</h2>
+            <h2 className="text-xl font-bold text-foreground">مركز القيادة</h2>
             <p className="text-sm text-muted-foreground">إحصائيات المنصة ونشاط المستخدمين</p>
           </div>
         </div>
-        <Badge className={meta.activeToday > 0 ? "bg-emerald-50 text-emerald-700 border-emerald-200/60" : "bg-gray-50 text-gray-600 border-gray-200/60"}>
+        <Badge className={meta.activeToday > 0 ? "bg-emerald-50 text-emerald-700 border-emerald-200/60" : "bg-muted/50 text-muted-foreground border-border/60/60"}>
           {meta.activeToday > 0 ? `${meta.activeToday} نشط` : "خامل"}
         </Badge>
       </div>
@@ -274,7 +310,7 @@ export default function AdminPanel() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium">{settings?.maintenance_mode ? "المنصة متوقفة" : "المنصة تعمل"}</p>
-                  <p className="text-sm text-gray-500">{settings?.maintenance_mode ? "المستخدمون لا يمكنهم الوصول" : "جميع المستخدمين يمكنهم الوصول"}</p>
+                  <p className="text-sm text-muted-foreground">{settings?.maintenance_mode ? "المستخدمون لا يمكنهم الوصول" : "جميع المستخدمين يمكنهم الوصول"}</p>
                 </div>
                 <Switch
                   checked={settings?.maintenance_mode || false}
@@ -313,35 +349,48 @@ export default function AdminPanel() {
       {/* Users List */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Users className="w-5 h-5" />المستخدمين المسجلين</CardTitle>
-          <CardDescription>{users.length} مستخدم في المنصة — اضغط لرؤية التفاصيل</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2"><Users className="w-5 h-5" />المستخدمين المسجلين</CardTitle>
+              <CardDescription>{filteredUsers.length} من {users.length} مستخدم — اضغط لرؤية التفاصيل</CardDescription>
+            </div>
+          </div>
+          <div className="relative mt-3">
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
+            <Input
+              placeholder="بحث عن مستخدم بالاسم أو البريد..."
+              value={userSearch}
+              onChange={(e) => setUserSearch(e.target.value)}
+              className="pr-9"
+            />
+          </div>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {users.map((u) => {
+            {filteredUsers.map((u) => {
               const userInvs = invoices.filter((inv) => inv.user_id === u.id);
               const userSalesTotal = userInvs.reduce((s, inv) => s + toNumber(inv.total), 0);
               const lastActivity = userInvs.length > 0 ? formatDate(userInvs[0].date) : null;
               return (
                 <div
                   key={u.id}
-                  onClick={() => setInfoUser(u)}
-                  className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 cursor-pointer transition-all border border-transparent hover:border-gray-200"
+                  onClick={() => handleUserClick(u)}
+                  className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl hover:bg-muted/70 cursor-pointer transition-all border border-transparent hover:border-border/60"
                 >
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/60 to-purple-500/60 flex items-center justify-center shrink-0">
                     <span className="text-white text-xs font-bold">{(u.full_name || u.email || "?").charAt(0).toUpperCase()}</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate">{u.full_name || u.email}</p>
+                    <p className="text-sm font-semibold text-foreground truncate">{u.full_name || u.email}</p>
                     <div className="flex items-center gap-2 mt-0.5">
                       {lastActivity && (
-                        <span className="text-[10px] text-gray-400 flex items-center gap-1">
+                        <span className="text-[10px] text-muted-foreground/60 flex items-center gap-1">
                           <Clock className="w-2.5 h-2.5" />{lastActivity}
                         </span>
                       )}
                     </div>
                   </div>
-                  <div className="text-xs text-gray-400 text-left shrink-0">
+                  <div className="text-xs text-muted-foreground/60 text-left shrink-0">
                     {userSalesTotal > 0 ? formatCurrency(userSalesTotal) : ""}
                   </div>
                 </div>
@@ -368,11 +417,10 @@ export default function AdminPanel() {
                 if (!end) return 0;
                 return Math.max(0, Math.ceil((new Date(end).getTime() - now) / 86400000));
               })();
-              if (u.role === "admin") return null;
               return (
-                <div key={u.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div key={u.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/60 to-purple-500/60 flex items-center justify-center">
                       <span className="text-white text-[10px] font-bold">{(u.full_name || u.email).charAt(0).toUpperCase()}</span>
                     </div>
                     <div>
@@ -382,13 +430,18 @@ export default function AdminPanel() {
                           <div className="flex items-center gap-1.5">
                             <Badge className={
                               sub.status === "active" ? "bg-green-100 text-green-800 border-green-200 text-[10px]" :
-                              sub.status === "trial" ? "bg-blue-100 text-blue-800 border-blue-200 text-[10px]" :
+                              sub.status === "trial" ? "bg-primary/100 text-primary border-primary/20 text-[10px]" :
                               "bg-red-100 text-red-800 border-red-200 text-[10px]"
                             }>
                               {sub.status === "active" ? `${sub.plan === "free" ? "مجاني" : sub.plan === "basic" ? "أساسي" : "برو"} - ${daysLeft} يوم` : sub.status === "trial" ? `تجريبي - ${daysLeft} يوم` : sub.status}
                             </Badge>
-                          </div>
-                        ) : <span className="text-gray-400">بدون اشتراك</span>}
+            {filteredUsers.length === 0 && (
+              <div className="col-span-full text-center py-8 text-muted-foreground">
+                {userSearch.trim() ? "لا توجد نتائج مطابقة للبحث" : ""}
+              </div>
+            )}
+          </div>
+                        ) : <span className="text-muted-foreground/60">بدون اشتراك</span>}
                       </p>
                     </div>
                   </div>
@@ -429,7 +482,7 @@ export default function AdminPanel() {
                     )}
                     <Button
                       size="sm" variant="ghost"
-                      className="h-7 w-7 p-0 text-gray-400 hover:text-red-600 hover:bg-red-50"
+                      className="h-7 w-7 p-0 text-muted-foreground/60 hover:text-red-600 hover:bg-red-50"
                       onClick={() => {
                         if (confirm(`تحذير: سيتم حذف الحساب وجميع بياناته بشكل نهائي!\n\nالمستخدم: ${u.full_name || u.email}\n\nلا يمكن التراجع عن هذا الإجراء. هل أنت متأكد؟`)) {
                           deleteUserMutation.mutate(u.id);
@@ -479,14 +532,14 @@ export default function AdminPanel() {
           {allNotifs?.data && allNotifs.data.length > 0 ? (
             <div className="max-h-96 overflow-y-auto space-y-2">
               {allNotifs.data.map((n) => (
-                <div key={n.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div key={n.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <Badge className={
                         n.type === "alert" ? "bg-red-100 text-red-800 border-red-200 text-[10px]" :
                         n.type === "debt" ? "bg-amber-100 text-amber-800 border-amber-200 text-[10px]" :
-                        n.type === "info" ? "bg-blue-100 text-blue-800 border-blue-200 text-[10px]" :
-                        "bg-gray-100 text-gray-600 border-gray-200 text-[10px]"
+                        n.type === "info" ? "bg-primary/100 text-primary border-primary/20 text-[10px]" :
+                        "bg-muted text-muted-foreground border-border/60 text-[10px]"
                       }>
                         {n.type === "alert" ? "تنبيه" : n.type === "debt" ? "ديون" : n.type === "info" ? "معلومة" : "النظام"}
                       </Badge>
@@ -538,37 +591,84 @@ export default function AdminPanel() {
       />
 
       {/* User Info Dialog */}
-      <Dialog open={!!infoUser} onOpenChange={(open) => { if (!open) setInfoUser(null); }}>
+      <Dialog open={!!infoUser} onOpenChange={(open) => { if (!open) { setInfoUser(null); setInfoUserStats(null); } }}>
         <DialogContent className="sm:max-w-lg" dir="rtl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Info className="w-5 h-5 text-blue-600" />معلومات المستخدم</DialogTitle>
+            <DialogTitle className="flex items-center gap-2"><Info className="w-5 h-5 text-primary" />معلومات المستخدم</DialogTitle>
             <DialogDescription>تفاصيل الحساب والنشاط</DialogDescription>
           </DialogHeader>
           {infoUser && (
             <div className="space-y-4 py-2">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 bg-blue-50 rounded-lg space-y-1">
-                  <p className="text-xs text-blue-500 flex items-center gap-1"><Users className="w-3 h-3" />الاسم</p>
-                  <p className="font-bold text-gray-900">{infoUser.full_name || "—"}</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 bg-primary/5 rounded-lg space-y-1">
+                  <p className="text-xs text-primary/80 flex items-center gap-1"><Users className="w-3 h-3" />الاسم</p>
+                  <p className="font-bold text-foreground">{infoUser.full_name || "—"}</p>
                 </div>
-                <div className="p-3 bg-blue-50 rounded-lg space-y-1">
-                  <p className="text-xs text-blue-500 flex items-center gap-1"><Mail className="w-3 h-3" />البريد</p>
-                  <p className="font-bold text-gray-900 text-sm" dir="ltr">{infoUser.email}</p>
+                <div className="p-3 bg-primary/5 rounded-lg space-y-1">
+                  <p className="text-xs text-primary/80 flex items-center gap-1"><Mail className="w-3 h-3" />البريد</p>
+                  <p className="font-bold text-foreground text-sm" dir="ltr">{infoUser.email}</p>
                 </div>
-                <div className="p-3 bg-blue-50 rounded-lg space-y-1">
-                  <p className="text-xs text-blue-500 flex items-center gap-1"><Phone className="w-3 h-3" />الهاتف</p>
-                  <p className="font-bold text-gray-900" dir="ltr">{infoUser.phone || <span className="text-gray-400">غير متوفر</span>}</p>
+                <div className="p-3 bg-primary/5 rounded-lg space-y-1">
+                  <p className="text-xs text-primary/80 flex items-center gap-1"><Phone className="w-3 h-3" />الهاتف</p>
+                  <p className="font-bold text-foreground" dir="ltr">{infoUser.phone || <span className="text-muted-foreground/60">غير متوفر</span>}</p>
                 </div>
-                <div className="p-3 bg-blue-50 rounded-lg space-y-1">
-                  <p className="text-xs text-blue-500 flex items-center gap-1"><Activity className="w-3 h-3" />إجمالي المبيعات</p>
-                  <p className="font-bold text-gray-900">
+                <div className="p-3 bg-primary/5 rounded-lg space-y-1">
+                  <p className="text-xs text-primary/80 flex items-center gap-1"><CalendarDays className="w-3 h-3" />تاريخ التسجيل</p>
+                  <p className="font-bold text-foreground text-sm">{infoUser.created_at ? formatDate(infoUser.created_at) : "—"}</p>
+                </div>
+                <div className="p-3 bg-emerald-50 rounded-lg space-y-1">
+                  <p className="text-xs text-emerald-600 flex items-center gap-1"><DollarSign className="w-3 h-3" />إجمالي المبيعات</p>
+                  <p className="font-bold text-foreground">
                     {(() => {
                       const userTotal = invoices.filter((inv) => inv.user_id === infoUser.id).reduce((s, inv) => s + toNumber(inv.total), 0);
                       return formatCurrency(userTotal);
                     })()}
                   </p>
                 </div>
+                <div className="p-3 bg-violet-50 rounded-lg space-y-1">
+                  <p className="text-xs text-violet-600 flex items-center gap-1"><ShoppingCart className="w-3 h-3" />عدد الفواتير</p>
+                  <p className="font-bold text-foreground">{invoices.filter((inv) => inv.user_id === infoUser.id).length}</p>
+                </div>
+                <div className="p-3 bg-amber-50 rounded-lg space-y-1">
+                  <p className="text-xs text-amber-600 flex items-center gap-1"><Package className="w-3 h-3" />المنتجات</p>
+                  <p className="font-bold text-foreground">{infoUserStats?.productsCount ?? <span className="text-muted-foreground/60">—</span>}</p>
+                </div>
+                <div className="p-3 bg-rose-50 rounded-lg space-y-1">
+                  <p className="text-xs text-rose-600 flex items-center gap-1"><Users className="w-3 h-3" />الزبائن</p>
+                  <p className="font-bold text-foreground">{infoUserStats?.customersCount ?? <span className="text-muted-foreground/60">—</span>}</p>
+                </div>
               </div>
+              {infoUser.subscription && (
+                <>
+                  <Separator />
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="p-2.5 bg-muted/50 rounded-lg text-center">
+                      <p className="text-[10px] text-muted-foreground">الحالة</p>
+                      <Badge className={
+                        infoUser.subscription.status === "active" ? "bg-green-100 text-green-800 mt-0.5" :
+                        infoUser.subscription.status === "trial" ? "bg-primary/10 text-primary/80 mt-0.5" :
+                        "bg-red-100 text-red-800 mt-0.5"
+                      }>
+                        {infoUser.subscription.status === "active" ? "نشط" : infoUser.subscription.status === "trial" ? "تجريبي" : infoUser.subscription.status}
+                      </Badge>
+                    </div>
+                    <div className="p-2.5 bg-muted/50 rounded-lg text-center">
+                      <p className="text-[10px] text-muted-foreground">الباقة</p>
+                      <p className="text-sm font-bold text-foreground mt-0.5">
+                        {infoUser.subscription.plan === "pro" ? "برو" : infoUser.subscription.plan === "basic" ? "أساسي" : infoUser.subscription.plan === "free" ? "مجاني" : infoUser.subscription.plan || "—"}
+                      </p>
+                    </div>
+                    <div className="p-2.5 bg-muted/50 rounded-lg text-center">
+                      <p className="text-[10px] text-muted-foreground">تاريخ الانتهاء</p>
+                      <p className="text-sm font-bold text-foreground mt-0.5">
+                        {infoUser.subscription.status === "trial"
+                          ? formatDate(infoUser.subscription.trial_end_date)
+                          : formatDate(infoUser.subscription.subscription_end_date)}
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </DialogContent>

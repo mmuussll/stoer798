@@ -48,13 +48,13 @@ export default function RecordPaymentDialog({
         </DialogHeader>
         {debt && (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3 bg-gray-50 rounded-lg p-3">
+            <div className="grid grid-cols-2 gap-3 bg-muted/50 rounded-lg p-3">
               <div>
-                <p className="text-xs text-gray-500">المبلغ الكلي للدين</p>
+                <p className="text-xs text-muted-foreground">المبلغ الكلي للدين</p>
                 <p className="font-bold text-lg">{formatCurrency(debt.total_amount, 2)}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500">المبلغ المتبقي</p>
+                <p className="text-xs text-muted-foreground">المبلغ المتبقي</p>
                 <p className="font-bold text-lg text-red-600">{formatCurrency(debt.remaining_amount, 2)}</p>
               </div>
             </div>

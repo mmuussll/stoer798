@@ -24,18 +24,18 @@ export function CustomerSelectDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent dir="rtl" className="max-w-lg">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2"><User2 className="w-5 h-5 text-blue-600" />اختيار الزبون</DialogTitle>
+          <DialogTitle className="flex items-center gap-2"><User2 className="w-5 h-5 text-primary" />اختيار الزبون</DialogTitle>
           <DialogDescription>ابحث عن زبون أو اختر من القائمة</DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <Input value={searchTerm} onChange={(e) => onSearchChange(e.target.value)}
             placeholder="ابحث بالاسم أو رقم الهاتف..." className="text-center" autoFocus />
           {selectedCustomer && (
-            <div className="flex items-center gap-2 bg-blue-50 rounded-lg p-2">
-              <User2 className="w-4 h-4 text-blue-600" />
+            <div className="flex items-center gap-2 bg-primary/5 rounded-lg p-2">
+              <User2 className="w-4 h-4 text-primary" />
               <div className="flex-1">
                 <div className="font-medium text-sm">{selectedCustomer.name}</div>
-                {selectedCustomer.phone && <div className="text-xs text-gray-500">{selectedCustomer.phone}</div>}
+                {selectedCustomer.phone && <div className="text-xs text-muted-foreground">{selectedCustomer.phone}</div>}
               </div>
               <div className="text-xs">
                 <Badge variant="secondary">{selectedCustomer.total_visits} زيارة</Badge>
@@ -49,18 +49,18 @@ export function CustomerSelectDialog({
           <ScrollArea className="max-h-60">
             {searchTerm.length >= 2 ? (
               searchedCustomers.length === 0 ? (
-                <div className="text-center text-gray-400 py-6 text-sm">لا يوجد زبائن مطابقين</div>
+                <div className="text-center text-muted-foreground/60 py-6 text-sm">لا يوجد زبائن مطابقين</div>
               ) : (
                 <div className="space-y-1">
                   {searchedCustomers.map((c) => (
-                    <div key={c.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-blue-50 cursor-pointer transition-colors"
+                    <div key={c.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-primary/5 cursor-pointer transition-colors"
                       onClick={() => { onSelectCustomer(c); onOpenChange(false); }}>
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center shrink-0">
-                        <User2 className="w-4 h-4 text-blue-600" />
+                      <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
+                        <User2 className="w-4 h-4 text-primary" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-sm truncate">{c.name}</div>
-                        {c.phone && <div className="text-xs text-gray-500">{c.phone}</div>}
+                        {c.phone && <div className="text-xs text-muted-foreground">{c.phone}</div>}
                       </div>
                       <Badge variant="outline" className="text-xs">{c.points} نقطة</Badge>
                     </div>
@@ -68,7 +68,7 @@ export function CustomerSelectDialog({
                 </div>
               )
             ) : (
-              <div className="text-center text-gray-400 py-6 text-sm">اكتب حرفين على الأقل للبحث</div>
+              <div className="text-center text-muted-foreground/60 py-6 text-sm">اكتب حرفين على الأقل للبحث</div>
             )}
           </ScrollArea>
         </div>

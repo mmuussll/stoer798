@@ -18,7 +18,7 @@ const PLAN_ICONS: Record<PlanType, React.ComponentType<{ className?: string }>> 
 
 const PLAN_BG_GRADIENT: Record<PlanType, string> = {
   free: "from-slate-50 to-gray-50",
-  basic: "from-blue-50/60 to-indigo-50/40",
+  basic: "from-blue-50/60 to-primary/5",
   pro: "from-purple-50/60 to-violet-50/40",
 };
 

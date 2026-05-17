@@ -65,7 +65,6 @@ export default function SalesInterface() {
   const [fastSalePrice, setFastSalePrice] = useState("");
 
   const [showScannerDialog, setShowScannerDialog] = useState(false);
-
   const [showCartMobile, setShowCartMobile] = useState(false);
 
   const { data: products = [], isLoading: productsLoading } = useQuery({
@@ -112,7 +111,6 @@ export default function SalesInterface() {
 
   const { checkoutMutation } = checkoutHook;
 
-  // Barcode
   const handleBarcodeSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!barcode.trim()) return;
@@ -132,7 +130,6 @@ export default function SalesInterface() {
     }
   };
 
-  // Fast sale
   const addFastSale = () => {
     if (!fastSaleName.trim() || !fastSalePrice || parseFloat(fastSalePrice) <= 0) {
       toast({ title: "بيانات غير صحيحة", description: "يرجى إدخال اسم وسعر صحيح", variant: "destructive" });
@@ -142,7 +139,6 @@ export default function SalesInterface() {
     setFastSaleName(""); setFastSalePrice(""); setShowFastSaleDialog(false);
   };
 
-  // Hold / Recall
   const doHoldOrder = () => {
     if (holdOrder(cart, calculateItemsCount())) {
       clearCart(); setShowHoldDialog(false);
@@ -157,7 +153,6 @@ export default function SalesInterface() {
     }
   };
 
-  // Keyboard shortcuts
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
     if (e.key === "F2" && cart.length > 0) setShowCheckoutDialog(true);
@@ -208,7 +203,6 @@ export default function SalesInterface() {
     printSaleInvoice(previewInvoice);
   };
 
-  // Session guard
   if (!activeSession && !showSessionDialog && user && settings?.require_cash_session !== false) {
     return (
       <SessionGuard
@@ -266,65 +260,75 @@ export default function SalesInterface() {
   return (
     <div className="h-full flex flex-col lg:flex-row gap-0" dir="rtl">
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden bg-gradient-to-b from-white to-slate-50/50">
         {/* Top bar */}
-        <div className="p-2 lg:p-3 border-b border-slate-200/70 bg-white/90 backdrop-blur-sm space-y-2">
+        <div className="p-2.5 lg:p-3.5 border-b border-border/60 bg-white/95 backdrop-blur-xl space-y-2.5 shadow-sm">
           {/* Barcode Row */}
           <div className="flex gap-2 items-center">
             <form onSubmit={handleBarcodeSubmit} className="flex gap-2 flex-1 min-w-0">
               <div className="relative flex-1 min-w-0">
-                <Barcode className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input value={barcode} onChange={(e) => setBarcode(e.target.value)}
-                  placeholder="امسح الباركود أو اكتبه (F1)..." className="pr-10 text-center font-mono" autoFocus dir="ltr" />
+                <Barcode className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
+                <Input
+                  value={barcode}
+                  onChange={(e) => setBarcode(e.target.value)}
+                  placeholder="امسح الباركود أو اكتبه (F1)..."
+                  className="pr-10 text-center font-mono h-11 rounded-xl border-border/60 bg-slate-50/80 focus:bg-white transition-colors"
+                  autoFocus
+                  dir="ltr"
+                />
               </div>
-              <Button type="submit" size="sm" className="bg-blue-600 hover:bg-blue-700 px-3 shrink-0">إضافة</Button>
+              <Button type="submit" size="sm" className="bg-primary hover:bg-primary/90 px-4 h-11 rounded-xl font-bold shadow-md shadow-primary/20 tap-active">
+                إضافة
+              </Button>
             </form>
+
             {/* Desktop: inline action buttons */}
-            <div className="hidden lg:flex gap-2 items-center shrink-0">
-              <Button variant="outline" size="sm" onClick={() => setShowScannerDialog(true)} className="gap-1 border-blue-200 text-blue-700 hover:bg-blue-50" title="مسح الباركود بالكاميرا">
+            <div className="hidden lg:flex gap-1.5 items-center shrink-0">
+              <Button variant="ghost" size="sm" onClick={() => setShowScannerDialog(true)} className="gap-1.5 text-primary/80 hover:text-primary hover:bg-primary/5 rounded-xl h-10 font-medium" title="مسح الباركود بالكاميرا">
                 <Scan className="w-4 h-4" /> مسح
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setShowFastSaleDialog(true)} title="بيع سريع (F4)" className="gap-1">
+              <Button variant="ghost" size="sm" onClick={() => setShowFastSaleDialog(true)} title="بيع سريع (F4)" className="gap-1.5 rounded-xl h-10 font-medium">
                 <Hash className="w-3.5 h-3.5" /> سريع
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setShowHoldDialog(true)} title="تعليق (Ctrl+H)" className="gap-1">
+              <Button variant="ghost" size="sm" onClick={() => setShowHoldDialog(true)} title="تعليق (Ctrl+H)" className="gap-1.5 rounded-xl h-10 font-medium">
                 <Pause className="w-3.5 h-3.5" /> تعليق
               </Button>
               {heldOrders.length > 0 && (
-                <Button variant="outline" size="sm" onClick={() => setShowRecallDialog(true)} title="استرجاع (Ctrl+R)" className="gap-1 relative">
+                <Button variant="ghost" size="sm" onClick={() => setShowRecallDialog(true)} title="استرجاع (Ctrl+R)" className="gap-1.5 rounded-xl h-10 font-medium relative">
                   <Play className="w-3.5 h-3.5" /> استرجاع
-                  <Badge variant="destructive" className="absolute -top-1 -end-1 h-4 w-4 p-0 flex items-center justify-center text-xs">{heldOrders.length}</Badge>
+                  <Badge variant="destructive" className="absolute -top-0.5 -right-0.5 h-4 w-4 p-0 flex items-center justify-center text-[10px] rounded-full">{heldOrders.length}</Badge>
                 </Button>
               )}
               {activeSession && (
-                <Button variant="outline" size="sm" className="gap-1 border-red-300 text-red-600 hover:bg-red-50 ml-auto"
+                <Button variant="ghost" size="sm" className="gap-1.5 text-destructive/80 hover:text-destructive hover:bg-destructive/5 rounded-xl h-10 font-medium ml-auto"
                   onClick={() => { setClosingBalance(activeSession.total_cash.toFixed(0)); setShowCloseSessionDialog(true); }}>
                   <Landmark className="w-3.5 h-3.5" /> إقفال الجلسة
                 </Button>
               )}
             </div>
           </div>
+
           {/* Mobile: compact icon-only action row */}
-          <div className="flex lg:hidden items-center gap-1.5">
-            <div className="flex gap-1.5 flex-1">
-              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg hover:bg-blue-50 text-blue-600" onClick={() => setShowScannerDialog(true)} title="مسح الباركود">
+          <div className="flex lg:hidden items-center gap-1">
+            <div className="flex gap-1 flex-1">
+              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl hover:bg-primary/5 text-primary/80" onClick={() => setShowScannerDialog(true)} title="مسح الباركود">
                 <Scan className="w-[18px] h-[18px]" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg hover:bg-slate-100 text-slate-600" onClick={() => setShowFastSaleDialog(true)} title="بيع سريع">
+              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl hover:bg-muted text-muted-foreground" onClick={() => setShowFastSaleDialog(true)} title="بيع سريع">
                 <Hash className="w-[18px] h-[18px]" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg hover:bg-slate-100 text-slate-600" onClick={() => setShowHoldDialog(true)} title="تعليق">
+              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl hover:bg-muted text-muted-foreground" onClick={() => setShowHoldDialog(true)} title="تعليق">
                 <Pause className="w-[18px] h-[18px]" />
               </Button>
               {heldOrders.length > 0 && (
-                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg hover:bg-slate-100 text-slate-600 relative" onClick={() => setShowRecallDialog(true)} title="استرجاع">
+                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl hover:bg-muted text-muted-foreground relative" onClick={() => setShowRecallDialog(true)} title="استرجاع">
                   <Play className="w-[18px] h-[18px]" />
                   <Badge variant="destructive" className="absolute -top-0.5 -right-0.5 h-[18px] min-w-[18px] p-0 flex items-center justify-center text-[10px] rounded-full">{heldOrders.length}</Badge>
                 </Button>
               )}
             </div>
             {activeSession && (
-              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg hover:bg-red-50 text-red-500 shrink-0"
+              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl hover:bg-destructive/5 text-destructive/80 shrink-0"
                 onClick={() => { setClosingBalance(activeSession.total_cash.toFixed(0)); setShowCloseSessionDialog(true); }} title="إقفال الجلسة">
                 <Landmark className="w-[18px] h-[18px]" />
               </Button>
@@ -332,35 +336,54 @@ export default function SalesInterface() {
           </div>
         </div>
 
-        {/* Search + Category filter — merged single row on mobile */}
-        <div className="p-2 lg:p-3 space-y-2 lg:space-y-2 border-b border-slate-200/70 bg-slate-50/70 backdrop-blur-sm">
+        {/* Search + Category filter */}
+        <div className="p-2.5 lg:p-3.5 space-y-2.5 border-b border-border/40 bg-slate-50/60 backdrop-blur-sm">
           <div className="flex gap-2 items-center">
             <div className="relative flex-1">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="ابحث عن المنتجات..." className="pr-10 h-9 lg:h-10" />
+              <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
+              <Input
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="ابحث عن المنتجات..."
+                className="pr-10 h-10 rounded-xl border-border/60 bg-white"
+              />
             </div>
-            {/* Desktop: compact category buttons — mobile shown as scrollable row below */}
           </div>
           <ScrollArea className="w-full whitespace-nowrap">
             <div className="flex gap-1.5 pb-0.5">
-              <Button variant={selectedCategory === "all" ? "default" : "outline"} size="sm"
+              <Button
+                variant={selectedCategory === "all" ? "default" : "outline"}
+                size="sm"
                 onClick={() => setSelectedCategory("all")}
-                className={cn("h-8 text-xs px-3", selectedCategory === "all" ? "bg-blue-600 hover:bg-blue-700" : "")}>الكل</Button>
+                className={cn(
+                  "h-8 text-xs px-3.5 rounded-full font-medium transition-all",
+                  selectedCategory === "all"
+                    ? "bg-primary hover:bg-primary/90 shadow-sm"
+                    : "border-border/60 hover:border-primary/30 hover:bg-primary/5"
+                )}
+              >
+                الكل
+              </Button>
               {categoriesLoading
-                ? Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-8 w-14" />)
+                ? Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-8 w-14 rounded-full" />)
                 : categories.map((cat) => (
-                  <Button key={cat.id} variant={selectedCategory === cat.id ? "default" : "outline"} size="sm"
+                  <Button
+                    key={cat.id}
+                    variant={selectedCategory === cat.id ? "default" : "outline"}
+                    size="sm"
                     onClick={() => setSelectedCategory(cat.id)}
-                    className="h-8 text-xs px-3"
-                    style={selectedCategory === cat.id ? { backgroundColor: cat.color, borderColor: cat.color } : undefined}>{cat.name}</Button>
+                    className="h-8 text-xs px-3.5 rounded-full font-medium"
+                    style={selectedCategory === cat.id ? { backgroundColor: cat.color, borderColor: cat.color } : {}}
+                  >
+                    {cat.name}
+                  </Button>
                 ))}
             </div>
           </ScrollArea>
         </div>
 
         {/* Products Grid */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto scrollbar-thin">
           <ProductGrid
             products={products}
             loading={productsLoading}
@@ -374,20 +397,29 @@ export default function SalesInterface() {
         </div>
 
         {/* Mobile: floating cart button */}
-        <div className="lg:hidden fixed inset-x-0 z-40 flex flex-col gap-2 px-3" style={{ bottom: "calc(5rem + env(safe-area-inset-bottom, 0px))" }}>
+        <div className="lg:hidden fixed inset-x-0 z-40 flex flex-col gap-2 px-3" style={{ bottom: "calc(5.5rem + env(safe-area-inset-bottom, 0px))" }}>
           {activeSession && (
-            <Button variant="outline" size="sm" className="w-full border-red-200/70 text-red-600 hover:bg-red-50/80 bg-white/90 backdrop-blur-sm shadow-sm rounded-xl h-10 text-xs font-medium"
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full border-destructive/20 text-destructive hover:bg-destructive/5 bg-white/95 backdrop-blur-xl shadow-lg rounded-2xl h-10 text-xs font-semibold"
               onClick={() => {
                 setClosingBalance(activeSession.total_cash.toFixed(0));
                 setShowCloseSessionDialog(true);
-              }}>
+              }}
+            >
               <Landmark className="w-3.5 h-3.5 ml-1.5" />
               إقفال الجلسة
             </Button>
           )}
-          <Button onClick={() => setShowCartMobile(!showCartMobile)} className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 shadow-lg shadow-indigo-500/25 rounded-xl h-12 text-sm font-semibold tracking-wide active:scale-[0.98] transition-transform">
+          <Button
+            onClick={() => setShowCartMobile(!showCartMobile)}
+            className="w-full bg-gradient-brand hover:opacity-95 shadow-xl shadow-primary/25 rounded-2xl h-13 text-sm font-bold tracking-wide active:scale-[0.97] transition-transform"
+          >
             <ShoppingBag className="w-5 h-5 ml-2" />
-            {cart.length > 0 ? `السلة (${calculateItemsCount()} قطعة - ${formatCurrency(totals.total, 2)})` : "عرض السلة"}
+            {cart.length > 0
+              ? `السلة (${calculateItemsCount()} قطعة - ${formatCurrency(totals.total, 2)})`
+              : "عرض السلة"}
           </Button>
         </div>
       </div>
@@ -401,11 +433,11 @@ export default function SalesInterface() {
       {showCartMobile && (
         <div className="lg:hidden fixed inset-0 z-50 flex flex-col justify-end animate-fade-in">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" onClick={() => setShowCartMobile(false)} />
-          <div className="relative bg-white rounded-t-2xl max-h-[85vh] flex flex-col animate-slide-up shadow-2xl shadow-black/20" style={{ paddingBottom: "max(env(safe-area-inset-bottom, 0px), 8px)" }}>
-            <div className="flex items-center justify-between p-3.5 border-b border-slate-100 shrink-0">
-              <h3 className="text-sm font-bold text-slate-800">سلة المشتريات</h3>
-              <button onClick={() => setShowCartMobile(false)} className="p-1.5 rounded-full hover:bg-slate-100 transition-colors">
-                <X className="w-5 h-5 text-slate-500" />
+          <div className="relative bg-white rounded-t-3xl max-h-[85vh] flex flex-col animate-slide-up shadow-2xl shadow-black/30" style={{ paddingBottom: "max(env(safe-area-inset-bottom, 0px), 8px)" }}>
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-border/60 shrink-0">
+              <h3 className="text-base font-bold text-foreground">سلة المشتريات</h3>
+              <button onClick={() => setShowCartMobile(false)} className="p-2 rounded-full hover:bg-muted transition-colors">
+                <X className="w-5 h-5 text-muted-foreground" />
               </button>
             </div>
             <div className="flex-1 min-h-0">
@@ -435,14 +467,16 @@ export default function SalesInterface() {
       </Suspense>
 
       <Dialog open={showClearCartDialog} onOpenChange={setShowClearCartDialog}>
-        <DialogContent dir="rtl" className="max-w-sm">
+        <DialogContent dir="rtl" className="max-w-sm rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-600"><AlertTriangle className="w-5 h-5" />إفراغ السلة</DialogTitle>
-            <DialogDescription>هل أنت متأكد من إفراغ سلة المشتريات؟ سيتم حذف جميع المنتجات المختارة.</DialogDescription>
+            <DialogTitle className="flex items-center gap-2 text-destructive text-lg">
+              <AlertTriangle className="w-5 h-5" />إفراغ السلة
+            </DialogTitle>
+            <DialogDescription className="text-sm">هل أنت متأكد من إفراغ سلة المشتريات؟ سيتم حذف جميع المنتجات المختارة.</DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowClearCartDialog(false)}>إلغاء</Button>
-            <Button variant="destructive" onClick={() => { clearCart(); setShowClearCartDialog(false); }}>إفراغ السلة</Button>
+            <Button variant="outline" onClick={() => setShowClearCartDialog(false)} className="rounded-xl">إلغاء</Button>
+            <Button variant="destructive" onClick={() => { clearCart(); setShowClearCartDialog(false); }} className="rounded-xl">إفراغ السلة</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

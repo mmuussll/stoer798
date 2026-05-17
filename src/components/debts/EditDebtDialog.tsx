@@ -89,15 +89,15 @@ export default function EditDebtDialog({
               <Input type="tel" value={editDebtorPhone} onChange={(e) => setEditDebtorPhone(e.target.value)}
                 dir="ltr" placeholder="رقم الهاتف" />
             </div>
-            <div className="bg-gray-50 border rounded-lg p-3 space-y-3">
-              <span className="text-sm font-semibold text-gray-700">بيانات الكفيل</span>
+            <div className="bg-muted/50 border rounded-lg p-3 space-y-3">
+              <span className="text-sm font-semibold text-foreground/80">بيانات الكفيل</span>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-gray-500 block mb-1">اسم الكفيل</label>
+                  <label className="text-xs text-muted-foreground block mb-1">اسم الكفيل</label>
                   <Input value={editGuarantorName} onChange={(e) => setEditGuarantorName(e.target.value)} placeholder="اسم الكفيل" />
                 </div>
                 <div>
-                  <label className="text-xs text-gray-500 block mb-1">رقم الكفيل</label>
+                  <label className="text-xs text-muted-foreground block mb-1">رقم الكفيل</label>
                   <Input type="tel" value={editGuarantorPhone} onChange={(e) => setEditGuarantorPhone(e.target.value)}
                     dir="ltr" placeholder="07xxxxxxxxx" />
                 </div>
@@ -107,8 +107,8 @@ export default function EditDebtDialog({
               <label className="text-sm font-medium mb-1 block">ملاحظات</label>
               <Input value={editNote} onChange={(e) => setEditNote(e.target.value)} placeholder="ملاحظات..." />
             </div>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <p className="text-xs text-blue-700">
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
+              <p className="text-xs text-primary/80">
                 المدفوع حتى الآن: <strong>{formatCurrency(selectedDebt.total_amount - selectedDebt.remaining_amount, 2)}</strong>
                 {" | "}
                 المتبقي: <strong>{formatCurrency(selectedDebt.remaining_amount, 2)}</strong>

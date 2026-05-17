@@ -78,7 +78,7 @@ export function BarcodeScannerDialog({ open, onOpenChange, onScan }: BarcodeScan
       <DialogContent dir="rtl" className="max-w-sm">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <QrCode className="w-5 h-5 text-blue-600" />
+            <QrCode className="w-5 h-5 text-primary" />
             مسح الباركود بالكاميرا
           </DialogTitle>
           <DialogDescription>وجّه كاميرا الهاتف نحو الباركود ليتم مسحه تلقائياً</DialogDescription>

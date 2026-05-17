@@ -26,7 +26,7 @@ export function ProfitReportTab({ period, profitPeriodData }: ProfitTabProps) {
     <div className="space-y-6">
       {profitPeriodData.length === 0 ? (
         <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-16 text-gray-400">
+          <CardContent className="flex flex-col items-center justify-center py-16 text-muted-foreground/60">
             <DollarSign className="w-12 h-12 mb-4" />
             <p className="text-lg font-medium">لا توجد بيانات كافية</p>
             <p className="text-sm mt-1">يجب وجود فواتير مبيعات ومشتريات لحساب الأرباح</p>
@@ -78,8 +78,8 @@ export function ProfitReportTab({ period, profitPeriodData }: ProfitTabProps) {
                   {profitPeriodData.map((item, i) => (
                     <TableRow key={i}>
                       <TableCell className="font-medium">{item.date}</TableCell>
-                      <TableCell className="text-blue-600">{formatCurrency(item.sales, 2)}</TableCell>
-                      <TableCell className="text-amber-600">{formatCurrency(item.purchases, 2)}</TableCell>
+                      <TableCell className="text-primary">{formatCurrency(item.sales, 2)}</TableCell>
+                      <TableCell className="text-warning">{formatCurrency(item.purchases, 2)}</TableCell>
                       <TableCell className={`font-semibold ${item.profit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
                         {formatCurrency(item.profit, 2)}
                       </TableCell>

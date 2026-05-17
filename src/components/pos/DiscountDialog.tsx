@@ -55,14 +55,14 @@ export function DiscountDialog({
                 ))}
               </div>
               <div>
-                <label className="text-xs text-gray-600 mb-1 block">نسبة مخصصة</label>
+                <label className="text-xs text-muted-foreground mb-1 block">نسبة مخصصة</label>
                 <Input type="number" value={discountValue || ""} onChange={(e) => onDiscountValueChange(parseFloat(e.target.value) || 0)} className="text-center" placeholder="0" />
               </div>
             </div>
           )}
           {discountType === "fixed" && (
             <div>
-              <label className="text-xs text-gray-600 mb-1 block">مبلغ الخصم ({CURRENCY})</label>
+              <label className="text-xs text-muted-foreground mb-1 block">مبلغ الخصم ({CURRENCY})</label>
               <Input type="number" value={discountValue || ""} onChange={(e) => onDiscountValueChange(parseFloat(e.target.value) || 0)} className="text-center text-lg font-bold" placeholder="0" />
             </div>
           )}

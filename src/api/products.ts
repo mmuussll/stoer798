@@ -88,6 +88,16 @@ export async function fetchProductsCount(): Promise<number> {
   return count || 0;
 }
 
+export async function fetchProductsCountForUser(userId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from(TABLE)
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId);
+
+  if (error) throw error;
+  return count || 0;
+}
+
 export async function createProduct(
   product: Omit<Product, "id" | "created_at" | "category">
 ): Promise<Product> {

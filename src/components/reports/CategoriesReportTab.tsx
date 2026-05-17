@@ -50,7 +50,7 @@ export function CategoriesReportTab({ categoryData }: CategoriesTabProps) {
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="flex items-center justify-center h-[320px] text-gray-400">لا توجد بيانات كافية</div>
+            <div className="flex items-center justify-center h-[320px] text-muted-foreground/60">لا توجد بيانات كافية</div>
           )}
         </CardContent>
       </Card>
@@ -58,13 +58,13 @@ export function CategoriesReportTab({ categoryData }: CategoriesTabProps) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Layers className="w-5 h-5 text-indigo-600" />
+            <Layers className="w-5 h-5 text-primary" />
             أداء الفئات
           </CardTitle>
         </CardHeader>
         <CardContent>
           {categoryData.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground/60">
               <Layers className="w-10 h-10 mb-3" />
               <p>لا توجد بيانات</p>
             </div>
@@ -88,7 +88,7 @@ export function CategoriesReportTab({ categoryData }: CategoriesTabProps) {
                       </div>
                     </TableCell>
                     <TableCell><Badge variant="secondary">{cat.items}</Badge></TableCell>
-                    <TableCell className="font-semibold text-indigo-600">{formatCurrency(cat.revenue, 2)}</TableCell>
+                    <TableCell className="font-semibold text-primary">{formatCurrency(cat.revenue, 2)}</TableCell>
                     <TableCell>{formatNumber(cat.percent, 1)}%</TableCell>
                   </TableRow>
                 ))}

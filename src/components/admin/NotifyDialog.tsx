@@ -43,7 +43,7 @@ export default function NotifyDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md" dir="rtl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2"><Send className="w-5 h-5 text-blue-600" />إرسال إشعار</DialogTitle>
+          <DialogTitle className="flex items-center gap-2"><Send className="w-5 h-5 text-primary" />إرسال إشعار</DialogTitle>
           <DialogDescription>أرسل إشعاراً للمستخدمين</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
@@ -103,7 +103,7 @@ export default function NotifyDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>إلغاء</Button>
-          <Button onClick={() => notifyMutation.mutate()} disabled={notifyMutation.isPending || !notifyTitle.trim() || !notifyMessage.trim()} className="bg-blue-600 hover:bg-blue-700">
+          <Button onClick={() => notifyMutation.mutate()} disabled={notifyMutation.isPending || !notifyTitle.trim() || !notifyMessage.trim()} className="bg-primary hover:bg-primary/90">
             {notifyMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin ml-2" /> : <Send className="w-4 h-4 ml-2" />}إرسال
           </Button>
         </DialogFooter>

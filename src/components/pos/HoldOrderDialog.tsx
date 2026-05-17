@@ -33,7 +33,7 @@ export function HoldOrderDialog({
             <label className="text-sm font-medium mb-1 block">تسمية الفاتورة (اختياري)</label>
             <Input value={holdLabel} onChange={(e) => onHoldLabelChange(e.target.value)} placeholder={`فاتورة ${orderCount + 1}`} className="text-center" />
           </div>
-          <div className="bg-gray-50 rounded-lg p-2 text-sm">
+          <div className="bg-muted/50 rounded-lg p-2 text-sm">
             <div className="flex justify-between"><span>عدد الأصناف:</span><span>{cart.length}</span></div>
             <div className="flex justify-between"><span>عدد القطع:</span><span>{itemCount}</span></div>
             <div className="flex justify-between font-bold"><span>الإجمالي:</span><span>{formatCurrency(total, 2)}</span></div>

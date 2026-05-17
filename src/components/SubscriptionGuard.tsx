@@ -57,7 +57,7 @@ function isAccessBlocked(sub: UserSubscription | null, role: string, userCreated
 function PlanIcon({ plan }: { plan: string }) {
   if (plan === "pro") return <Crown className="w-5 h-5 text-amber-500" />;
   if (plan === "basic") return <Zap className="w-5 h-5 text-blue-500" />;
-  return <Star className="w-5 h-5 text-gray-500" />;
+  return <Star className="w-5 h-5 text-muted-foreground" />;
 }
 
 export function SubscriptionGuard({ children }: { children: React.ReactNode }) {
@@ -88,10 +88,10 @@ export function SubscriptionGuard({ children }: { children: React.ReactNode }) {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-purple-50/30">
         <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">جاري التحميل...</p>
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">جاري التحميل...</p>
         </div>
       </div>
     );
@@ -103,7 +103,7 @@ export function SubscriptionGuard({ children }: { children: React.ReactNode }) {
     const daysRemaining = subscription ? getDaysRemaining(subscription) : 0;
 
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 p-4" dir="rtl">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-purple-50/30 p-4" dir="rtl">
         <Card className="max-w-md w-full shadow-lg">
           <CardHeader className="text-center">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -166,7 +166,7 @@ export function SubscriptionGuard({ children }: { children: React.ReactNode }) {
 
   if (isFeatureRestricted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 p-4" dir="rtl">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-purple-50/30 p-4" dir="rtl">
         <Card className="max-w-md w-full shadow-lg">
           <CardHeader className="text-center">
             <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3">

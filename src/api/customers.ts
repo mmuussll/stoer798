@@ -54,6 +54,16 @@ export async function fetchCustomersCount(): Promise<number> {
   return count || 0;
 }
 
+export async function fetchCustomersCountForUser(userId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from(TABLE)
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId);
+
+  if (error) throw error;
+  return count || 0;
+}
+
 export async function getCustomer(id: string): Promise<Customer | null> {
   const [userId, isAdmin] = await Promise.all([getCurrentUserId(), isCurrentUserAdmin()]);
   let query = supabase.from(TABLE).select("*").eq("id", id);

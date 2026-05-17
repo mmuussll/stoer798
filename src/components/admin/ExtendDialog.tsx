@@ -56,15 +56,15 @@ export default function ExtendDialog({
                     onClick={() => { setSelectedPlan(p); }}
                     className={`p-3 rounded-lg border-2 text-center transition-all ${
                       isSelected
-                        ? p === "pro" ? "border-purple-400 bg-purple-50" : p === "basic" ? "border-blue-400 bg-blue-50" : "border-gray-400 bg-gray-50"
+                        ? p === "pro" ? "border-purple-400 bg-purple-50" : p === "basic" ? "border-blue-400 bg-blue-50" : "border-border bg-muted/40"
                         : "border-gray-200 hover:border-gray-300"
                     }`}
                   >
                     <div className="flex justify-center mb-1">
-                      {p === "pro" ? <Crown className="w-4 h-4 text-amber-500" /> : p === "basic" ? <Zap className="w-4 h-4 text-blue-500" /> : <Star className="w-4 h-4 text-gray-500" />}
+                      {p === "pro" ? <Crown className="w-4 h-4 text-amber-500" /> : p === "basic" ? <Zap className="w-4 h-4 text-blue-500" /> : <Star className="w-4 h-4 text-muted-foreground" />}
                     </div>
-                    <p className={`text-xs font-bold ${isSelected ? (p === "pro" ? "text-purple-700" : p === "basic" ? "text-blue-700" : "text-gray-700") : "text-gray-600"}`}>{plan.nameAr}</p>
-                    <p className="text-[10px] text-gray-500">{plan.key === "free" ? "مجاني" : `${plan.monthlyPrice.toLocaleString()} د.ع`}</p>
+                    <p className={`text-xs font-bold ${isSelected ? (p === "pro" ? "text-purple-700" : p === "basic" ? "text-blue-700" : "text-foreground/80") : "text-muted-foreground"}`}>{plan.nameAr}</p>
+                    <p className="text-[10px] text-muted-foreground">{plan.key === "free" ? "مجاني" : `${plan.monthlyPrice.toLocaleString()} د.ع`}</p>
                   </button>
                 );
               })}
@@ -92,14 +92,14 @@ export default function ExtendDialog({
                         isSelected ? "border-purple-400 bg-purple-50" : "border-gray-200 hover:border-gray-300"
                       }`}
                     >
-                      <p className="font-bold text-gray-700">{tier.label}</p>
-                      <p className={`font-bold ${tier.discountPercent > 0 ? "text-green-600" : "text-gray-500"}`}>
+                      <p className="font-bold text-foreground/80">{tier.label}</p>
+                      <p className={`font-bold ${tier.discountPercent > 0 ? "text-green-600" : "text-muted-foreground"}`}>
                         {monthlyWithDiscount.toLocaleString()}
                       </p>
                       {tier.discountPercent > 0 && (
                         <p className="text-[9px] text-green-500">خصم {tier.discountPercent}%</p>
                       )}
-                      <p className="text-[9px] text-gray-400">{totalDays} يوم</p>
+                      <p className="text-[9px] text-muted-foreground/60">{totalDays} يوم</p>
                     </button>
                   );
                 })}

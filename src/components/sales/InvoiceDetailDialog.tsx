@@ -43,34 +43,34 @@ export default function InvoiceDetailDialog({ open, onOpenChange, invoice, onPri
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" dir="rtl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Receipt className="w-5 h-5 text-blue-600" />تفاصيل الفاتورة
+            <Receipt className="w-5 h-5 text-primary" />تفاصيل الفاتورة
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-muted/50 rounded-lg">
             <div>
-              <p className="text-xs text-gray-500 mb-1">رقم الفاتورة</p>
+              <p className="text-xs text-muted-foreground mb-1">رقم الفاتورة</p>
               <p className="font-semibold text-sm font-mono">{invoice.invoice_number}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500 mb-1">التاريخ</p>
+              <p className="text-xs text-muted-foreground mb-1">التاريخ</p>
               <p className="font-semibold text-sm">{invoice.date} - {invoice.time}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500 mb-1">البائع</p>
+              <p className="text-xs text-muted-foreground mb-1">البائع</p>
               <p className="font-semibold text-sm">{invoice.cashier}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500 mb-1">الزبون</p>
+              <p className="text-xs text-muted-foreground mb-1">الزبون</p>
               <p className="font-semibold text-sm">
                 {invoice.customer ? (
                   <span className="flex items-center gap-1">
-                    <Users className="w-3 h-3 text-blue-500" />
+                    <Users className="w-3 h-3 text-primary/80" />
                     {invoice.customer.name}
                   </span>
                 ) : (
-                  <span className="text-gray-400">-</span>
+                  <span className="text-muted-foreground/60">-</span>
                 )}
               </p>
             </div>
@@ -78,13 +78,13 @@ export default function InvoiceDetailDialog({ open, onOpenChange, invoice, onPri
 
           <div>
             <h3 className="text-base font-semibold mb-3 flex items-center gap-2">
-              <Package className="w-4 h-4 text-gray-500" />
+              <Package className="w-4 h-4 text-muted-foreground" />
               تفاصيل المنتجات ({invoice.items.length})
             </h3>
             <div className="border rounded-lg overflow-hidden">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-gray-50">
+                  <TableRow className="bg-muted/50">
                     <TableHead className="text-right">#</TableHead>
                     <TableHead className="text-right">المنتج</TableHead>
                     <TableHead className="text-right">السعر</TableHead>
@@ -95,7 +95,7 @@ export default function InvoiceDetailDialog({ open, onOpenChange, invoice, onPri
                 <TableBody>
                   {invoice.items.map((item, index) => (
                     <TableRow key={item.id || index}>
-                      <TableCell className="text-gray-500 text-sm">{index + 1}</TableCell>
+                      <TableCell className="text-muted-foreground text-sm">{index + 1}</TableCell>
                       <TableCell className="font-medium">{item.name}</TableCell>
                       <TableCell>{formatCurrency(item.price, 2)}</TableCell>
                       <TableCell>
@@ -113,7 +113,7 @@ export default function InvoiceDetailDialog({ open, onOpenChange, invoice, onPri
 
           <div className="border-t pt-4 space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">المجموع الفرعي:</span>
+              <span className="text-muted-foreground">المجموع الفرعي:</span>
               <span className="font-medium">
                 {invoice.subtotal > 0
                   ? formatCurrency(invoice.subtotal, 2)
@@ -144,7 +144,7 @@ export default function InvoiceDetailDialog({ open, onOpenChange, invoice, onPri
               </div>
             )}
 
-            <div className="flex justify-between text-sm text-gray-600">
+            <div className="flex justify-between text-sm text-muted-foreground">
               <span>طريقة الدفع:</span>
               <span className="font-medium flex items-center gap-1">
                 {getPaymentIcon(invoice.payment_method)}
@@ -153,7 +153,7 @@ export default function InvoiceDetailDialog({ open, onOpenChange, invoice, onPri
             </div>
 
             {invoice.paid_amount > 0 && (
-              <div className="flex justify-between text-sm text-gray-600">
+              <div className="flex justify-between text-sm text-muted-foreground">
                 <span>المبلغ المدفوع:</span>
                 <span className="font-medium">
                   {formatCurrency(invoice.paid_amount, 2)}
@@ -171,13 +171,13 @@ export default function InvoiceDetailDialog({ open, onOpenChange, invoice, onPri
             )}
 
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">عدد القطع:</span>
+              <span className="text-muted-foreground">عدد القطع:</span>
               <span className="font-medium">
                 {invoice.items.reduce((s, item) => s + item.quantity, 0)}
               </span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">عدد الأصناف:</span>
+              <span className="text-muted-foreground">عدد الأصناف:</span>
               <span className="font-medium">{invoice.items.length}</span>
             </div>
 
@@ -185,7 +185,7 @@ export default function InvoiceDetailDialog({ open, onOpenChange, invoice, onPri
 
             <div className="flex justify-between items-center">
               <span className="text-lg font-bold">المبلغ الإجمالي:</span>
-              <span className="text-2xl font-bold text-blue-600">
+              <span className="text-2xl font-bold text-primary">
                 {formatCurrency(invoice.total, 2)}
               </span>
             </div>
@@ -204,7 +204,7 @@ export default function InvoiceDetailDialog({ open, onOpenChange, invoice, onPri
               مرتجع
             </Button>
             <Button
-              className="flex-1 bg-blue-600 hover:bg-blue-700"
+              className="flex-1 bg-primary hover:bg-primary/90"
               onClick={onPrint}
             >
               <Printer className="w-4 h-4 ml-2" />

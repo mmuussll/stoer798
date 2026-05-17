@@ -11,7 +11,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
 import * as settingsApi from "@/api/settings";
 import { generateTestPage, connectSerialPrinter, printViaSerial, disconnectSerialPrinter, isWebSerialSupported } from "@/lib/thermalPrinter";
 import type { StoreSettings } from "@/types";
@@ -22,8 +21,10 @@ import {
   AlertTriangle, Shield, HardDrive, Clock,
   Usb, Network, Monitor,
   MessageCircle, Key, Database, Download, Upload,
-  TestTube,
+  TestTube, LogOut, ChevronRight,
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 // ==================== Helper Components ====================
 
@@ -98,18 +99,39 @@ function SettingSelect({
 
 // ==================== Main Component ====================
 
+function SettingAction({
+  label, description, icon, onClick,
+}: {
+  label: string; description: string; icon: React.ReactNode; onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex items-center gap-3 w-full p-3 rounded-xl border border-border/60 hover:bg-destructive/5 hover:border-destructive/30 transition-all duration-200 group"
+    >
+      <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center group-hover:bg-destructive/20 transition-colors">
+        {icon}
+      </div>
+      <div className="flex-1 text-start">
+        <p className="text-sm font-semibold text-destructive">{label}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
+      </div>
+      <ChevronRight className="w-4 h-4 text-muted-foreground/30 ml-auto" />
+    </button>
+  );
+}
+
 export default function SettingsPage() {
   const { toast } = useToast();
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { isAdmin } = useAuth();
   const [settings, setSettings] = useState<StoreSettings | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
   const [activeTab, setActiveTab] = useState("store");
   const [serialPort, setSerialPort] = useState<Record<string, unknown> | null>(null);
   const [printerTesting, setPrinterTesting] = useState(false);
   const [serialSupported] = useState(() => isWebSerialSupported());
-
-  const isOwner = !isAdmin;
 
   const { data: fetchedSettings, isLoading } = useQuery({
     queryKey: ["settings"],
@@ -287,31 +309,23 @@ export default function SettingsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">الإعدادات المتقدمة</h1>
-          <p className="text-sm text-gray-500 mt-1">جميع إعدادات النظام - الطابعة، الفواتير، الضرائب، الأمان والتكامل</p>
+          <h1 className="text-2xl font-bold text-foreground">الإعدادات المتقدمة</h1>
+          <p className="text-sm text-muted-foreground mt-1">جميع إعدادات النظام - الطابعة، الفواتير، الضرائب، الأمان والتكامل</p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          {isOwner ? (
-            <>
-              <Button variant="outline" size="sm" onClick={handleExportSettings} className="gap-1 active:scale-95">
-                <Download className="w-3.5 h-3.5" /> تصدير
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleImportSettings} className="gap-1 active:scale-95">
-                <Upload className="w-3.5 h-3.5" /> استيراد
-              </Button>
-              <Button variant="outline" onClick={resetDefaults} className="gap-2 active:scale-95">
-                <RotateCcw className="w-4 h-4" /> إعادة تعيين
-              </Button>
-              <Button onClick={() => saveMutation.mutate()} disabled={!hasChanges || saveMutation.isPending} className="gap-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 active:scale-95">
-                <Save className="w-4 h-4" />
-                {saveMutation.isPending ? "جاري الحفظ..." : "حفظ الإعدادات"}
-              </Button>
-            </>
-          ) : (
-            <Badge variant="secondary" className="gap-1">
-              <Shield className="w-3 h-3" /> للقراءة فقط
-            </Badge>
-          )}
+          <Button variant="outline" size="sm" onClick={handleExportSettings} className="gap-1 active:scale-95">
+            <Download className="w-3.5 h-3.5" /> تصدير
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleImportSettings} className="gap-1 active:scale-95">
+            <Upload className="w-3.5 h-3.5" /> استيراد
+          </Button>
+          <Button variant="outline" onClick={resetDefaults} className="gap-2 active:scale-95">
+            <RotateCcw className="w-4 h-4" /> إعادة تعيين
+          </Button>
+          <Button onClick={() => saveMutation.mutate()} disabled={!hasChanges || saveMutation.isPending} className="gap-2 bg-primary hover:bg-primary/90 active:bg-primary/95 active:scale-95">
+            <Save className="w-4 h-4" />
+            {saveMutation.isPending ? "جاري الحفظ..." : "حفظ الإعدادات"}
+          </Button>
         </div>
       </div>
 
@@ -335,7 +349,7 @@ export default function SettingsPage() {
         <TabsContent value="store" className="mt-4 space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg"><Store className="w-5 h-5 text-blue-600" />معلومات المتجر الأساسية</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-lg"><Store className="w-5 h-5 text-primary" />معلومات المتجر الأساسية</CardTitle>
               <CardDescription>البيانات الرسمية التي تظهر في الفواتير والتقارير والمراسلات</CardDescription>
             </CardHeader>
             <CardContent className="space-y-1">
@@ -372,8 +386,8 @@ export default function SettingsPage() {
                 ]} />
 
               {settings.printer_type === "browser" && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3">
-                  <p className="text-xs text-blue-800 flex items-center gap-1"><Monitor className="w-3.5 h-3.5" /> وضع المتصفح: ستظهر نافذة الطباعة القياسية بعد كل عملية بيع. مناسب لجميع أنواع الطابعات.</p>
+                <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 mt-3">
+                  <p className="text-xs text-primary/80 flex items-center gap-1"><Monitor className="w-3.5 h-3.5" /> وضع المتصفح: ستظهر نافذة الطباعة القياسية بعد كل عملية بيع. مناسب لجميع أنواع الطابعات.</p>
                 </div>
               )}
 
@@ -565,7 +579,7 @@ export default function SettingsPage() {
         <TabsContent value="prefs" className="mt-4 space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg"><Settings2 className="w-5 h-5 text-indigo-600" />تفضيلات النظام</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-lg"><Settings2 className="w-5 h-5 text-primary" />تفضيلات النظام</CardTitle>
               <CardDescription>ضبط سلوك واجهة نقطة البيع والميزات</CardDescription>
             </CardHeader>
             <CardContent className="space-y-1">
@@ -588,6 +602,15 @@ export default function SettingsPage() {
               <SettingSwitch label="إظهار صور المنتجات" description="عرض الصور في شبكة المنتجات" checked={settings.show_product_images} onCheckedChange={(v) => update("show_product_images", v)} />
               <SettingSwitch label="السماح بالمخزون السالب" checked={settings.enable_negative_stock} onCheckedChange={(v) => update("enable_negative_stock", v)} />
               <SettingSwitch label="تفعيل التنبيهات الصوتية" description="صوت عند إتمام البيع أو التنبيهات" checked={settings.enable_sound_notifications} onCheckedChange={(v) => update("enable_sound_notifications", v)} />
+              <Separator className="my-3" />
+              <SettingSelect label="خط واجهة المستخدم" value={settings.font_family} onValueChange={(v) => update("font_family", v)}
+                options={[
+                  { value: "ibm-plex", label: "IBM Plex Sans Arabic" },
+                  { value: "cairo", label: "Cairo — قاهرية" },
+                  { value: "tajawal", label: "Tajawal — تجوال" },
+                  { value: "almarai", label: "Almarai — المراعي" },
+                  { value: "el-messiri", label: "El Messiri — المسيري" },
+                ]} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -606,12 +629,19 @@ export default function SettingsPage() {
               <SettingSwitch label="إشعارات سطح المكتب" description="تنبيهات تظهر على سطح المكتب" checked={settings.enable_desktop_notifications} onCheckedChange={(v) => update("enable_desktop_notifications", v)} />
               <SettingSwitch label="إجبارية جلسات الصندوق" description="يجب فتح جلسة صندوق قبل البيع - يمكن تعطيلها" checked={settings.require_cash_session} onCheckedChange={(v) => update("require_cash_session", v)} />
               <Separator className="my-3" />
-              <div className="bg-gray-50 rounded-lg p-3">
-                <p className="text-xs text-gray-600 flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> مهلة الجلسة: سيتم تسجيل الخروج تلقائياً بعد فترة عدم النشاط المحددة.</p>
+              <div className="bg-muted/50 rounded-lg p-3">
+                <p className="text-xs text-muted-foreground flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> مهلة الجلسة: سيتم تسجيل الخروج تلقائياً بعد فترة عدم النشاط المحددة.</p>
               </div>
-              <div className="bg-gray-50 rounded-lg p-3 mt-2">
-                <p className="text-xs text-gray-600 flex items-center gap-1"><AlertTriangle className="w-3.5 h-3.5" /> المصادقة الثنائية تتطلب إعداداً إضافياً في لوحة تحكم Supabase.</p>
+              <div className="bg-muted/50 rounded-lg p-3 mt-2">
+                <p className="text-xs text-muted-foreground flex items-center gap-1"><AlertTriangle className="w-3.5 h-3.5" /> المصادقة الثنائية تتطلب إعداداً إضافياً في لوحة تحكم Supabase.</p>
               </div>
+              <Separator className="my-3" />
+              <SettingAction
+                label="تسجيل الخروج"
+                description="الخروج من حسابك الحالي"
+                icon={<LogOut className="w-4 h-4 text-destructive" />}
+                onClick={signOut}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -647,8 +677,8 @@ export default function SettingsPage() {
                   <Upload className="w-3.5 h-3.5" /> استيراد الإعدادات (JSON)
                 </Button>
               </div>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3">
-                <p className="text-xs text-blue-800 flex items-center gap-1"><Database className="w-3.5 h-3.5" /> ملاحظة: النسخ الاحتياطي الكامل لقاعدة البيانات يتم من خلال لوحة تحكم Supabase.</p>
+              <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 mt-3">
+                <p className="text-xs text-primary/80 flex items-center gap-1"><Database className="w-3.5 h-3.5" /> ملاحظة: النسخ الاحتياطي الكامل لقاعدة البيانات يتم من خلال لوحة تحكم Supabase.</p>
               </div>
             </CardContent>
           </Card>
@@ -674,8 +704,8 @@ export default function SettingsPage() {
               {settings.api_key_enabled && (
                 <SettingInput label="مفتاح API" value={settings.api_key} onChange={(v) => update("api_key", v)} dir="ltr" placeholder="sk-..." type="password" />
               )}
-              <div className="bg-gray-50 rounded-lg p-3 mt-3">
-                <p className="text-xs text-gray-600 flex items-center gap-1"><Key className="w-3.5 h-3.5" /> التكامل عبر API يتطلب إعداداً إضافياً في Supabase Edge Functions.</p>
+              <div className="bg-muted/50 rounded-lg p-3 mt-3">
+                <p className="text-xs text-muted-foreground flex items-center gap-1"><Key className="w-3.5 h-3.5" /> التكامل عبر API يتطلب إعداداً إضافياً في Supabase Edge Functions.</p>
               </div>
             </CardContent>
           </Card>
@@ -683,25 +713,23 @@ export default function SettingsPage() {
       </Tabs>
 
       {/* Sticky Save Bar */}
-      {isOwner && (
-        <div className={`fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] px-4 py-3 flex items-center justify-between gap-3 transition-all duration-300 ${hasChanges ? "translate-y-0 opacity-100" : "translate-y-full opacity-0 pointer-events-none"}`}>
-          <div className="flex items-center gap-2 text-sm">
-            <AlertTriangle className="w-4 h-4 text-amber-500" />
-            <span className="text-amber-700 font-medium">توجد تغييرات غير محفوظة</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={resetDefaults} className="gap-2 active:scale-95">
-              <RotateCcw className="w-4 h-4" /> إعادة تعيين
-            </Button>
-            <Button onClick={() => saveMutation.mutate()} disabled={!hasChanges || saveMutation.isPending} className="gap-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 active:scale-95 min-w-[140px] shadow-lg shadow-blue-500/25">
-              <Save className="w-4 h-4" />
-              {saveMutation.isPending ? "جاري الحفظ..." : "حفظ الإعدادات"}
-            </Button>
-          </div>
+      <div className={`fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-border/60 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] px-4 py-3 flex items-center justify-between gap-3 transition-all duration-300 ${hasChanges ? "translate-y-0 opacity-100" : "translate-y-full opacity-0 pointer-events-none"}`}>
+        <div className="flex items-center gap-2 text-sm">
+          <AlertTriangle className="w-4 h-4 text-amber-500" />
+          <span className="text-amber-700 font-medium">توجد تغييرات غير محفوظة</span>
         </div>
-      )}
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={resetDefaults} className="gap-2 active:scale-95">
+            <RotateCcw className="w-4 h-4" /> إعادة تعيين
+          </Button>
+          <Button onClick={() => saveMutation.mutate()} disabled={!hasChanges || saveMutation.isPending} className="gap-2 bg-primary hover:bg-primary/90 active:bg-primary/95 active:scale-95 min-w-[140px] shadow-lg shadow-primary/25">
+            <Save className="w-4 h-4" />
+            {saveMutation.isPending ? "جاري الحفظ..." : "حفظ الإعدادات"}
+          </Button>
+        </div>
+      </div>
       {/* Spacer for sticky bar when visible */}
-      {isOwner && hasChanges && <div className="h-16" />}
+      {hasChanges && <div className="h-16" />}
     </div>
   );
 }

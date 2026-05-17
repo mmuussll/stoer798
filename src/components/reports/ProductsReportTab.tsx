@@ -66,7 +66,7 @@ export function ProductsReportTab({
       {selectedProduct !== "all" && selectedProductStats ? (
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard title="الكمية المباعة" value={String(selectedProductStats.quantity)} icon={ShoppingCart} color="text-blue-600" bg="bg-blue-50" />
+            <StatCard title="الكمية المباعة" value={String(selectedProductStats.quantity)} icon={ShoppingCart} color="text-primary" bg="bg-primary/5" />
             <StatCard title="الإيرادات" value={formatCurrency(selectedProductStats.revenue, 2)} icon={DollarSign} color="text-emerald-600" bg="bg-emerald-50" />
             <StatCard title="المخزون الحالي" value={String(selectedProductStats.stock)} icon={Package} color="text-violet-600" bg="bg-violet-50" />
             <StatCard title="متوسط السعر" value={formatCurrency(selectedProductStats.quantity > 0 ? selectedProductStats.revenue / selectedProductStats.quantity : 0, 2)} icon={TrendingUp} color="text-orange-600" bg="bg-orange-50" />
@@ -76,7 +76,7 @@ export function ProductsReportTab({
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <Activity className="w-5 h-5 text-blue-600" />
+                  <Activity className="w-5 h-5 text-primary" />
                   اتجاه مبيعات: {selectedProduct}
                 </CardTitle>
               </CardHeader>
@@ -125,7 +125,7 @@ export function ProductsReportTab({
                           <TableCell>
                             <Badge variant="secondary">{item.quantity}</Badge>
                           </TableCell>
-                          <TableCell className="font-semibold text-blue-600">
+                          <TableCell className="font-semibold text-primary">
                             {formatCurrency(item.price * item.quantity, 2)}
                           </TableCell>
                         </TableRow>
@@ -147,7 +147,7 @@ export function ProductsReportTab({
             </CardHeader>
             <CardContent>
               {topProducts.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-8 text-gray-400">
+                <div className="flex flex-col items-center justify-center py-8 text-muted-foreground/60">
                   <Package className="w-8 h-8 mb-2" />
                   <p>لا توجد مبيعات</p>
                 </div>
@@ -177,13 +177,13 @@ export function ProductsReportTab({
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
-                <TrendingDown className="w-5 h-5 text-red-500" />
+                <TrendingDown className="w-5 h-5 text-destructive" />
                 الأقل مبيعاً
               </CardTitle>
             </CardHeader>
             <CardContent>
               {bottomProducts.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-8 text-gray-400">
+                <div className="flex flex-col items-center justify-center py-8 text-muted-foreground/60">
                   <Package className="w-8 h-8 mb-2" />
                   <p>لا توجد مبيعات</p>
                 </div>
@@ -201,7 +201,7 @@ export function ProductsReportTab({
                       <TableRow key={i}>
                         <TableCell className="font-medium">{item.name}</TableCell>
                         <TableCell><Badge variant="secondary">{item.quantity}</Badge></TableCell>
-                        <TableCell className="font-semibold text-red-500">{formatCurrency(item.revenue, 2)}</TableCell>
+                        <TableCell className="font-semibold text-destructive">{formatCurrency(item.revenue, 2)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

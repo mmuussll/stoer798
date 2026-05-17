@@ -30,7 +30,7 @@ export function DebtsReportTab({ debts, debtSummary: ds }: DebtsTabProps) {
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <StatCard title="الديون المستحقة" value={formatCurrency(ds.totalOutstanding, 2)} icon={Landmark} color="text-red-600" bg="bg-red-50 border border-red-200" />
         <StatCard title="الديون المسددة" value={formatCurrency(ds.totalPaid, 2)} icon={CheckCircle2} color="text-emerald-600" bg="bg-emerald-50" />
-        <StatCard title="إجمالي الديون" value={formatCurrency(ds.totalDebtValue, 2)} icon={Wallet} color="text-blue-600" bg="bg-blue-50" />
+        <StatCard title="إجمالي الديون" value={formatCurrency(ds.totalDebtValue, 2)} icon={Wallet} color="text-primary" bg="bg-primary/5" />
         <StatCard title="عدد الديون النشطة" value={String(ds.activeCount)} icon={AlertTriangle} color="text-amber-600" bg="bg-amber-50" />
         <StatCard title="عدد الديون المتأخرة" value={`${ds.overdueCount} (${formatNumber(ds.overdueAmount, 0)})`} icon={AlertTriangle} color={ds.overdueCount > 0 ? "text-red-600" : "text-green-600"} bg={ds.overdueCount > 0 ? "bg-red-50" : "bg-green-50"} />
       </div>
@@ -45,7 +45,7 @@ export function DebtsReportTab({ debts, debtSummary: ds }: DebtsTabProps) {
           </CardHeader>
           <CardContent>
             {ds.topCustomers.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-gray-400">
+              <div className="flex flex-col items-center justify-center py-8 text-muted-foreground/60">
                 <User2 className="w-8 h-8 mb-2" />
                 <p>لا توجد ديون حتى الآن</p>
               </div>
@@ -79,13 +79,13 @@ export function DebtsReportTab({ debts, debtSummary: ds }: DebtsTabProps) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <PieChartIcon className="w-5 h-5 text-blue-600" />
+              <PieChartIcon className="w-5 h-5 text-primary" />
               توزيع الديون (نشط/مسدد)
             </CardTitle>
           </CardHeader>
           <CardContent>
             {debts.length === 0 ? (
-              <div className="flex items-center justify-center h-[280px] text-gray-400">لا توجد بيانات</div>
+              <div className="flex items-center justify-center h-[280px] text-muted-foreground/60">لا توجد بيانات</div>
             ) : (
               <ResponsiveContainer width="100%" height={280}>
                 <PieChart>
@@ -119,7 +119,7 @@ export function DebtsReportTab({ debts, debtSummary: ds }: DebtsTabProps) {
         </CardHeader>
         <CardContent>
           {debts.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 text-gray-400">
+            <div className="flex flex-col items-center justify-center py-8 text-muted-foreground/60">
               <Landmark className="w-8 h-8 mb-2" />
               <p>لا توجد ديون</p>
             </div>

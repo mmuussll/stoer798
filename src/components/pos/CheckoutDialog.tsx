@@ -37,22 +37,22 @@ export function CheckoutDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent dir="rtl" className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2"><Receipt className="w-5 h-5 text-blue-600" />تأكيد عملية البيع</DialogTitle>
+          <DialogTitle className="flex items-center gap-2"><Receipt className="w-5 h-5 text-primary" />تأكيد عملية البيع</DialogTitle>
           <DialogDescription>الرجاء مراجعة تفاصيل الفاتورة قبل الإتمام</DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           {selectedCustomer && (
-            <div className="flex items-center gap-2 text-sm bg-blue-50 rounded-lg p-2">
-              <User2 className="w-4 h-4 text-blue-600" />
+            <div className="flex items-center gap-2 text-sm bg-primary/5 rounded-lg p-2">
+              <User2 className="w-4 h-4 text-primary" />
               <span className="font-medium">{selectedCustomer.name}</span>
-              {selectedCustomer.phone && <span className="text-gray-500 text-xs">{selectedCustomer.phone}</span>}
-              <span className="text-xs text-blue-600 mr-auto">{selectedCustomer.points} نقطة</span>
+              {selectedCustomer.phone && <span className="text-muted-foreground text-xs">{selectedCustomer.phone}</span>}
+              <span className="text-xs text-primary mr-auto">{selectedCustomer.points} نقطة</span>
             </div>
           )}
-          <div className="rounded-lg border bg-gray-50 p-3 space-y-2 max-h-48 overflow-y-auto">
+          <div className="rounded-lg border bg-muted/50 p-3 space-y-2 max-h-48 overflow-y-auto">
             {cart.map((item) => (
               <div key={item.id} className="flex justify-between items-center text-sm">
-                <div><span className="font-medium">{item.name}</span><span className="text-gray-500 mr-2">x{item.quantity}</span></div>
+                <div><span className="font-medium">{item.name}</span><span className="text-muted-foreground mr-2">x{item.quantity}</span></div>
                 <span className="font-semibold">{formatNumber(item.price * item.quantity, 2)} {CURRENCY}</span>
               </div>
             ))}
@@ -69,13 +69,13 @@ export function CheckoutDialog({
               <span>{formatCurrency(taxAmount, 2)}</span>
             </div>
           )}
-          <div className="flex justify-between text-sm text-gray-600">
+          <div className="flex justify-between text-sm text-muted-foreground">
             <span>طريقة الدفع:</span>
             <span className="font-medium">{paymentMethod === "cash" ? "نقداً" : paymentMethod === "card" ? "بطاقة" : paymentMethod === "credit" ? "آجل (دَين)" : "مختلط (كاش + بطاقة)"}</span>
           </div>
           {paymentMethod === "cash" && paidAmount > 0 && change >= 0 && (
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">المبلغ المدفوع / الباقي:</span>
+              <span className="text-muted-foreground">المبلغ المدفوع / الباقي:</span>
               <span className="font-semibold">{formatCurrency(paidAmount, 2)} / <span className="text-green-600">{formatCurrency(change, 2)}</span> {CURRENCY}</span>
             </div>
           )}
@@ -96,7 +96,7 @@ export function CheckoutDialog({
           <Separator />
           <div className="flex justify-between items-center">
             <span className="text-base font-bold">الإجمالي النهائي:</span>
-            <span className="text-2xl font-bold text-blue-600">{formatCurrency(total, 2)}</span>
+            <span className="text-2xl font-bold text-primary">{formatCurrency(total, 2)}</span>
           </div>
         </div>
         <DialogFooter className="gap-2">

@@ -65,13 +65,13 @@ export default function ReturnFormDialog({
 
         {returnInvoice && (
           <div className="space-y-3">
-            <div className="flex items-center justify-between bg-blue-50 rounded-lg p-3">
+            <div className="flex items-center justify-between bg-primary/5 rounded-lg p-3">
               <div>
                 <div className="font-semibold text-sm">{returnInvoice.invoice_number}</div>
-                <div className="text-xs text-gray-500">{returnInvoice.date} - {returnInvoice.time}</div>
+                <div className="text-xs text-muted-foreground">{returnInvoice.date} - {returnInvoice.time}</div>
               </div>
-              <div className="text-sm font-bold text-blue-600">{formatCurrency(returnInvoice.total, 2)}</div>
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-blue-100" onClick={resetReturnForm}>
+              <div className="text-sm font-bold text-primary">{formatCurrency(returnInvoice.total, 2)}</div>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-primary/10" onClick={resetReturnForm}>
                 <X className="w-4 h-4" />
               </Button>
             </div>
@@ -96,10 +96,10 @@ export default function ReturnFormDialog({
                   const itemId = item.product_id || item.id;
                   const returnQty = selectedItems[itemId] || 0;
                   return (
-                    <div key={itemId} className="flex items-center justify-between p-2 rounded-lg border hover:bg-gray-50 gap-2">
+                    <div key={itemId} className="flex items-center justify-between p-2 rounded-lg border hover:bg-muted/40 gap-2">
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-sm truncate">{item.name}</div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-muted-foreground">
                           x{item.quantity} قطعة - السعر: {formatNumber(item.price, 2)}
                         </div>
                       </div>
@@ -113,7 +113,7 @@ export default function ReturnFormDialog({
                         >
                           <Minus className="w-3.5 h-3.5" />
                         </Button>
-                        <span className={`w-7 text-center text-sm font-bold tabular-nums ${returnQty > 0 ? "text-red-600" : "text-gray-400"}`}>
+                        <span className={`w-7 text-center text-sm font-bold tabular-nums ${returnQty > 0 ? "text-red-600" : "text-muted-foreground/60"}`}>
                           {returnQty}
                         </span>
                         <Button

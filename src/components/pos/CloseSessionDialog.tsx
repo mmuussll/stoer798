@@ -34,7 +34,7 @@ export function CloseSessionDialog({
           <DialogDescription>أدخل المبلغ النقدي الفعلي الموجود في الصندوق</DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
-          <div className="bg-gray-50 rounded-lg p-3 space-y-1 text-sm">
+          <div className="bg-muted/50 rounded-lg p-3 space-y-1 text-sm">
             <div className="flex justify-between"><span>المبلغ الافتتاحي:</span><span>{formatCurrency(session.opening_balance, 2)}</span></div>
             <div className="flex justify-between"><span>إجمالي المبيعات:</span><span>{formatCurrency(session.total_sales, 2)}</span></div>
             <div className="flex justify-between"><span>نقدي:</span><span>{formatCurrency(session.total_cash, 2)}</span></div>

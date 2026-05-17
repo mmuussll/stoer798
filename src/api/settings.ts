@@ -26,6 +26,7 @@ export const STORE_SETTINGS_DEFAULTS: StoreSettings = {
   date_format: "yyyy-MM-dd",
   time_format: "12h",
   language: "ar",
+  font_family: "ibm-plex",
   receipt_header: "",
   receipt_footer: "شكراً لتعاملکم معنا",
   receipt_show_logo: true,
@@ -118,6 +119,7 @@ function mapSettings(row: Record<string, unknown>): StoreSettings {
     date_format: s("date_format", STORE_SETTINGS_DEFAULTS.date_format),
     time_format: s("time_format", STORE_SETTINGS_DEFAULTS.time_format),
     language: s("language", STORE_SETTINGS_DEFAULTS.language),
+    font_family: s("font_family", STORE_SETTINGS_DEFAULTS.font_family),
     receipt_header: s("receipt_header", STORE_SETTINGS_DEFAULTS.receipt_header),
     receipt_footer: s("receipt_footer", STORE_SETTINGS_DEFAULTS.receipt_footer),
     receipt_show_logo: b("receipt_show_logo", STORE_SETTINGS_DEFAULTS.receipt_show_logo),
@@ -195,6 +197,35 @@ export async function fetchSettings(): Promise<StoreSettings> {
   return mapSettings(data);
 }
 
+export async function fetchMaintenanceStatus(): Promise<{ maintenance_mode: boolean; maintenance_message: string }> {
+  try {
+    const { data: adminProfiles } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("role", "admin")
+      .limit(1);
+
+    if (!adminProfiles || adminProfiles.length === 0) {
+      return { maintenance_mode: false, maintenance_message: "" };
+    }
+
+    const adminId = adminProfiles[0].id;
+
+    const { data: adminSettings } = await supabase
+      .from("store_settings")
+      .select("maintenance_mode, maintenance_message")
+      .eq("user_id", adminId)
+      .maybeSingle();
+
+    return {
+      maintenance_mode: Boolean(adminSettings?.maintenance_mode),
+      maintenance_message: (adminSettings?.maintenance_message as string) || STORE_SETTINGS_DEFAULTS.maintenance_message,
+    };
+  } catch {
+    return { maintenance_mode: false, maintenance_message: "" };
+  }
+}
+
 export async function updateSettings(
   settings: Partial<Omit<StoreSettings, "id" | "created_at" | "updated_at" | "user_id">>
 ): Promise<StoreSettings> {
@@ -209,7 +240,7 @@ export async function updateSettings(
     "store_logo_url", "store_website", "store_registration_number",
     "store_tax_number", "store_owner_name", "store_mobile",
     "tax_name", "second_tax_name",
-    "currency", "currency_position", "date_format", "time_format", "language",
+    "currency", "currency_position", "date_format", "time_format", "language", "font_family",
     "receipt_header", "receipt_footer", "receipt_paper_size",
     "default_payment_method", "invoice_number_prefix",
     "printer_type", "printer_ip", "printer_port", "printer_encoding",

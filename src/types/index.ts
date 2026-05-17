@@ -244,6 +244,7 @@ export interface StoreSettings {
   date_format: string;
   time_format: string;
   language: string;
+  font_family: string;
   receipt_header: string;
   receipt_footer: string;
   receipt_show_logo: boolean;

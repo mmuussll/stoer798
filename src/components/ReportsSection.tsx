@@ -281,8 +281,8 @@ export default function ReportsSection() {
     <div className="space-y-6" dir="rtl">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">التقارير والإحصائيات</h1>
-          <p className="text-sm text-gray-500 mt-1">تحليل شامل لأداء المبيعات والمنتجات والمخزون</p>
+          <h1 className="text-2xl font-bold text-foreground">التقارير والإحصائيات</h1>
+          <p className="text-sm text-muted-foreground mt-1">تحليل شامل لأداء المبيعات والمنتجات والمخزون</p>
         </div>
         <Button variant="outline" onClick={exportCSV}>
           <Download className="w-4 h-4 ml-2" />
@@ -291,23 +291,23 @@ export default function ReportsSection() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="إجمالي المبيعات" value={formatCurrency(stats.totalRevenue, 2)} icon={DollarSign} color="text-blue-600" bg="bg-blue-50" />
+        <StatCard title="إجمالي المبيعات" value={formatCurrency(stats.totalRevenue, 2)} icon={DollarSign} color="text-primary" bg="bg-primary/5" />
         <StatCard title="عدد الفواتير" value={String(stats.totalInvoices)} icon={Receipt} color="text-violet-600" bg="bg-violet-50" />
         <StatCard title="القطع المباعة" value={String(stats.totalItemsSold)} icon={Package} color="text-emerald-600" bg="bg-emerald-50" />
-        <StatCard title="صافي الربح" value={formatCurrency(stats.profit, 2)} icon={TrendingUp} color={stats.profit >= 0 ? "text-green-600" : "text-red-600"} bg={stats.profit >= 0 ? "bg-green-50" : "bg-red-50"} />
+        <StatCard title="صافي الربح" value={formatCurrency(stats.profit, 2)} icon={TrendingUp} color={stats.profit >= 0 ? "text-success" : "text-destructive"} bg={stats.profit >= 0 ? "bg-green-50" : "bg-red-50"} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         <StatCard title="متوسط الفاتورة" value={formatCurrency(stats.avgInvoice, 2)} icon={Target} color="text-orange-600" bg="bg-orange-50" />
         <StatCard title="إجمالي المشتريات" value={formatCurrency(stats.totalPurchaseCost, 2)} icon={ShoppingCart} color="text-amber-600" bg="bg-amber-50" />
-        <StatCard title="نسبة الربح" value={`${formatNumber(stats.profitMargin, 1)}%`} icon={Zap} color={stats.profitMargin >= 0 ? "text-teal-600" : "text-red-600"} bg={stats.profitMargin >= 0 ? "bg-teal-50" : "bg-red-50"} />
-        <StatCard title="قيمة المخزون" value={formatCurrency(totalStockValue, 2)} icon={Layers} color="text-indigo-600" bg="bg-indigo-50" />
+        <StatCard title="نسبة الربح" value={`${formatNumber(stats.profitMargin, 1)}%`} icon={Zap} color={stats.profitMargin >= 0 ? "text-teal-600" : "text-destructive"} bg={stats.profitMargin >= 0 ? "bg-teal-50" : "bg-red-50"} />
+        <StatCard title="قيمة المخزون" value={formatCurrency(totalStockValue, 2)} icon={Layers} color="text-primary" bg="bg-primary/5" />
       </div>
 
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base">
-            <Calendar className="w-5 h-5 text-blue-600" />
+            <Calendar className="w-5 h-5 text-primary" />
             نطاق التاريخ
           </CardTitle>
         </CardHeader>

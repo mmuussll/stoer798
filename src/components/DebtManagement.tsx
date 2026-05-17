@@ -417,8 +417,8 @@ export default function DebtManagement() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">إدارة الديون</h1>
-          <p className="text-sm text-gray-500 mt-1">متابعة وإدارة ديون الزبائن والمدفوعات</p>
+          <h1 className="text-2xl font-bold text-foreground">إدارة الديون</h1>
+          <p className="text-sm text-muted-foreground mt-1">متابعة وإدارة ديون الزبائن والمدفوعات</p>
         </div>
         <Button onClick={openAddDialog} className="bg-emerald-600 hover:bg-emerald-700 gap-2">
           <Plus className="w-4 h-4" /> إضافة دين جديد
@@ -436,13 +436,13 @@ export default function DebtManagement() {
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <StatCard title="إجمالي الديون المستحقة"
           value={formatCurrencyDisplay(summary?.total_outstanding || 0, 2)}
-          icon={Landmark} color="text-blue-600" bg="bg-blue-50 border border-blue-200"
+          icon={Landmark} color="text-primary" bg="bg-primary/5 border border-primary/20"
           sub={`${activeStats.totalActive} دين نشط`} />
         <StatCard title="الديون المتأخرة"
           value={formatCurrencyDisplay(activeStats.totalOverdueAmount, 2)}
           icon={AlertTriangle}
-          color={activeStats.totalOverdue > 0 ? "text-red-600" : "text-gray-600"}
-          bg={activeStats.totalOverdue > 0 ? "bg-red-50 border border-red-200" : "bg-gray-50"}
+          color={activeStats.totalOverdue > 0 ? "text-red-600" : "text-muted-foreground"}
+          bg={activeStats.totalOverdue > 0 ? "bg-red-50 border border-red-200" : "bg-muted/50"}
           sub={`${activeStats.totalOverdue} دين متأخر`} />
         <StatCard title="الديون النشطة"
           value={formatCurrencyDisplay(summary?.total_active || 0, 2)}
@@ -479,14 +479,14 @@ export default function DebtManagement() {
                     </div>
                     <div>
                       <p className="font-semibold text-sm">{c.name}</p>
-                      {c.phone && <p className="text-xs text-gray-500 flex items-center gap-1"><Phone className="w-2.5 h-2.5" />{c.phone}</p>}
+                      {c.phone && <p className="text-xs text-muted-foreground flex items-center gap-1"><Phone className="w-2.5 h-2.5" />{c.phone}</p>}
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-lg font-bold text-red-600">{formatCurrency(c.total_debt, 2)}</p>
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <span>{c.debt_count} دين</span>
                       {c.debt_limit > 0 && c.total_debt > c.debt_limit && (
                         <Badge variant="destructive" className="text-xs">تجاوز الحد</Badge>
@@ -510,7 +510,7 @@ export default function DebtManagement() {
         <CardContent className="p-4">
           <div className="flex gap-3 items-center flex-wrap">
             <div className="relative flex-1 max-w-sm">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
               <Input value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                 placeholder="ابحث باسم الزبون أو رقم الفاتورة..." className="pr-10" />
             </div>
@@ -571,22 +571,22 @@ export default function DebtManagement() {
         <DialogContent dir="rtl" className="max-w-2xl max-h-[85vh] overflow-y-auto max-sm:mx-2 max-sm:w-[calc(100%-16px)]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <History className="w-5 h-5 text-blue-600" />تفاصيل الدين والمدفوعات
+              <History className="w-5 h-5 text-primary" />تفاصيل الدين والمدفوعات
             </DialogTitle>
           </DialogHeader>
           {selectedDebt && (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 bg-gray-50 rounded-lg">
-                <div><p className="text-xs text-gray-500">الزبون</p><p className="font-semibold text-sm">{selectedDebt.customer_name || "-"}</p></div>
-                <div><p className="text-xs text-gray-500">الفاتورة</p><p className="font-semibold text-sm font-mono">{selectedDebt.invoice_number || "-"}</p></div>
-                <div><p className="text-xs text-gray-500">المبلغ الكلي</p><p className="font-bold text-blue-600">{formatCurrency(selectedDebt.total_amount, 2)}</p></div>
-                <div><p className="text-xs text-gray-500">المتبقي</p><p className="font-bold text-red-600">{formatCurrency(selectedDebt.remaining_amount, 2)}</p></div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 bg-muted/50 rounded-lg">
+                <div><p className="text-xs text-muted-foreground">الزبون</p><p className="font-semibold text-sm">{selectedDebt.customer_name || "-"}</p></div>
+                <div><p className="text-xs text-muted-foreground">الفاتورة</p><p className="font-semibold text-sm font-mono">{selectedDebt.invoice_number || "-"}</p></div>
+                <div><p className="text-xs text-muted-foreground">المبلغ الكلي</p><p className="font-bold text-primary">{formatCurrency(selectedDebt.total_amount, 2)}</p></div>
+                <div><p className="text-xs text-muted-foreground">المتبقي</p><p className="font-bold text-red-600">{formatCurrency(selectedDebt.remaining_amount, 2)}</p></div>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                <div><span className="text-gray-500">الحالة: </span><Badge variant="outline" className={STATUS_MAP[selectedDebt.status]?.color}>{STATUS_MAP[selectedDebt.status]?.label}</Badge></div>
-                <div><span className="text-gray-500">تاريخ الاستحقاق: </span><span className={getDueStatus(selectedDebt.due_date).color}>{selectedDebt.due_date || "غير محدد"}</span></div>
-                <div><span className="text-gray-500">المدفوع: </span><span className="text-emerald-600 font-semibold">{formatCurrency(selectedDebt.total_amount - selectedDebt.remaining_amount, 2)}</span></div>
-                <div><span className="text-gray-500">نسبة السداد: </span><span className="text-emerald-600 font-semibold">{formatNumberDisplay(selectedDebt.total_amount > 0 ? (1 - selectedDebt.remaining_amount / selectedDebt.total_amount) * 100 : 0, 1)}%</span></div>
+                <div><span className="text-muted-foreground">الحالة: </span><Badge variant="outline" className={STATUS_MAP[selectedDebt.status]?.color}>{STATUS_MAP[selectedDebt.status]?.label}</Badge></div>
+                <div><span className="text-muted-foreground">تاريخ الاستحقاق: </span><span className={getDueStatus(selectedDebt.due_date).color}>{selectedDebt.due_date || "غير محدد"}</span></div>
+                <div><span className="text-muted-foreground">المدفوع: </span><span className="text-emerald-600 font-semibold">{formatCurrency(selectedDebt.total_amount - selectedDebt.remaining_amount, 2)}</span></div>
+                <div><span className="text-muted-foreground">نسبة السداد: </span><span className="text-emerald-600 font-semibold">{formatNumberDisplay(selectedDebt.total_amount > 0 ? (1 - selectedDebt.remaining_amount / selectedDebt.total_amount) * 100 : 0, 1)}%</span></div>
               </div>
               {selectedDebt.notes && (
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
@@ -595,16 +595,16 @@ export default function DebtManagement() {
                 </div>
               )}
               {(selectedDebt.guarantor_name || selectedDebt.guarantor_phone) && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <p className="text-xs text-blue-700 font-medium mb-2">بيانات الكفيل:</p>
+                <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
+                  <p className="text-xs text-primary/80 font-medium mb-2">بيانات الكفيل:</p>
                   <div className="grid grid-cols-2 gap-2 text-sm">
-                    {selectedDebt.guarantor_name && <div><span className="text-gray-500">اسم الكفيل: </span><span className="font-semibold">{selectedDebt.guarantor_name}</span></div>}
-                    {selectedDebt.guarantor_phone && <div><span className="text-gray-500">رقم الكفيل: </span><span className="font-semibold" dir="ltr">{selectedDebt.guarantor_phone}</span></div>}
+                    {selectedDebt.guarantor_name && <div><span className="text-muted-foreground">اسم الكفيل: </span><span className="font-semibold">{selectedDebt.guarantor_name}</span></div>}
+                    {selectedDebt.guarantor_phone && <div><span className="text-muted-foreground">رقم الكفيل: </span><span className="font-semibold" dir="ltr">{selectedDebt.guarantor_phone}</span></div>}
                   </div>
                 </div>
               )}
               {selectedDebt.debtor_phone && selectedDebt.debtor_phone !== selectedDebt.customer_phone && (
-                <div className="text-sm"><span className="text-gray-500">رقم هاتف المديون: </span><span className="font-semibold" dir="ltr">{selectedDebt.debtor_phone}</span></div>
+                <div className="text-sm"><span className="text-muted-foreground">رقم هاتف المديون: </span><span className="font-semibold" dir="ltr">{selectedDebt.debtor_phone}</span></div>
               )}
               {selectedDebt.debt_items && selectedDebt.debt_items.length > 0 && (
                 <div>
@@ -623,7 +623,7 @@ export default function DebtManagement() {
                       <TableBody>
                         {selectedDebt.debt_items.map((item, idx) => (
                           <TableRow key={idx}>
-                            <TableCell className="text-gray-400 text-xs">{idx + 1}</TableCell>
+                            <TableCell className="text-muted-foreground/60 text-xs">{idx + 1}</TableCell>
                             <TableCell className="font-medium text-sm">{item.name}</TableCell>
                             <TableCell><Badge variant="secondary" className="text-xs">{item.quantity}</Badge></TableCell>
                           </TableRow>
@@ -636,17 +636,17 @@ export default function DebtManagement() {
               <Separator />
               <div>
                 <h3 className="text-base font-semibold mb-3 flex items-center gap-2">
-                  <Banknote className="w-4 h-4 text-gray-500" />سجل المدفوعات ({detailPayments.length})
+                  <Banknote className="w-4 h-4 text-muted-foreground" />سجل المدفوعات ({detailPayments.length})
                 </h3>
                 {detailPayments.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-8 text-gray-400">
+                  <div className="flex flex-col items-center justify-center py-8 text-muted-foreground/60">
                     <Wallet className="w-8 h-8 mb-2" /><p className="text-sm">لا توجد مدفوعات حتى الآن</p>
                   </div>
                 ) : (
                   <div className="border rounded-lg overflow-hidden">
                     <Table>
                       <TableHeader>
-                        <TableRow className="bg-gray-50">
+                        <TableRow className="bg-muted/50">
                           <TableHead className="text-right">التاريخ</TableHead>
                           <TableHead className="text-right">المبلغ</TableHead>
                           <TableHead className="text-right">الطريقة</TableHead>
@@ -660,11 +660,11 @@ export default function DebtManagement() {
                           const PIcon = PAYMENT_ICONS[p.payment_method] || DollarSign;
                           return (
                             <TableRow key={p.id}>
-                              <TableCell><div className="flex items-center gap-1 text-sm"><Calendar className="w-3 h-3 text-gray-400" />{p.payment_date}{p.payment_time && <span className="text-gray-400 text-xs">{p.payment_time}</span>}</div></TableCell>
+                              <TableCell><div className="flex items-center gap-1 text-sm"><Calendar className="w-3 h-3 text-muted-foreground/60" />{p.payment_date}{p.payment_time && <span className="text-muted-foreground/60 text-xs">{p.payment_time}</span>}</div></TableCell>
                               <TableCell className="font-bold text-emerald-600">+{formatCurrency(p.amount, 2)}</TableCell>
                               <TableCell><Badge variant="outline" className="text-xs flex items-center gap-1 w-fit"><PIcon className="w-3 h-3" />{PAYMENT_LABELS[p.payment_method]}</Badge></TableCell>
                               <TableCell className="text-sm">{p.cashier || "-"}</TableCell>
-                              <TableCell className="text-sm text-gray-500">{p.notes || "-"}</TableCell>
+                              <TableCell className="text-sm text-muted-foreground">{p.notes || "-"}</TableCell>
                               <TableCell className="text-center">
                                 <Button variant="ghost" size="sm"
                                   className="h-7 w-7 p-0 text-red-400 hover:text-red-600 hover:bg-red-50"
@@ -704,21 +704,21 @@ export default function DebtManagement() {
             <div>
               <label className="text-sm font-medium mb-1.5 block">الزبون <span className="text-red-500">*</span></label>
               {addSelectedCustomer ? (
-                <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <div className="flex items-center justify-between bg-primary/5 border border-primary/20 rounded-lg p-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center">
-                      <User2 className="w-4 h-4 text-blue-600" />
+                    <div className="w-9 h-9 bg-primary/10 rounded-full flex items-center justify-center">
+                      <User2 className="w-4 h-4 text-primary" />
                     </div>
                     <div>
                       <p className="font-semibold text-sm">{addSelectedCustomer.name}</p>
-                      {addSelectedCustomer.phone && <p className="text-xs text-gray-500 flex items-center gap-1"><Phone className="w-2.5 h-2.5" />{addSelectedCustomer.phone}</p>}
+                      {addSelectedCustomer.phone && <p className="text-xs text-muted-foreground flex items-center gap-1"><Phone className="w-2.5 h-2.5" />{addSelectedCustomer.phone}</p>}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     {addSelectedCustomer.total_debt > 0 && (
                       <Badge variant="destructive" className="text-xs">عليه {formatCurrency(addSelectedCustomer.total_debt, 2)}</Badge>
                     )}
-                    <Button variant="ghost" size="sm" className="h-7 text-gray-400 hover:text-red-500"
+                    <Button variant="ghost" size="sm" className="h-7 text-muted-foreground/60 hover:text-red-500"
                       onClick={() => { setAddSelectedCustomer(null); setAddCustomerSearch(""); }}>
                       تغيير
                     </Button>
@@ -727,25 +727,25 @@ export default function DebtManagement() {
               ) : (
                 <div className="space-y-2">
                   <div className="relative">
-                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
                     <Input value={addCustomerSearch} onChange={(e) => setAddCustomerSearch(e.target.value)}
                       placeholder="ابحث باسم الزبون أو رقم الهاتف..." className="pr-10" autoFocus />
                   </div>
                   {addCustomerSearch.trim().length >= 2 && (
                     <div className="border rounded-lg max-h-40 overflow-y-auto divide-y">
                       {searchLoading ? (
-                        <div className="p-4 text-center text-sm text-gray-400">جاري البحث...</div>
+                        <div className="p-4 text-center text-sm text-muted-foreground/60">جاري البحث...</div>
                       ) : searchedCustomers.length === 0 ? (
-                        <div className="p-4 text-center text-sm text-gray-400">لا توجد نتائج - أدخل بيانات الزبون يدوياً أدناه</div>
+                        <div className="p-4 text-center text-sm text-muted-foreground/60">لا توجد نتائج - أدخل بيانات الزبون يدوياً أدناه</div>
                       ) : (
                         searchedCustomers.map((c: Customer) => (
-                          <div key={c.id} className="flex items-center justify-between p-2.5 hover:bg-blue-50 cursor-pointer transition-colors"
+                          <div key={c.id} className="flex items-center justify-between p-2.5 hover:bg-primary/5 cursor-pointer transition-colors"
                             onClick={() => { setAddSelectedCustomer(c); setAddCustomerSearch(""); }}>
                             <div className="flex items-center gap-2">
-                              <User2 className="w-4 h-4 text-gray-400" />
+                              <User2 className="w-4 h-4 text-muted-foreground/60" />
                               <div>
                                 <p className="font-medium text-sm">{c.name}</p>
-                                {c.phone && <p className="text-xs text-gray-400">{c.phone}</p>}
+                                {c.phone && <p className="text-xs text-muted-foreground/60">{c.phone}</p>}
                               </div>
                             </div>
                             {c.total_debt > 0 && (
@@ -756,7 +756,7 @@ export default function DebtManagement() {
                       )}
                     </div>
                   )}
-                  <div className="bg-slate-50 border border-dashed border-slate-300 rounded-lg p-3 space-y-2">
+                  <div className="bg-muted/30 border border-dashed border-muted-foreground/25 rounded-lg p-3 space-y-2">
                     <p className="text-xs text-slate-500 font-medium">أو أدخل بيانات زبون جديد:</p>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
@@ -800,7 +800,7 @@ export default function DebtManagement() {
               </div>
               <div className="flex gap-2 items-end">
                 <div className="flex-1">
-                  <label className="text-xs text-gray-500 block mb-1">المبلغ المدفوع</label>
+                  <label className="text-xs text-muted-foreground block mb-1">المبلغ المدفوع</label>
                   <Input type="number" value={addInitPayment} onChange={(e) => setAddInitPayment(e.target.value)}
                     placeholder="0.00" dir="ltr" max={addAmount || undefined} />
                 </div>
@@ -819,7 +819,7 @@ export default function DebtManagement() {
               </div>
               {addInitPayment && parseFloat(addInitPayment) > 0 && addAmount && (
                 <div className="text-center text-sm">
-                  <span className="text-gray-500">المبلغ المتبقي: </span>
+                  <span className="text-muted-foreground">المبلغ المتبقي: </span>
                   <span className="font-bold text-red-600">{formatCurrency(Math.max(0, (parseFloat(addAmount) || 0) - (parseFloat(addInitPayment) || 0)), 2)}</span>
                 </div>
               )}
@@ -830,30 +830,30 @@ export default function DebtManagement() {
               <button
                 type="button"
                 onClick={() => setShowAdvanced(!showAdvanced)}
-                className="w-full flex items-center justify-between text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                className="w-full flex items-center justify-between text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
                 <span className="flex items-center gap-1.5">
                   {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                   خيارات متقدمة
                 </span>
-                <span className="text-xs text-gray-400 font-normal">كفيل، بضاعة، هاتف المديون</span>
+                <span className="text-xs text-muted-foreground/60 font-normal">كفيل، بضاعة، هاتف المديون</span>
               </button>
 
               {showAdvanced && (
                 <div className="mt-3 space-y-3">
                   {/* Guarantor */}
-                  <div className="bg-gray-50 border rounded-lg p-3 space-y-3">
+                  <div className="bg-muted/50 border rounded-lg p-3 space-y-3">
                     <div className="flex items-center gap-2">
-                      <User2 className="w-4 h-4 text-gray-600" />
-                      <span className="text-sm font-semibold text-gray-700">بيانات الكفيل</span>
+                      <User2 className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm font-semibold text-foreground/80">بيانات الكفيل</span>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="text-xs text-gray-500 block mb-1">اسم الكفيل</label>
+                        <label className="text-xs text-muted-foreground block mb-1">اسم الكفيل</label>
                         <Input value={addGuarantorName} onChange={(e) => setAddGuarantorName(e.target.value)} placeholder="اسم الكفيل الكامل" />
                       </div>
                       <div>
-                        <label className="text-xs text-gray-500 block mb-1">رقم هاتف الكفيل</label>
+                        <label className="text-xs text-muted-foreground block mb-1">رقم هاتف الكفيل</label>
                         <Input type="tel" value={addGuarantorPhone} onChange={(e) => setAddGuarantorPhone(e.target.value)} placeholder="07xxxxxxxxx" dir="ltr" />
                       </div>
                     </div>
@@ -861,21 +861,21 @@ export default function DebtManagement() {
 
                   {/* Debtor Phone (different from customer) */}
                   <div>
-                    <label className="text-xs text-gray-500 block mb-1">رقم هاتف المديون (إذا كان مختلفاً عن الزبون)</label>
+                    <label className="text-xs text-muted-foreground block mb-1">رقم هاتف المديون (إذا كان مختلفاً عن الزبون)</label>
                     <Input type="tel" value={addDebtorPhone} onChange={(e) => setAddDebtorPhone(e.target.value)}
                       placeholder={addSelectedCustomer?.phone || addCustomerPhone || "رقم الهاتف"} dir="ltr" />
                   </div>
 
                   {/* Debt Items */}
                   <div>
-                    <label className="text-xs text-gray-500 block mb-1 flex items-center gap-1">
+                    <label className="text-xs text-muted-foreground block mb-1 flex items-center gap-1">
                       <ShoppingBag className="w-3 h-3" />المنتجات / البضاعة المعطاة
                     </label>
                     <textarea value={addItems} onChange={(e) => setAddItems(e.target.value)}
                       placeholder={"أدخل منتجاً في كل سطر...\nمثال:\nرز بسمتي x5\nزيت نباتي x3\nسكر x10"}
                       rows={3} dir="rtl"
                       className="w-full rounded-md border border-gray-200 p-2 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-                    <p className="text-xs text-gray-400 mt-1">لكل سطر: اسم المنتج ثم x ثم الكمية</p>
+                    <p className="text-xs text-muted-foreground/60 mt-1">لكل سطر: اسم المنتج ثم x ثم الكمية</p>
                   </div>
                 </div>
               )}

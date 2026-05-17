@@ -141,7 +141,7 @@ export async function createSaleInvoice(
       debt_amount: invoice.debt_amount || 0,
       customer_id: invoice.customer_id,
       cashier: invoice.cashier,
-      user_id: invoice.user_id,
+      user_id: userId,
       note: invoice.note,
     })
     .select("*")

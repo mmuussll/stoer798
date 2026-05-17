@@ -228,8 +228,8 @@ export default function SalesInvoices() {
   return (
     <div className="space-y-6 p-4" dir="rtl">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">سجل الفواتير</h1>
-        <p className="text-sm text-gray-500 mt-1">فواتير المبيعات والمرتجعات</p>
+        <h1 className="text-2xl font-bold text-foreground">سجل الفواتير</h1>
+        <p className="text-sm text-muted-foreground mt-1">فواتير المبيعات والمرتجعات</p>
       </div>
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "invoices" | "returns")}>
@@ -242,14 +242,14 @@ export default function SalesInvoices() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <Card className="bg-blue-50 border-blue-200">
+        <Card className="bg-primary/5 border-primary/20">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-blue-600 font-medium">إجمالي الفواتير</p>
-                <p className="text-2xl font-bold text-blue-900 mt-1">{filteredInvoices.length}</p>
+                <p className="text-primary">إجمالي الفواتير</p>
+                <p className="text-primary font-bold mt-1">{filteredInvoices.length}</p>
               </div>
-              <Receipt className="w-8 h-8 text-blue-400" />
+              <Receipt className="w-8 h-8 text-primary/60" />
             </div>
           </CardContent>
         </Card>
@@ -305,7 +305,7 @@ export default function SalesInvoices() {
       <Card>
         <CardContent className="p-4">
           <div className="relative max-w-md">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
             <Input
               value={searchTerm}
               onChange={(e) => {
@@ -323,12 +323,12 @@ export default function SalesInvoices() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <FileText className="w-5 h-5 text-blue-600" />قائمة الفواتير
+            <FileText className="w-5 h-5 text-primary" />قائمة الفواتير
           </CardTitle>
         </CardHeader>
         <CardContent>
           {filteredInvoices.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
               <Receipt className="w-12 h-12 mb-4" />
               <p className="text-lg font-medium">
                 {searchTerm ? "لا توجد نتائج للبحث" : "لا توجد فواتير حتى الآن"}
@@ -357,28 +357,28 @@ export default function SalesInvoices() {
                     {paginatedInvoices.map((invoice) => (
                       <TableRow
                         key={invoice.id}
-                        className="hover:bg-gray-50"
+                        className="hover:bg-muted/30"
                       >
                         <TableCell className="font-medium cursor-pointer" onClick={() => openInvoice(invoice)}>
-                          <Badge variant="outline" className="text-blue-600 border-blue-300 text-xs font-mono">
+                          <Badge variant="outline" className="text-primary border-primary/30 text-xs font-mono">
                             {invoice.invoice_number}
                           </Badge>
                         </TableCell>
                         <TableCell className="cursor-pointer" onClick={() => openInvoice(invoice)}>
                           <div className="flex items-center gap-1 text-sm">
-                            <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                            <Calendar className="w-3.5 h-3.5 text-muted-foreground/60" />
                             {invoice.date}
-                            <span className="text-gray-400 text-xs">{invoice.time}</span>
+                            <span className="text-muted-foreground/60 text-xs">{invoice.time}</span>
                           </div>
                         </TableCell>
                         <TableCell className="cursor-pointer" onClick={() => openInvoice(invoice)}>
                           {invoice.customer ? (
                             <div className="flex items-center gap-1 text-sm">
-                              <Users className="w-3 h-3 text-blue-500" />
+                              <Users className="w-3 h-3 text-primary" />
                               <span className="truncate max-w-[100px]">{invoice.customer.name}</span>
                             </div>
                           ) : (
-                            <span className="text-gray-300 text-sm">-</span>
+                            <span className="text-muted-foreground/30 text-sm">-</span>
                           )}
                         </TableCell>
                         <TableCell className="cursor-pointer" onClick={() => openInvoice(invoice)}>
@@ -388,7 +388,7 @@ export default function SalesInvoices() {
                         </TableCell>
                         <TableCell className="cursor-pointer" onClick={() => openInvoice(invoice)}>
                           <div className="flex items-center gap-1">
-                            <User className="w-3.5 h-3.5 text-gray-400" />
+                            <User className="w-3.5 h-3.5 text-muted-foreground/60" />
                             <span className="text-sm truncate max-w-[80px]">{invoice.cashier}</span>
                           </div>
                         </TableCell>
@@ -398,7 +398,7 @@ export default function SalesInvoices() {
                             {getPaymentLabel(invoice.payment_method)}
                           </Badge>
                         </TableCell>
-                        <TableCell className="font-bold text-blue-600 cursor-pointer" onClick={() => openInvoice(invoice)}>
+                        <TableCell className="font-bold text-primary cursor-pointer" onClick={() => openInvoice(invoice)}>
                           {formatCurrency(invoice.total, 2)}
                         </TableCell>
                         <TableCell className="text-center">
@@ -416,7 +416,7 @@ export default function SalesInvoices() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/5"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 openReturnDialog(invoice);
@@ -487,20 +487,20 @@ export default function SalesInvoices() {
         <DialogContent dir="rtl" className="max-w-xl max-sm:mx-2 max-sm:w-[calc(100%-16px)] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <RotateCcw className="w-5 h-5 text-red-500" />مرتجع من الفاتورة
+              <RotateCcw className="w-5 h-5 text-destructive" />مرتجع من الفاتورة
             </DialogTitle>
             <DialogDescription>حدد المنتجات المراد إرجاعها من الفاتورة</DialogDescription>
           </DialogHeader>
 
           {returnInvoice && (
             <div className="space-y-3">
-              <div className="flex items-center justify-between bg-blue-50 rounded-lg p-3">
+              <div className="flex items-center justify-between bg-primary/5 rounded-lg p-3">
                 <div>
                   <div className="font-semibold text-sm">{returnInvoice.invoice_number}</div>
-                  <div className="text-xs text-gray-500">{returnInvoice.date} - {returnInvoice.time}</div>
+                  <div className="text-xs text-muted-foreground">{returnInvoice.date} - {returnInvoice.time}</div>
                 </div>
-                <div className="text-sm font-bold text-blue-600">{formatCurrency(returnInvoice.total, 2)}</div>
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-blue-100" onClick={resetReturnForm}>
+                <div className="text-sm font-bold text-primary">{formatCurrency(returnInvoice.total, 2)}</div>
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-primary/10" onClick={resetReturnForm}>
                   <X className="w-4 h-4" />
                 </Button>
               </div>
@@ -512,7 +512,7 @@ export default function SalesInvoices() {
                     <CheckCheck className="w-3 h-3 ml-1" />الكل
                   </Button>
                   {hasSelectedItems && (
-                    <Button variant="ghost" size="sm" className="h-7 text-[11px] text-red-500" onClick={deselectAllItems}>
+                    <Button variant="ghost" size="sm" className="h-7 text-[11px] text-destructive" onClick={deselectAllItems}>
                       إلغاء الكل
                     </Button>
                   )}
@@ -525,10 +525,10 @@ export default function SalesInvoices() {
                     const itemId = item.product_id || item.id;
                     const returnQty = selectedItems[itemId] || 0;
                     return (
-                      <div key={itemId} className="flex items-center justify-between p-2 rounded-lg border hover:bg-gray-50 gap-2">
+                      <div key={itemId} className="flex items-center justify-between p-2 rounded-lg border hover:bg-muted/30 gap-2">
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-sm truncate">{item.name}</div>
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-muted-foreground">
                             x{item.quantity} قطعة - السعر: {formatNumber(item.price, 2)}
                           </div>
                         </div>
@@ -542,7 +542,7 @@ export default function SalesInvoices() {
                           >
                             <Minus className="w-3.5 h-3.5" />
                           </Button>
-                          <span className={`w-7 text-center text-sm font-bold tabular-nums ${returnQty > 0 ? "text-red-600" : "text-gray-400"}`}>
+                          <span className={`w-7 text-center text-sm font-bold tabular-nums ${returnQty > 0 ? "text-destructive" : "text-muted-foreground"}`}>
                             {returnQty}
                           </span>
                           <Button
@@ -584,8 +584,8 @@ export default function SalesInvoices() {
               </div>
 
               {hasSelectedItems && (
-                <div className="bg-red-50 rounded-lg p-3 text-center">
-                  <span className="text-sm text-red-700">
+                <div className="bg-destructive/5 rounded-lg p-3 text-center">
+                  <span className="text-sm text-destructive">
                     إجمالي المرتجع: <strong>{formatCurrency(returnTotal, 2)}</strong>
                   </span>
                 </div>
@@ -599,7 +599,7 @@ export default function SalesInvoices() {
               <Button
                 onClick={() => createReturnMutation.mutate()}
                 disabled={createReturnMutation.isPending || !hasSelectedItems}
-                className="bg-red-600 hover:bg-red-700"
+                className="bg-destructive hover:bg-destructive/90"
               >
                 {createReturnMutation.isPending ? "جاري..." : "تأكيد الإرجاع"}
               </Button>
@@ -616,11 +616,11 @@ export default function SalesInvoices() {
           ) : (
             <>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                <Card className="bg-red-50 border-red-200">
+                <Card className="bg-destructive/5 border-destructive/20">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
-                      <div><p className="text-sm text-red-600 font-medium">إجمالي المرتجعات</p><p className="text-2xl font-bold text-red-900 mt-1">{returns.length}</p></div>
-                      <RotateCcw className="w-8 h-8 text-red-400" />
+                      <div><p className="text-sm text-destructive font-medium">إجمالي المرتجعات</p><p className="text-2xl font-bold text-red-900 mt-1">{returns.length}</p></div>
+                      <RotateCcw className="w-8 h-8 text-destructive/60" />
                     </div>
                   </CardContent>
                 </Card>
@@ -632,11 +632,11 @@ export default function SalesInvoices() {
                     </div>
                   </CardContent>
                 </Card>
-                <Card className="bg-blue-50 border-blue-200">
+                <Card className="bg-primary/5 border-primary/20">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
-                      <div><p className="text-sm text-blue-600 font-medium">متوسط المرتجع</p><p className="text-2xl font-bold text-blue-900 mt-1">{returns.length > 0 ? formatNumberDisplay(returns.reduce((s, r) => s + r.total, 0) / returns.length, 2) : "0"}</p></div>
-                      <Hash className="w-8 h-8 text-blue-400" />
+                      <div><p className="text-sm text-primary font-medium">متوسط المرتجع</p><p className="text-2xl font-bold text-primary/80 mt-1">{returns.length > 0 ? formatNumberDisplay(returns.reduce((s, r) => s + r.total, 0) / returns.length, 2) : "0"}</p></div>
+                      <Hash className="w-8 h-8 text-primary/60" />
                     </div>
                   </CardContent>
                 </Card>
@@ -660,7 +660,7 @@ export default function SalesInvoices() {
                         <TableRow key={ret.id}>
                           <TableCell className="font-medium">{ret.return_number}</TableCell>
                           <TableCell>{ret.date} - {ret.time}</TableCell>
-                          <TableCell className="font-bold text-red-600">{formatCurrency(ret.total, 2)}</TableCell>
+                          <TableCell className="font-bold text-destructive">{formatCurrency(ret.total, 2)}</TableCell>
                           <TableCell>{ret.reason || "—"}</TableCell>
                           <TableCell>{ret.cashier || "—"}</TableCell>
                         </TableRow>

@@ -1,5 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { useBodyScrollLock } from "@/lib/scroll-lock";
 import { ChevronRight, ChevronLeft, Menu, X, PanelRightClose, PanelRightOpen } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -112,12 +113,7 @@ const Sidebar = React.forwardRef<
 >(({ side = "right", variant = "sidebar", collapsible = "offcanvas", className, children, ...props }, ref) => {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
 
-  React.useEffect(() => {
-    if (!isMobile) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = openMobile ? "hidden" : "";
-    return () => { document.body.style.overflow = prev; };
-  }, [isMobile, openMobile]);
+  useBodyScrollLock(isMobile && openMobile);
 
   if (collapsible === "none") {
     return (

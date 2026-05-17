@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useBodyScrollLock } from "@/lib/scroll-lock";
 
 interface NavItem {
   id: string;
@@ -24,6 +25,12 @@ export function MobileBottomNav({ items, activeSection, onSelect, sidebarOpen, o
   const moreItems = items.slice(5);
 
   useEffect(() => {
+    if (sidebarOpen) {
+      setMoreOpen(false);
+    }
+  }, [sidebarOpen]);
+
+  useEffect(() => {
     if (!moreOpen) return;
     const handleClickOutside = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMoreOpen(false);
@@ -32,10 +39,7 @@ export function MobileBottomNav({ items, activeSection, onSelect, sidebarOpen, o
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [moreOpen]);
 
-  useEffect(() => {
-    document.body.style.overflow = moreOpen ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
-  }, [moreOpen]);
+  useBodyScrollLock(moreOpen);
 
   const handleMoreToggle = () => {
     if (sidebarOpen) onToggleSidebar();
@@ -51,7 +55,7 @@ export function MobileBottomNav({ items, activeSection, onSelect, sidebarOpen, o
     <>
       {moreOpen && (
         <div
-          className="lg:hidden fixed inset-0 z-[60] bg-black/55 backdrop-blur-[3px] animate-fade-in"
+          className="lg:hidden fixed inset-0 z-[45] bg-black/55 backdrop-blur-[3px] animate-fade-in"
           onClick={() => setMoreOpen(false)}
         />
       )}
@@ -59,7 +63,7 @@ export function MobileBottomNav({ items, activeSection, onSelect, sidebarOpen, o
       <div
         ref={menuRef}
         className={cn(
-          "lg:hidden fixed inset-x-0 bottom-0 z-[70] transition-transform duration-400 ease-out",
+          "lg:hidden fixed inset-x-0 bottom-0 z-[48] transition-transform duration-400 ease-out",
           moreOpen ? "translate-y-0" : "translate-y-full"
         )}
         style={{ paddingBottom: "max(env(safe-area-inset-bottom, 0px), 8px)" }}

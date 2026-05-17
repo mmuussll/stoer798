@@ -101,8 +101,9 @@ function IndexContent() {
       const el = pageAnimRef.current;
       if (el) {
         el.classList.remove("animate-page-enter");
-        void el.offsetWidth;
-        el.classList.add("animate-page-enter");
+        requestAnimationFrame(() => {
+          el.classList.add("animate-page-enter");
+        });
       }
       prevPathname.current = location.pathname;
     }

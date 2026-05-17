@@ -216,8 +216,8 @@ export async function createSaleInvoice(
           const { data: settingsData } = await supabase
             .from(SETTINGS_TABLE)
             .select("loyalty_points_per_amount, enable_loyalty")
-            .eq("id", 1)
-            .single();
+            .eq("user_id", userId)
+            .maybeSingle();
           if (settingsData?.enable_loyalty) {
             pointsPerAmount = toNumber(settingsData.loyalty_points_per_amount, 1000);
           }

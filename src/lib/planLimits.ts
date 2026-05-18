@@ -8,9 +8,9 @@ async function getCurrentUserPlan(): Promise<{ plan: PlanType; isAdmin: boolean 
   const admin = await isCurrentUserAdmin();
   if (admin) return { plan: "pro", isAdmin: true };
 
-  const { data: sub } = await supabase
+   const { data: sub } = await supabase
     .from("user_subscriptions")
-    .select("plan, status, is_trial_used")
+    .select("plan, status, trial_end_date")
     .eq("user_id", session.user.id)
     .maybeSingle();
 
@@ -24,6 +24,9 @@ async function getCurrentUserPlan(): Promise<{ plan: PlanType; isAdmin: boolean 
   }
 
   if (sub.status === "trial") {
+    if (sub.trial_end_date && new Date(sub.trial_end_date) > new Date()) {
+      return { plan: (sub.plan || "pro") as PlanType, isAdmin: false };
+    }
     return { plan: "free", isAdmin: false };
   }
 

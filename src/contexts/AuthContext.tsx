@@ -93,7 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await supabase.from("user_subscriptions").insert({
           user_id: data.user.id,
           status: "trial",
-          plan: "free",
+           plan: "pro",
           trial_start_date: now.toISOString(),
           trial_end_date: trialEnd.toISOString(),
           is_trial_used: true,

@@ -49,7 +49,9 @@ function isAccessBlocked(sub: UserSubscription | null, role: string, userCreated
   }
   if (sub.status === "trial") {
     const end = new Date(sub.trial_end_date);
-    return end <= new Date();
+    if (end > new Date()) return false;
+    if (sub.plan === "pro") return false;
+    return true;
   }
   return true;
 }

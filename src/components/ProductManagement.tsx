@@ -356,7 +356,7 @@ export default function ProductManagement() {
                     </span>
                     {editingProduct ? "تعديل المنتج" : "إضافة منتج جديد"}
                   </DialogTitle>
-                  <DialogDescription className="mr-10">
+                  <DialogDescription className="pe-10">
                     {editingProduct ? "قم بتحديث بيانات المنتج" : "أدخل بيانات المنتج الجديد للمخزون"}
                   </DialogDescription>
                 </DialogHeader>
@@ -850,12 +850,8 @@ export default function ProductManagement() {
         </Card>
       )}
 
-      {/* Image Zoom Dialog */}
       <Dialog open={!!zoomedImage} onOpenChange={(open) => { if (!open) setZoomedImage(null); }}>
-        <DialogContent className="max-w-2xl p-1 bg-black/90" dir="ltr">
-          <button onClick={() => setZoomedImage(null)} className="absolute top-3 right-3 z-10 p-1.5 rounded-full bg-white/20 hover:bg-white/40 transition-colors text-white">
-            <X className="w-5 h-5" />
-          </button>
+        <DialogContent className="max-w-2xl p-1 bg-black/90 text-white border-0" dir="ltr">
           {zoomedImage && (
             <img src={zoomedImage} alt="عرض الصورة" className="w-full max-h-[70vh] object-contain rounded" />
           )}

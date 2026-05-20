@@ -128,7 +128,7 @@ export function ProductGrid({
         </div>
       )}
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2.5 lg:gap-3.5 p-2.5 lg:p-3.5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2.5 lg:gap-3.5 p-2.5 pb-32 lg:pb-3.5">
         {filtered.map((product) => {
           const stockStatus = getStockStatus(product.stock, lowStockAlert);
           const inCart = cart.find((item) => item.id === product.id);
@@ -149,13 +149,12 @@ export function ProductGrid({
                 }
               }}
               className={cn(
-                "group relative cursor-pointer overflow-hidden rounded-2xl border-border/60 transition-all duration-200",
-                "hover:shadow-lg hover:border-primary/25 active:scale-[0.97]",
+                "group relative cursor-pointer overflow-hidden rounded-2xl border border-indigo-50/50 transition-all duration-300",
                 "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 outline-none",
                 isOutOfStock
-                  ? "opacity-40 cursor-not-allowed bg-muted/30"
-                  : "bg-white hover:-translate-y-0.5",
-                inCart ? "ring-2 ring-primary ring-offset-2 ring-offset-slate-50 shadow-lg" : ""
+                  ? "opacity-40 cursor-not-allowed bg-slate-100/50"
+                  : "bg-white hover:-translate-y-1 hover:shadow-xl hover:border-primary/30 active:scale-[0.96]",
+                inCart ? "ring-2 ring-primary ring-offset-2 ring-offset-slate-50 shadow-[0_12px_24px_rgba(99,102,241,0.2)] border-primary/40" : "shadow-sm shadow-slate-100"
               )}
               onClick={() => !isOutOfStock && onAddToCart(product)}
               onPointerDown={() => !isOutOfStock && handlePointerDown(product)}
@@ -164,46 +163,47 @@ export function ProductGrid({
               onContextMenu={(e) => e.preventDefault()}
             >
               {product.image_url ? (
-                <div className="h-22 lg:h-28 bg-muted/30 overflow-hidden">
+                <div className="h-22 lg:h-28 bg-slate-50 overflow-hidden relative">
                   <img
                     src={product.image_url}
                     alt={product.name}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     loading="lazy"
                   />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 </div>
               ) : (
-                <div className="h-16 lg:h-20 bg-gradient-to-br from-muted/50 to-primary/5 flex items-center justify-center">
-                  <Package className="w-6 lg:w-7 h-6 lg:h-7 text-muted-foreground/20" />
+                <div className="h-16 lg:h-20 bg-gradient-to-br from-indigo-50/40 via-purple-50/20 to-pink-50/10 flex items-center justify-center transition-all duration-300 group-hover:from-indigo-100/30 group-hover:to-purple-100/20">
+                  <Package className="w-6 lg:w-7 h-6 lg:h-7 text-primary/30 transition-transform duration-500 group-hover:scale-110 group-hover:text-primary/50" />
                 </div>
               )}
 
-              <CardContent className="p-2.5 lg:p-3 space-y-1.5 lg:space-y-2">
+              <CardContent className="p-2.5 lg:p-3.5 space-y-1.5 lg:space-y-2">
                 {inCartQty ? (
                   <span
-                    className="absolute top-2 right-2 min-w-[22px] h-[22px] lg:min-w-[24px] lg:h-[24px] bg-primary text-white text-[10px] lg:text-[11px] font-extrabold rounded-full flex items-center justify-center px-1 shadow-lg shadow-primary/30 animate-scale-in"
+                    className="absolute top-2 right-2 min-w-[22px] h-[22px] lg:min-w-[24px] lg:h-[24px] bg-gradient-brand text-white text-[10px] lg:text-[11px] font-black rounded-full flex items-center justify-center px-1 shadow-md shadow-primary/40 animate-scale-in"
                   >
                     {inCartQty}
                   </span>
                 ) : null}
 
-                <div className="font-bold text-[13px] lg:text-[14px] text-foreground line-clamp-2 leading-tight pr-5">
+                <div className="font-bold text-[13px] lg:text-[14px] text-slate-800 line-clamp-2 leading-snug group-hover:text-primary transition-colors duration-200">
                   {product.name}
                 </div>
 
                 <p className="text-base lg:text-lg font-extrabold text-primary tracking-tight tabular-nums">
                   {formatNumber(product.price, 3)}{" "}
-                  <span className="text-[10px] lg:text-[11px] font-medium text-muted-foreground">{CURRENCY}</span>
+                  <span className="text-[10px] lg:text-[11px] font-medium text-slate-400">{CURRENCY}</span>
                 </p>
 
-                <div className="flex items-center gap-1 flex-wrap">
+                <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
                   <Badge
                     variant={stockStatus.variant}
                     className={cn(
-                      "text-[9px] lg:text-[10px] px-1.5 lg:px-2 py-0.5 font-semibold rounded-lg",
-                      product.stock === 0 && "bg-destructive/10 text-destructive border-destructive/20",
-                      product.stock > 0 && product.stock <= lowStockAlert && "bg-warning/10 text-warning border-warning/20",
-                      product.stock > lowStockAlert && "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      "text-[9px] lg:text-[10px] px-1.5 lg:px-2 py-0.5 font-bold rounded-lg border",
+                      product.stock === 0 && "bg-rose-50 text-rose-600 border-rose-100",
+                      product.stock > 0 && product.stock <= lowStockAlert && "bg-amber-50 text-amber-600 border-amber-100",
+                      product.stock > lowStockAlert && "bg-emerald-50 text-emerald-600 border-emerald-100"
                     )}
                   >
                     {stockStatus.label}
@@ -211,8 +211,8 @@ export function ProductGrid({
                   {product.category && (
                     <Badge
                       variant="outline"
-                      className="text-[9px] lg:text-[10px] px-1.5 lg:px-2 py-0.5 font-semibold rounded-lg"
-                      style={{ borderColor: product.category.color + "50", color: product.category.color }}
+                      className="text-[9px] lg:text-[10px] px-1.5 lg:px-2 py-0.5 font-bold rounded-lg border"
+                      style={{ borderColor: product.category.color + "25", color: product.category.color, backgroundColor: product.category.color + "08" }}
                     >
                       {product.category.name}
                     </Badge>

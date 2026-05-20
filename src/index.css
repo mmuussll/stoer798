@@ -19,7 +19,7 @@
 @layer base {
   :root {
     /* ── Typography ── */
-    --font-sans: 'IBM Plex Sans Arabic';
+    --font-sans: 'Cairo';
     /* ── Surface Colors ── */
     --background: 230 30% 99%;
     --foreground: 232 45% 12%;
@@ -162,15 +162,17 @@
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
     -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
   }
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'IBM Plex Sans Arabic', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-family: 'Cairo', system-ui, -apple-system, 'Segoe UI', sans-serif;
     font-feature-settings: "ss01", "ss02", "cv01", "cv02";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    overflow-x: hidden;
   }
 
   :focus-visible {
@@ -620,3 +622,34 @@
     transform: translateY(-4px);
   }
 }
+
+/* ============================================
+   6. PREMIUM CUSTOM UTILITIES
+   ============================================ */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(14px) saturate(170%);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+.dark .glass-panel {
+  background: rgba(15, 18, 30, 0.75);
+  backdrop-filter: blur(14px) saturate(170%);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.interactive-hover {
+  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.interactive-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -10px hsl(var(--primary) / 0.3);
+}
+.bg-gradient-brand {
+  background: linear-gradient(135deg, hsl(243 75% 59%) 0%, hsl(262 80% 50%) 100%);
+}
+.shadow-premium {
+  box-shadow: 0 12px 30px -10px hsl(var(--primary) / 0.25);
+}
+.active-glow {
+  box-shadow: 0 0 15px 2px hsl(var(--primary) / 0.25);
+}
+

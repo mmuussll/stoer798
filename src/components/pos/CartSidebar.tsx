@@ -55,17 +55,17 @@ export function CartSidebar({
   const itemCount = cart.reduce((c, i) => c + i.quantity, 0);
 
   return (
-    <div className={cn("w-full lg:w-[380px] bg-white/95 backdrop-blur-sm border-t lg:border-t-0 lg:border-r border-border/60 flex flex-col shadow-xl lg:shadow-2xl lg:shadow-slate-200/50 rounded-t-2xl lg:rounded-none", className)}>
+    <div className={cn("w-full lg:w-[380px] bg-slate-50/85 backdrop-blur-md border-t lg:border-t-0 lg:border-r border-indigo-100/30 flex flex-col h-full max-h-full min-h-0 shadow-xl lg:shadow-2xl lg:shadow-indigo-900/5 rounded-t-2xl lg:rounded-none", className)}>
       {/* Header */}
       <div className="pb-3.5 border-b border-border/60 shrink-0 px-4 pt-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
-              <ShoppingBag className="w-4.5 h-4.5 text-primary" />
+          <div className="flex items-center gap-2">
+            <div className="hidden lg:flex w-9 h-9 rounded-xl bg-primary/10 items-center justify-center">
+              <ShoppingBag className="w-4 h-4 text-primary" />
             </div>
-            <span className="text-sm font-bold text-foreground">سلة المشتريات</span>
+            <span className="hidden lg:inline text-sm font-bold text-foreground">سلة المشتريات</span>
             {cart.length > 0 && (
-              <Badge variant="secondary" className="text-[11px] font-semibold rounded-full bg-primary/10 text-primary border-primary/20">{itemCount}</Badge>
+              <Badge variant="secondary" className="text-[11px] font-semibold rounded-full bg-primary/10 text-primary border-primary/20">{itemCount} قطع</Badge>
             )}
           </div>
           {cart.length > 0 && (
@@ -122,38 +122,38 @@ export function CartSidebar({
             <p className="text-xs mt-1.5 text-muted-foreground/60">اضغط على منتج لإضافته أو امسح باركود</p>
           </div>
         ) : (
-          <div className="divide-y divide-border/40">
+          <div className="space-y-2 py-2">
             {cart.map((item) => (
-              <div key={item.id} className="px-4 py-3 hover:bg-muted/30 transition-colors duration-150">
-                <div className="flex items-start justify-between gap-2 mb-2">
+              <div key={item.id} className="mx-4 p-3 bg-white border border-indigo-50/30 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 group/cart-item relative overflow-hidden">
+                <div className="flex items-start justify-between gap-2 mb-1.5">
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-[13px] text-foreground truncate leading-tight">{item.name}</h4>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">{formatCurrency(item.price, 2)} / قطعة</p>
+                    <h4 className="font-bold text-[13px] text-slate-800 truncate leading-tight group-hover/cart-item:text-primary transition-colors duration-150">{item.name}</h4>
+                    <p className="text-[10px] text-slate-400 mt-0.5">{formatCurrency(item.price, 2)} / قطعة</p>
                   </div>
                   <button
                     onClick={() => onRemoveItem(item.id)}
-                    className="p-1.5 rounded-lg text-muted-foreground/30 hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0"
+                    className="p-1 rounded-lg text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-colors shrink-0"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1">
                     <button
                       onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
-                      className="w-7 h-7 flex items-center justify-center rounded-lg border border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all duration-150 active:scale-95"
+                      className="w-7 h-7 flex items-center justify-center rounded-lg border border-slate-100 hover:border-primary/30 hover:bg-primary/5 transition-all duration-150 active:scale-90"
                     >
-                      <Minus className="w-3 h-3 text-muted-foreground" />
+                      <Minus className="w-3 h-3 text-slate-500" />
                     </button>
-                    <span className="w-8 text-center text-sm font-bold text-foreground tabular-nums">{item.quantity}</span>
+                    <span className="w-8 text-center text-xs font-bold text-slate-800 tabular-nums">{item.quantity}</span>
                     <button
                       onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
-                      className="w-7 h-7 flex items-center justify-center rounded-lg border border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all duration-150 active:scale-95"
+                      className="w-7 h-7 flex items-center justify-center rounded-lg border border-slate-100 hover:border-primary/30 hover:bg-primary/5 transition-all duration-150 active:scale-90"
                     >
-                      <Plus className="w-3 h-3 text-muted-foreground" />
+                      <Plus className="w-3 h-3 text-slate-500" />
                     </button>
                   </div>
-                  <p className="text-sm font-extrabold text-primary tabular-nums tracking-tight">
+                  <p className="text-[13px] font-black text-primary tabular-nums tracking-tight">
                     {formatNumber(item.price * item.quantity, 2)}
                   </p>
                 </div>
@@ -184,10 +184,10 @@ export function CartSidebar({
                 <span className="tabular-nums">{formatCurrency(totals.taxAmount, 2)}</span>
               </div>
             )}
-            <Separator className="my-2" />
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-bold text-foreground">الإجمالي</span>
-              <span className="text-xl font-extrabold text-primary tabular-nums tracking-tight">
+            <Separator className="my-2 bg-indigo-100/50" />
+            <div className="flex justify-between items-center bg-indigo-50/40 p-2.5 rounded-xl border border-indigo-100/30">
+              <span className="text-xs font-bold text-slate-600">الإجمالي النهائي</span>
+              <span className="text-xl font-black text-primary tabular-nums tracking-tight drop-shadow-[0_2px_4px_rgba(99,102,241,0.08)]">
                 {formatCurrency(totals.total, 2)}
               </span>
             </div>

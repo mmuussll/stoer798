@@ -86,7 +86,7 @@ export function SubscriptionGuard({ children }: { children: React.ReactNode }) {
         setRole(contextIsAdmin ? "admin" : "user");
         setLoading(false);
       });
-  }, [user]);
+  }, [user, contextIsAdmin]);
 
   if (authLoading || loading) {
     return (

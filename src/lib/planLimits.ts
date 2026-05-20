@@ -91,8 +91,7 @@ export async function checkDailyInvoiceLimit(userId: string): Promise<void> {
     .from("sales_invoices")
     .select("*", { count: "exact", head: true })
     .eq("user_id", userId)
-    .gte("date", today)
-    .lt("date", today + "T23:59:59Z");
+    .eq("sale_date", today);
 
   if (error) throw error;
   if (count !== null && count >= planDef.maxDailyInvoices) {

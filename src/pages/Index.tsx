@@ -79,7 +79,7 @@ const NAV_ITEMS = [
 export default function Index() {
   return (
     <QueryProvider>
-      <SidebarProvider defaultOpen={true}>
+      <SidebarProvider defaultOpen={true} className="overflow-x-hidden max-w-full">
         <IndexContent />
       </SidebarProvider>
     </QueryProvider>
@@ -116,16 +116,15 @@ function IndexContent() {
   });
 
   useEffect(() => {
-    if (settings?.font_family) {
-      const FAMILY_MAP: Record<string, string> = {
-        "ibm-plex": "'IBM Plex Sans Arabic'",
-        "cairo": "'Cairo'",
-        "tajawal": "'Tajawal'",
-        "almarai": "'Almarai'",
-        "el-messiri": "'El Messiri'",
-      };
-      document.documentElement.style.setProperty("--font-sans", FAMILY_MAP[settings.font_family] || FAMILY_MAP["ibm-plex"]);
-    }
+    const defaultFont = settings?.font_family || "cairo";
+    const FAMILY_MAP: Record<string, string> = {
+      "ibm-plex": "'IBM Plex Sans Arabic'",
+      "cairo": "'Cairo'",
+      "tajawal": "'Tajawal'",
+      "almarai": "'Almarai'",
+      "el-messiri": "'El Messiri'",
+    };
+    document.documentElement.style.setProperty("--font-sans", FAMILY_MAP[defaultFont] || FAMILY_MAP["cairo"]);
   }, [settings?.font_family]);
 
   const handleSectionChange = (id: string) => {
@@ -192,16 +191,29 @@ function IndexContent() {
                       isActive={isActive}
                       tooltip={`${item.label} — ${item.description}`}
                       size="lg"
+                      className={cn(
+                        "rounded-xl transition-all duration-300 relative overflow-hidden group/btn",
+                        isActive
+                          ? "bg-gradient-brand text-white shadow-lg border-none active-glow"
+                          : "hover:bg-slate-800/60 hover:text-white"
+                      )}
                     >
                       <item.icon
                         className={cn(
-                          "transition-all duration-200",
-                          isActive && "text-sidebar-primary drop-shadow-[0_0_6px_hsl(var(--sidebar-primary)/0.5)]"
+                          "transition-all duration-300",
+                          isActive
+                            ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.7)] scale-110"
+                            : "text-sidebar-foreground/60 group-hover/btn:text-white group-hover/btn:scale-105"
                         )}
                       />
-                      <div className="flex flex-col gap-0 text-start">
-                        <span>{item.label}</span>
-                        <span className="text-[10px] text-sidebar-accent-foreground/40 font-normal leading-tight">
+                      <div className="flex flex-col gap-0 text-start group-data-[state=collapsed]:hidden">
+                        <span className={cn("transition-colors duration-200", isActive ? "text-white font-bold" : "text-sidebar-foreground/90")}>
+                          {item.label}
+                        </span>
+                        <span className={cn(
+                          "text-[10px] font-normal leading-tight transition-colors duration-200",
+                          isActive ? "text-white/80" : "text-sidebar-accent-foreground/50"
+                        )}>
                           {item.description}
                         </span>
                       </div>
@@ -257,7 +269,7 @@ function IndexContent() {
         dir="rtl"
       >
         {/* ── Top Navigation Bar ── */}
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/50 bg-white/85 backdrop-blur-xl px-3 md:px-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+        <header className="sticky top-0 z-30 flex h-15 items-center gap-3 border-b border-indigo-100/30 bg-white/70 backdrop-blur-xl px-4 md:px-6 shadow-[0_4px_24px_-10px_rgba(99,102,241,0.05)]">
           <SidebarTrigger />
 
           {/* Breadcrumb-style navigation indicator */}
@@ -308,9 +320,10 @@ function IndexContent() {
         {/* ── Page Content ── */}
         <main
           className={cn(
-            "flex-1 overflow-y-auto",
-            isSalesPage ? "p-0" : "p-4 md:p-6 lg:p-7",
-            "pb-24 lg:pb-6"
+            "flex-1",
+            isSalesPage
+              ? "p-0 overflow-hidden pb-[calc(64px+env(safe-area-inset-bottom,0px))] lg:pb-0"
+              : "overflow-y-auto p-3 md:p-6 lg:p-7 pb-24 lg:pb-6"
           )}
         >
           <div ref={pageAnimRef} className="animate-page-enter h-full">

@@ -20,8 +20,8 @@ export default {
 		},
 		extend: {
 			fontFamily: {
-				sans: ["var(--font-sans)", "'IBM Plex Sans Arabic'", 'system-ui', '-apple-system', 'sans-serif'],
-				mono: ["'IBM Plex Sans Arabic'", 'monospace'],
+				sans: ["var(--font-sans)", "'Cairo'", 'system-ui', '-apple-system', 'sans-serif'],
+				mono: ["'Cairo'", 'monospace'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',

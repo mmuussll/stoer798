@@ -154,7 +154,7 @@ export default function CategoryManagement() {
                     </span>
                     {editingCategory ? "تعديل الفئة" : "إضافة فئة جديدة"}
                   </DialogTitle>
-                  <DialogDescription className="mr-10">
+                  <DialogDescription className="pe-10">
                     {editingCategory ? "قم بتحديث بيانات الفئة" : "أنشئ فئة جديدة لتنظيم منتجاتك"}
                   </DialogDescription>
                 </DialogHeader>

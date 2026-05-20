@@ -66,6 +66,20 @@ export default function SalesInterface() {
 
   const [showScannerDialog, setShowScannerDialog] = useState(false);
   const [showCartMobile, setShowCartMobile] = useState(false);
+  const [showShortcutGuide, setShowShortcutGuide] = useState(() => {
+    try {
+      return localStorage.getItem("pos_shortcuts_guide") !== "hidden";
+    } catch {
+      return true;
+    }
+  });
+
+  const handleCloseGuide = () => {
+    setShowShortcutGuide(false);
+    try {
+      localStorage.setItem("pos_shortcuts_guide", "hidden");
+    } catch { /* ignore */ }
+  };
 
   const { data: products = [], isLoading: productsLoading } = useQuery({
     queryKey: ["products"], queryFn: productsApi.fetchProducts,
@@ -349,8 +363,8 @@ export default function SalesInterface() {
               />
             </div>
           </div>
-          <ScrollArea className="w-full whitespace-nowrap">
-            <div className="flex gap-1.5 pb-0.5">
+          <div className="w-full overflow-x-auto scrollbar-none whitespace-nowrap">
+            <div className="flex gap-1.5 pb-1">
               <Button
                 variant={selectedCategory === "all" ? "default" : "outline"}
                 size="sm"
@@ -379,11 +393,48 @@ export default function SalesInterface() {
                   </Button>
                 ))}
             </div>
-          </ScrollArea>
+          </div>
         </div>
 
         {/* Products Grid */}
         <div className="flex-1 overflow-y-auto scrollbar-thin">
+          {showShortcutGuide && (
+            <div className="mx-2.5 lg:mx-3.5 mt-3 p-3 bg-gradient-to-r from-indigo-50/70 via-purple-50/50 to-pink-50/40 border border-indigo-100/30 rounded-2xl flex items-start justify-between gap-3 shadow-sm animate-scale-in relative overflow-hidden group">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-5 h-5 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+                    <span className="text-[11px] text-indigo-600 font-bold">💡</span>
+                  </div>
+                  <h4 className="text-xs font-bold text-slate-800">الدليل الذكي لاختصارات الكاشير السريعة</h4>
+                </div>
+                <p className="text-[11px] text-slate-500 leading-relaxed mb-2.5">
+                  استخدم اختصارات لوحة المفاتيح لإجراء عمليات البيع والتحكم في النظام بسرعة فائقة:
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { key: "F1", desc: "البحث والباركود" },
+                    { key: "F2", desc: "إتمام الدفع" },
+                    { key: "F4", desc: "بيع سريع" },
+                    { key: "Ctrl + H", desc: "تعليق الفاتورة" },
+                    { key: "Ctrl + R", desc: "استرجاع معلق" },
+                  ].map((shortcut) => (
+                    <span key={shortcut.key} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white border border-indigo-100/40 rounded-xl shadow-xs">
+                      <kbd className="px-1 py-0.5 bg-slate-100 border border-slate-200 rounded text-[10px] font-black text-slate-700 font-mono tracking-tight">{shortcut.key}</kbd>
+                      <span className="text-[10px] text-slate-500 font-medium">{shortcut.desc}</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <button
+                onClick={handleCloseGuide}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors shrink-0"
+                title="إخفاء الدليل"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
           <ProductGrid
             products={products}
             loading={productsLoading}
@@ -397,29 +448,20 @@ export default function SalesInterface() {
         </div>
 
         {/* Mobile: floating cart button */}
-        <div className="lg:hidden fixed inset-x-0 z-40 flex flex-col gap-2 px-3" style={{ bottom: "calc(5.5rem + env(safe-area-inset-bottom, 0px))" }}>
-          {activeSession && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full border-destructive/20 text-destructive hover:bg-destructive/5 bg-white/95 backdrop-blur-xl shadow-lg rounded-2xl h-10 text-xs font-semibold"
-              onClick={() => {
-                setClosingBalance(activeSession.total_cash.toFixed(0));
-                setShowCloseSessionDialog(true);
-              }}
-            >
-              <Landmark className="w-3.5 h-3.5 ml-1.5" />
-              إقفال الجلسة
-            </Button>
-          )}
+        <div className="lg:hidden fixed inset-x-0 z-40 px-4" style={{ bottom: "calc(4.75rem + env(safe-area-inset-bottom, 0px))" }}>
           <Button
             onClick={() => setShowCartMobile(!showCartMobile)}
-            className="w-full bg-gradient-brand hover:opacity-95 shadow-xl shadow-primary/25 rounded-2xl h-13 text-sm font-bold tracking-wide active:scale-[0.97] transition-transform"
+            className="w-full bg-gradient-brand hover:opacity-95 shadow-lg shadow-primary/25 rounded-2xl h-12 text-sm font-bold tracking-wide active:scale-[0.97] transition-all duration-200 flex items-center justify-between px-5"
           >
-            <ShoppingBag className="w-5 h-5 ml-2" />
-            {cart.length > 0
-              ? `السلة (${calculateItemsCount()} قطعة - ${formatCurrency(totals.total, 2)})`
-              : "عرض السلة"}
+            <div className="flex items-center gap-2">
+              <ShoppingBag className="w-5 h-5" />
+              <span>{cart.length > 0 ? "عرض السلة" : "السلة فارغة"}</span>
+            </div>
+            {cart.length > 0 && (
+              <span className="bg-white/20 text-white px-3 py-1 rounded-xl text-xs font-black font-mono">
+                {calculateItemsCount()} قطع | {formatCurrency(totals.total, 0)}
+              </span>
+            )}
           </Button>
         </div>
       </div>
@@ -440,7 +482,7 @@ export default function SalesInterface() {
                 <X className="w-5 h-5 text-muted-foreground" />
               </button>
             </div>
-            <div className="flex-1 min-h-0">
+            <div className="flex-1 min-h-0 flex flex-col">
               <CartSidebar {...cartSidebarProps} className="border-t-0 lg:border-t-0 bg-transparent lg:bg-white" />
             </div>
           </div>

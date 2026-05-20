@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Percent } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
+import { CURRENCY } from "@/constants";
 
 interface DiscountDialogProps {
   open: boolean;
